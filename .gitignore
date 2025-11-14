@@ -39,7 +39,7 @@ lerna-debug.log*
 # Wrangler
 wrangler.toml.local
 .wrangler/
-
+.dev.vars
 # Testing
 coverage/
 .nyc_output/
