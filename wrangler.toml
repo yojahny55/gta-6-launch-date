@@ -1,0 +1,9 @@
+name = "gta6-tracker"
+main = "src/index.ts"
+compatibility_date = "2025-11-13"
+
+# D1 Database binding (to be configured in Story 1.2)
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "gta6_predictions_db"
+# database_id = "<to-be-created-in-story-1.2>"

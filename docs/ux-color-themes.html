@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTA 6 Tracker - Color Theme Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: #1a1a1a;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: #666;
+        }
+
+        .themes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .theme-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .theme-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .theme-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-tagline {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+
+        .theme-description {
+            font-size: 0.9rem;
+            color: #888;
+            line-height: 1.5;
+        }
+
+        .palette-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .palette-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #666;
+            margin-bottom: 0.75rem;
+        }
+
+        .color-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .color-swatch {
+            flex: 1;
+            height: 60px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .color-label {
+            font-size: 0.65rem;
+            opacity: 0.9;
+        }
+
+        .components-section {
+            margin-top: 2rem;
+        }
+
+        .components-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 0.25rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .card-demo {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 0.75rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.7;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 6px;
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .input-demo {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            font-size: 0.875rem;
+            margin-top: 0.5rem;
+        }
+
+        .input-demo:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .comparison {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .comparison h2 {
+            margin-bottom: 1.5rem;
+            color: #1a1a1a;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .comparison-item {
+            padding: 1rem;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+
+        .comparison-item h4 {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .comparison-item ul {
+            list-style: none;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .comparison-item li {
+            margin-bottom: 0.25rem;
+        }
+
+        .comparison-item li:before {
+            content: "✓ ";
+            color: #22c55e;
+            font-weight: bold;
+        }
+
+        /* Theme 1: Gaming Energy */
+        .theme-1 .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            color: white;
+        }
+        .theme-1 .btn-secondary {
+            background: #06b6d4;
+            color: white;
+        }
+        .theme-1 .btn-ghost {
+            background: transparent;
+            color: #8b5cf6;
+            border: 2px solid #8b5cf6;
+        }
+        .theme-1 .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .theme-1 .stat-value {
+            color: #8b5cf6;
+        }
+
+        /* Theme 2: Trust & Data */
+        .theme-2 .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+        .theme-2 .btn-secondary {
+            background: #64748b;
+            color: white;
+        }
+        .theme-2 .btn-ghost {
+            background: transparent;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+        }
+        .theme-2 .alert-success {
+            background: #dbeafe;
+            color: #1e3a8a;
+            border-left: 4px solid #3b82f6;
+        }
+        .theme-2 .stat-value {
+            color: #2563eb;
+        }
+
+        /* Theme 3: Rockstar Edge */
+        .theme-3 .btn-primary {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+        }
+        .theme-3 .btn-secondary {
+            background: #fbbf24;
+            color: #1a1a1a;
+        }
+        .theme-3 .btn-ghost {
+            background: transparent;
+            color: #f97316;
+            border: 2px solid #f97316;
+        }
+        .theme-3 .alert-success {
+            background: #fef3c7;
+            color: #78350f;
+            border-left: 4px solid #f59e0b;
+        }
+        .theme-3 .stat-value {
+            color: #f97316;
+        }
+
+        /* Theme 4: Community Friendly */
+        .theme-4 .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+        .theme-4 .btn-secondary {
+            background: #14b8a6;
+            color: white;
+        }
+        .theme-4 .btn-ghost {
+            background: transparent;
+            color: #10b981;
+            border: 2px solid #10b981;
+        }
+        .theme-4 .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .theme-4 .stat-value {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 GTA 6 Tracker - Color Theme Explorer</h1>
+        <p>Explore 4 theme directions designed for gaming community, trustworthiness, and shareability</p>
+    </div>
+
+    <div class="themes-grid">
+        <!-- Theme 1: Gaming Energy -->
+        <div class="theme-card theme-1">
+            <div class="theme-header">
+                <div class="theme-name">1. Gaming Energy</div>
+                <div class="theme-tagline">Bold • Vibrant • Competitive</div>
+                <div class="theme-description">
+                    Neon gaming aesthetic with purple and cyan. Energetic and modern, perfect for hardcore gamers.
+                    Stands out in screenshots and feels exciting to share.
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <div class="palette-title">Primary Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);">
+                        <span>#8b5cf6</span>
+                        <span class="color-label">Primary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #06b6d4;">
+                        <span>#06b6d4</span>
+                        <span class="color-label">Secondary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #ec4899;">
+                        <span>#ec4899</span>
+                        <span class="color-label">Accent</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Semantic Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #10b981;">
+                        <span>#10b981</span>
+                        <span class="color-label">Success</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f59e0b;">
+                        <span>#f59e0b</span>
+                        <span class="color-label">Warning</span>
+                    </div>
+                    <div class="color-swatch" style="background: #ef4444;">
+                        <span>#ef4444</span>
+                        <span class="color-label">Error</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Neutrals</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #1a1a1a;">
+                        <span>#1a1a1a</span>
+                        <span class="color-label">Text</span>
+                    </div>
+                    <div class="color-swatch" style="background: #64748b;">
+                        <span>#64748b</span>
+                        <span class="color-label">Muted</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f1f5f9;">
+                        <span style="color: #1a1a1a;">#f1f5f9</span>
+                        <span class="color-label" style="color: #1a1a1a;">Background</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="components-section">
+                <div class="components-title">Live Components</div>
+                <button class="btn btn-primary">Submit Prediction</button>
+                <button class="btn btn-secondary">Share Results</button>
+                <button class="btn btn-ghost">Learn How It Works</button>
+
+                <div class="card-demo">
+                    <div class="stat-item">
+                        <div class="stat-value">March 15, 2027</div>
+                        <div class="stat-label">Community Median</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    ✓ Prediction submitted! You're 3 months more optimistic than 68% of fans.
+                </div>
+
+                <input type="date" class="input-demo" placeholder="Pick your predicted launch date">
+            </div>
+        </div>
+
+        <!-- Theme 2: Trust & Data -->
+        <div class="theme-card theme-2">
+            <div class="theme-header">
+                <div class="theme-name">2. Trust & Data</div>
+                <div class="theme-tagline">Clean • Professional • Reliable</div>
+                <div class="theme-description">
+                    Stripe/Linear-inspired blue and gray. Professional and trustworthy, emphasizes data credibility.
+                    Perfect for users who value methodology and accuracy.
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <div class="palette-title">Primary Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #2563eb;">
+                        <span>#2563eb</span>
+                        <span class="color-label">Primary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #64748b;">
+                        <span>#64748b</span>
+                        <span class="color-label">Secondary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #0891b2;">
+                        <span>#0891b2</span>
+                        <span class="color-label">Accent</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Semantic Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #10b981;">
+                        <span>#10b981</span>
+                        <span class="color-label">Success</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f59e0b;">
+                        <span>#f59e0b</span>
+                        <span class="color-label">Warning</span>
+                    </div>
+                    <div class="color-swatch" style="background: #ef4444;">
+                        <span>#ef4444</span>
+                        <span class="color-label">Error</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Neutrals</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #0f172a;">
+                        <span>#0f172a</span>
+                        <span class="color-label">Text</span>
+                    </div>
+                    <div class="color-swatch" style="background: #94a3b8;">
+                        <span>#94a3b8</span>
+                        <span class="color-label">Muted</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f8fafc;">
+                        <span style="color: #1a1a1a;">#f8fafc</span>
+                        <span class="color-label" style="color: #1a1a1a;">Background</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="components-section">
+                <div class="components-title">Live Components</div>
+                <button class="btn btn-primary">Submit Prediction</button>
+                <button class="btn btn-secondary">Share Results</button>
+                <button class="btn btn-ghost">Learn How It Works</button>
+
+                <div class="card-demo">
+                    <div class="stat-item">
+                        <div class="stat-value">March 15, 2027</div>
+                        <div class="stat-label">Community Median</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    ✓ Prediction submitted! You're 3 months more optimistic than 68% of fans.
+                </div>
+
+                <input type="date" class="input-demo" placeholder="Pick your predicted launch date">
+            </div>
+        </div>
+
+        <!-- Theme 3: Rockstar Edge -->
+        <div class="theme-card theme-3">
+            <div class="theme-header">
+                <div class="theme-name">3. Rockstar Edge</div>
+                <div class="theme-tagline">Bold • Edgy • Iconic</div>
+                <div class="theme-description">
+                    Dark theme with orange and yellow inspired by GTA brand colors. Edgy and iconic,
+                    instantly recognizable to GTA fans. Creates strong brand association.
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <div class="palette-title">Primary Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);">
+                        <span>#f97316</span>
+                        <span class="color-label">Primary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #fbbf24;">
+                        <span style="color: #1a1a1a;">#fbbf24</span>
+                        <span class="color-label" style="color: #1a1a1a;">Secondary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #dc2626;">
+                        <span>#dc2626</span>
+                        <span class="color-label">Accent</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Semantic Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #22c55e;">
+                        <span>#22c55e</span>
+                        <span class="color-label">Success</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f59e0b;">
+                        <span>#f59e0b</span>
+                        <span class="color-label">Warning</span>
+                    </div>
+                    <div class="color-swatch" style="background: #dc2626;">
+                        <span>#dc2626</span>
+                        <span class="color-label">Error</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Neutrals</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #0a0a0a;">
+                        <span>#0a0a0a</span>
+                        <span class="color-label">Text</span>
+                    </div>
+                    <div class="color-swatch" style="background: #737373;">
+                        <span>#737373</span>
+                        <span class="color-label">Muted</span>
+                    </div>
+                    <div class="color-swatch" style="background: #fafaf9;">
+                        <span style="color: #1a1a1a;">#fafaf9</span>
+                        <span class="color-label" style="color: #1a1a1a;">Background</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="components-section">
+                <div class="components-title">Live Components</div>
+                <button class="btn btn-primary">Submit Prediction</button>
+                <button class="btn btn-secondary">Share Results</button>
+                <button class="btn btn-ghost">Learn How It Works</button>
+
+                <div class="card-demo">
+                    <div class="stat-item">
+                        <div class="stat-value">March 15, 2027</div>
+                        <div class="stat-label">Community Median</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    ✓ Prediction submitted! You're 3 months more optimistic than 68% of fans.
+                </div>
+
+                <input type="date" class="input-demo" placeholder="Pick your predicted launch date">
+            </div>
+        </div>
+
+        <!-- Theme 4: Community Friendly -->
+        <div class="theme-card theme-4">
+            <div class="theme-header">
+                <div class="theme-name">4. Community Friendly</div>
+                <div class="theme-tagline">Approachable • Fresh • Optimistic</div>
+                <div class="theme-description">
+                    Green and teal with warm neutrals. Friendly and approachable, emphasizes community aspect.
+                    Feels fresh and optimistic, welcoming to all users.
+                </div>
+            </div>
+
+            <div class="palette-section">
+                <div class="palette-title">Primary Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #10b981;">
+                        <span>#10b981</span>
+                        <span class="color-label">Primary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #14b8a6;">
+                        <span>#14b8a6</span>
+                        <span class="color-label">Secondary</span>
+                    </div>
+                    <div class="color-swatch" style="background: #06b6d4;">
+                        <span>#06b6d4</span>
+                        <span class="color-label">Accent</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Semantic Colors</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #22c55e;">
+                        <span>#22c55e</span>
+                        <span class="color-label">Success</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f59e0b;">
+                        <span>#f59e0b</span>
+                        <span class="color-label">Warning</span>
+                    </div>
+                    <div class="color-swatch" style="background: #ef4444;">
+                        <span>#ef4444</span>
+                        <span class="color-label">Error</span>
+                    </div>
+                </div>
+
+                <div class="palette-title">Neutrals</div>
+                <div class="color-row">
+                    <div class="color-swatch" style="background: #1f2937;">
+                        <span>#1f2937</span>
+                        <span class="color-label">Text</span>
+                    </div>
+                    <div class="color-swatch" style="background: #6b7280;">
+                        <span>#6b7280</span>
+                        <span class="color-label">Muted</span>
+                    </div>
+                    <div class="color-swatch" style="background: #f9fafb;">
+                        <span style="color: #1a1a1a;">#f9fafb</span>
+                        <span class="color-label" style="color: #1a1a1a;">Background</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="components-section">
+                <div class="components-title">Live Components</div>
+                <button class="btn btn-primary">Submit Prediction</button>
+                <button class="btn btn-secondary">Share Results</button>
+                <button class="btn btn-ghost">Learn How It Works</button>
+
+                <div class="card-demo">
+                    <div class="stat-item">
+                        <div class="stat-value">March 15, 2027</div>
+                        <div class="stat-label">Community Median</div>
+                    </div>
+                </div>
+
+                <div class="alert alert-success">
+                    ✓ Prediction submitted! You're 3 months more optimistic than 68% of fans.
+                </div>
+
+                <input type="date" class="input-demo" placeholder="Pick your predicted launch date">
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison Section -->
+    <div class="comparison">
+        <h2>Theme Comparison & Recommendations</h2>
+        <div class="comparison-grid">
+            <div class="comparison-item">
+                <h4>1. Gaming Energy</h4>
+                <ul>
+                    <li>Best for viral sharing</li>
+                    <li>Screenshot-worthy</li>
+                    <li>Gaming community appeal</li>
+                    <li>Competitive vibe</li>
+                </ul>
+            </div>
+            <div class="comparison-item">
+                <h4>2. Trust & Data</h4>
+                <ul>
+                    <li>Professional credibility</li>
+                    <li>Data-focused users</li>
+                    <li>News site embeds</li>
+                    <li>Methodology emphasis</li>
+                </ul>
+            </div>
+            <div class="comparison-item">
+                <h4>3. Rockstar Edge</h4>
+                <ul>
+                    <li>Instant GTA association</li>
+                    <li>Bold and edgy</li>
+                    <li>Brand recognition</li>
+                    <li>Hardcore fan appeal</li>
+                </ul>
+            </div>
+            <div class="comparison-item">
+                <h4>4. Community Friendly</h4>
+                <ul>
+                    <li>Welcoming to all</li>
+                    <li>Optimistic tone</li>
+                    <li>Broad appeal</li>
+                    <li>Fresh and modern</li>
+                </ul>
+            </div>
+        </div>
+
+        <div style="margin-top: 2rem; padding: 1.5rem; background: #f9fafb; border-radius: 8px;">
+            <h3 style="margin-bottom: 1rem;">💡 My Recommendation:</h3>
+            <p style="font-size: 1.1rem; line-height: 1.8; color: #374151;">
+                <strong>Theme 1 (Gaming Energy)</strong> or <strong>Theme 3 (Rockstar Edge)</strong> for your viral goals.
+                <br><br>
+                <strong>Gaming Energy</strong> is bold and screenshot-worthy - perfect for "Excited to Share" + "Playfully Competitive" emotions. The purple/cyan neon vibe stands out in social feeds.
+                <br><br>
+                <strong>Rockstar Edge</strong> creates instant GTA brand association with orange/yellow. Hardcore fans will recognize it immediately, which could drive engagement.
+                <br><br>
+                Both support your viral mechanics better than the more conservative Trust & Data or Community Friendly themes.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

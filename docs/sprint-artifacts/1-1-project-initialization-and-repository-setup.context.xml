@@ -1,0 +1,315 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Project Initialization and Repository Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-1-project-initialization-and-repository-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>a properly configured project structure with TypeScript, build tools, and version control</iWant>
+    <soThat>I can develop efficiently with type safety and maintain clean code</soThat>
+    <tasks>- [ ] **Task 1:** Initialize Hono + Cloudflare Workers project (AC: 1, 2, 3, 4)
+  - [ ] Run `npm create hono@latest gta6-tracker -- --template cloudflare-workers`
+  - [ ] Navigate to project directory: `cd gta6-tracker`
+  - [ ] Verify TypeScript configuration includes strict mode
+  - [ ] Verify package.json has dev, build, test, deploy scripts
+
+- [ ] **Task 2:** Set up additional dependencies (AC: 2, 5)
+  - [ ] Install production dependencies: `npm install js-cookie dayjs tailwindcss`
+  - [ ] Install dev dependencies: `npm install -D vitest @cloudflare/workers-types eslint prettier`
+  - [ ] Initialize Tailwind CSS: `npx tailwindcss init`
+  - [ ] Configure ESLint rules: no-any, no-explicit-any, strict-null-checks
+  - [ ] Configure Prettier for consistent formatting
+
+- [ ] **Task 3:** Create directory structure (AC: 4)
+  - [ ] Verify /src directory exists (Hono default)
+  - [ ] Create /workers directory for backend API routes
+  - [ ] Create /db directory for database schema files
+  - [ ] Create /public directory for static HTML/CSS/JS
+
+- [ ] **Task 4:** Configure Git repository (AC: 1, 7)
+  - [ ] Initialize Git: `git init`
+  - [ ] Create .gitignore with entries: node_modules, .env, dist, .dev.vars, wrangler.toml (local overrides)
+  - [ ] Create first commit: `git commit -m "feat: initial project setup"`
+  - [ ] Verify clean working tree: `git status`
+
+- [ ] **Task 5:** Create environment template (AC: 6)
+  - [ ] Create .env.example file with required variables
+  - [ ] Add comments explaining each variable's purpose
+  - [ ] Document where to obtain API keys (Cloudflare dashboard, reCAPTCHA console, AdSense)
+
+- [ ] **Task 6:** Write comprehensive README.md (AC: 6)
+  - [ ] Add project title and description
+  - [ ] Document prerequisites: Node.js >= 18, npm >= 9
+  - [ ] Document setup instructions (clone, install, configure .env)
+  - [ ] Document development commands (npm run dev)
+  - [ ] Document deployment commands (npx wrangler deploy)
+  - [ ] Link to Cloudflare Workers documentation
+
+- [ ] **Task 7:** Verify project setup (Testing)
+  - [ ] Run `npm install` succeeds without errors
+  - [ ] Run `npm run dev` starts local server
+  - [ ] Verify TypeScript compilation: `npx tsc --noEmit` passes
+  - [ ] Verify linting: `npm run lint` passes (or configure script)
+  - [ ] Verify project structure matches expected layout</tasks>
+  </story>
+
+  <acceptanceCriteria>**Given** a new project needs to be created
+**When** I initialize the project
+**Then** the following structure exists:
+
+1. **Git repository initialized** with .gitignore (node_modules, .env, dist)
+2. **TypeScript configured** (tsconfig.json with strict mode, ES2022 target)
+3. **Package.json with scripts**: dev, build, test, deploy
+4. **Directory structure** created: /src (frontend), /workers (backend), /db (schema)
+5. **ESLint + Prettier configured** for code quality
+6. **README.md** with setup instructions
+
+**And** environment variables template exists (.env.example):
+- CLOUDFLARE_ACCOUNT_ID
+- CLOUDFLARE_API_TOKEN
+- DATABASE_NAME
+- RECAPTCHA_SITE_KEY
+- RECAPTCHA_SECRET_KEY
+- ADSENSE_CLIENT_ID
+
+**And** first commit is made with message: "feat: initial project setup"</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Documentation Artifacts -->
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Project Initialization</section>
+        <snippet>Zero-cost infrastructure requirement drives Cloudflare-based stack. MVP must ship in 2 weeks with type safety (TypeScript) and minimal dependencies for fast load times (&lt;2s). Core tech stack: Cloudflare Workers + D1 + Hono framework.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Project Initialization</section>
+        <snippet>First implementation story establishes: Hono + Cloudflare Workers template, D1 database creation, TypeScript with strict mode, Tailwind CSS initialization, and local dev server at localhost:8787. All decisions ensure AI agents implement consistently.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Decision Summary</section>
+        <snippet>Key decisions: Runtime=Cloudflare Workers, Framework=Hono v4.10.0 (14KB), Database=D1, Language=TypeScript latest, Frontend=Vanilla JS, CSS=Tailwind v4.0, Testing=Vitest v4.0. All optimized for speed and zero-cost deployment.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Project Structure</section>
+        <snippet>Expected structure: src/ (index.ts, routes/, middleware/, services/, utils/, db/, types/), public/ (HTML/CSS/JS), wrangler.toml, package.json, tsconfig.json, tailwind.config.js, vite.config.ts</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Dependencies</section>
+        <snippet>Production: hono ^4.10.0, js-cookie ^3.0.5, dayjs ^1.11.19, tailwindcss ^4.0.0. Development: vitest ^4.0.0, @cloudflare/workers-types latest, wrangler latest, typescript latest</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-001: Use Hono</section>
+        <snippet>Hono chosen over vanilla Workers for: lightweight (14KB), type-safe routing/middleware, TypeScript-first design, Cloudflare-optimized, excellent DX. Minimal framework lock-in with cleaner code.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>System Architecture Alignment</section>
+        <snippet>Story 1.1 establishes foundation with TypeScript strict mode (NFR-M1), ES2022 target for modern JS, Cloudflare Workers types for D1 bindings. Enforces type safety across all subsequent development.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Services and Modules</section>
+        <snippet>Story 1.1 responsibility: TypeScript configuration, build tools, linting. Inputs: Developer code. Outputs: Type-checked bundles. Package.json minimum scripts: dev (wrangler dev), build (vite build &amp;&amp; tsc), test (vitest), deploy (wrangler deploy), lint (eslint src/**/*.ts)</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics.md</path>
+        <title>Epics Document</title>
+        <section>Epic 1: Foundation &amp; Infrastructure</section>
+        <snippet>Epic 1 establishes robust technical foundation with zero technical debt, secure-by-default architecture, scalable infrastructure. Maps to FRs: FR78 (parameterized queries), FR83 (transactions), FR95-96 (deployment/rollback), FR102 (monitoring).</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- No existing code - greenfield project -->
+      <!-- Story 1.1 will create initial codebase -->
+    </code>
+
+    <dependencies>
+      <!-- Dependencies to be installed -->
+      <node>
+        <!-- Production Dependencies -->
+        <package name="hono" version="^4.10.0" reason="Lightweight API framework for Cloudflare Workers (14KB)" />
+        <package name="js-cookie" version="^3.0.5" reason="Clean cookie API for user tracking (2KB)" />
+        <package name="dayjs" version="^1.11.19" reason="Tiny date library for algorithm and display (2KB core)" />
+        <package name="tailwindcss" version="^4.0.0" reason="Utility-first CSS framework with tree-shaking (~5-10KB)" />
+
+        <!-- Development Dependencies -->
+        <package name="vitest" version="^4.0.0" reason="Fast testing framework, Vite-integrated" />
+        <package name="@cloudflare/workers-types" version="latest" reason="TypeScript types for Cloudflare Workers and D1" />
+        <package name="wrangler" version="latest" reason="Cloudflare Workers CLI for deployment" />
+        <package name="typescript" version="latest" reason="Type safety for all code" />
+        <package name="eslint" version="^8.0.0" reason="Code quality linting" />
+        <package name="prettier" version="^3.0.0" reason="Code formatting" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>1. **Cloudflare Free Tier:** Must work within 100K requests/day limit
+2. **TypeScript Strict Mode:** Required for type safety (NFR-M1)
+3. **Zero-Cost Infrastructure:** No paid services for MVP
+4. **ES2022 Target:** Modern JavaScript features for Workers runtime
+5. **Hono Template:** Use official Cloudflare Workers template as base
+6. **Directory Structure:** Must match architecture.md specification (src/, workers/, db/, public/)
+7. **Git Ignore:** Must exclude node_modules, .env, dist, .dev.vars to prevent secret leaks (NFR-S7)
+8. **Package Scripts:** Must include dev, build, test, deploy (Tech Spec requirement)
+9. **ESLint Rules:** Must enforce no-any, no-explicit-any, strict-null-checks (Architecture: Code Quality)
+10. **Environment Variables:** All secrets via environment variables, never hardcoded (NFR-M6)
+11. **README Requirements:** Setup time must be &lt; 30 minutes for new developer (Tech Spec AC1)
+12. **First Commit:** Message format "feat: initial project setup" following conventional commits
+13. **Tailwind v4:** Use new CSS-first configuration approach (ADR-003)
+14. **Vitest Integration:** Must work with Vite build tool (ADR-009)</constraints>
+
+  <interfaces>
+    <!-- No interfaces yet - this is the foundation story -->
+    <!-- Future stories will define API endpoints, database schemas, etc. -->
+    <interface>
+      <name>Cloudflare Workers Environment</name>
+      <kind>Runtime Interface</kind>
+      <signature>
+interface Env {
+  DB: D1Database;           // D1 database binding (Story 1.2)
+  IP_HASH_SALT: string;     // Secret for IP hashing (Story 1.2)
+}
+      </signature>
+      <path>Will be defined in src/types/index.ts</path>
+    </interface>
+    <interface>
+      <name>Wrangler Configuration</name>
+      <kind>Deployment Configuration</kind>
+      <signature>
+// wrangler.toml structure expected
+name = "gta6-tracker"
+main = "src/index.ts"
+compatibility_date = "2025-11-13"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "gta6_predictions_db"
+database_id = "&lt;to-be-created-in-story-1.2&gt;"
+      </signature>
+      <path>wrangler.toml (root directory)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Testing framework: Vitest v4.0 (per Architecture ADR-009)
+Test location: Co-located with source files (*.test.ts pattern)
+Coverage target: 90%+ for critical business logic (Tech Spec)
+Test types: Unit tests (utils), Integration tests (API endpoints), Manual tests (setup verification)
+
+Story 1.1 is primarily setup verification:
+- Manual verification of project structure
+- Command execution tests (npm install, npm run dev, npm run build)
+- No unit tests required for this story (infrastructure only)
+
+Testing standards established for future stories:
+- Weighted median algorithm: 90%+ coverage required
+- Database queries: 100% coverage for critical paths
+- API endpoints: Integration tests with mock D1 database</standards>
+
+    <locations>- tests/ directory (future unit/integration tests)
+- *.test.ts files co-located with source (e.g., src/utils/weighted-median.test.ts)
+- Story 1.1: Manual verification commands in Task 7</locations>
+
+    <ideas>
+      <!-- Test Ideas for Story 1.1 Verification -->
+      <test id="AC1" desc="Verify Git repository initialized">
+        <steps>
+1. Check .git directory exists
+2. Verify .gitignore contains node_modules, .env, dist, .dev.vars
+3. Run `git status` and confirm clean working tree
+4. Check first commit exists with message "feat: initial project setup"
+        </steps>
+      </test>
+      <test id="AC2" desc="Verify TypeScript configured correctly">
+        <steps>
+1. Check tsconfig.json exists
+2. Verify "strict": true is enabled
+3. Verify "target": "ES2022"
+4. Verify "types": ["@cloudflare/workers-types"]
+5. Run `npx tsc --noEmit` and confirm no errors
+        </steps>
+      </test>
+      <test id="AC3" desc="Verify package.json scripts">
+        <steps>
+1. Check package.json exists
+2. Verify "dev" script exists (should be "wrangler dev")
+3. Verify "build" script exists
+4. Verify "test" script exists (should be "vitest")
+5. Verify "deploy" script exists (should be "wrangler deploy")
+        </steps>
+      </test>
+      <test id="AC4" desc="Verify directory structure">
+        <steps>
+1. Check /src directory exists
+2. Check /workers directory created (or /src/routes for Hono pattern)
+3. Check /db directory created (or /src/db)
+4. Check /public directory created
+5. Verify index.ts exists in src/
+        </steps>
+      </test>
+      <test id="AC5" desc="Verify ESLint and Prettier">
+        <steps>
+1. Check .eslintrc or eslint.config.js exists
+2. Verify rules: no-any, no-explicit-any, strict-null-checks
+3. Check .prettierrc exists
+4. Run `npm run lint` (or configure and run)
+5. Verify no linting errors on initial code
+        </steps>
+      </test>
+      <test id="AC6" desc="Verify README.md completeness">
+        <steps>
+1. Check README.md exists
+2. Verify contains project title and description
+3. Verify lists prerequisites (Node.js >= 18, npm >= 9)
+4. Verify includes setup instructions
+5. Verify documents npm run dev command
+6. Verify documents npx wrangler deploy command
+7. Verify includes link to Cloudflare Workers docs
+8. Time setup process - should be &lt; 30 minutes
+        </steps>
+      </test>
+      <test id="AC6-env" desc="Verify .env.example template">
+        <steps>
+1. Check .env.example file exists
+2. Verify contains CLOUDFLARE_ACCOUNT_ID with comment
+3. Verify contains CLOUDFLARE_API_TOKEN with comment
+4. Verify contains DATABASE_NAME with comment
+5. Verify contains RECAPTCHA_SITE_KEY with comment
+6. Verify contains RECAPTCHA_SECRET_KEY with comment
+7. Verify contains ADSENSE_CLIENT_ID with comment
+8. Verify all values are placeholders, no real secrets
+        </steps>
+      </test>
+      <test id="AC7-functional" desc="Verify functional project">
+        <steps>
+1. Run `npm install` - should succeed without errors
+2. Run `npm run dev` - should start local server
+3. Verify server accessible at localhost:8787
+4. Run `npx tsc --noEmit` - should pass type checking
+5. Verify project structure matches architecture.md specification
+        </steps>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

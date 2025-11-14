@@ -1,0 +1,34 @@
+{
+  "name": "gta6-tracker",
+  "version": "0.1.0",
+  "description": "GTA 6 Launch Date Prediction Tracker - Community-driven prediction platform",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "vite build && tsc",
+    "test": "vitest",
+    "deploy": "wrangler deploy",
+    "lint": "eslint src/**/*.ts"
+  },
+  "dependencies": {
+    "hono": "^4.10.0",
+    "js-cookie": "^3.0.5",
+    "dayjs": "^1.11.19",
+    "tailwindcss": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "latest",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "latest",
+    "vite": "^5.0.0",
+    "vitest": "^4.0.0",
+    "wrangler": "latest"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  }
+}
