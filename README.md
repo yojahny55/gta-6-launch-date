@@ -155,6 +155,81 @@ gta6-tracker/
 | `npm run lint` | Check code quality with ESLint |
 | `npm run deploy` | Deploy to Cloudflare Workers (production) |
 
+## CI/CD Pipeline
+
+This project uses GitHub Actions for automated testing and deployment. Every push triggers a comprehensive quality check pipeline.
+
+### GitHub Actions Workflow
+
+The workflow executes the following steps in order:
+
+1. **Install dependencies** (`npm ci`)
+2. **Run linter** (`npm run lint`)
+3. **Check code formatting** (`npm run format:check`)
+4. **Run TypeScript type check** (`npx tsc --noEmit`)
+5. **Run tests** (`npm test`)
+6. **Build project** (`npm run build`)
+7. **Deploy to Cloudflare** (main branch only)
+
+### Required GitHub Secrets
+
+To enable automated deployment, configure the following secrets in your GitHub repository:
+
+**Settings → Secrets and variables → Actions → New repository secret**
+
+| Secret Name | Description | How to Get It |
+|-------------|-------------|---------------|
+| `CLOUDFLARE_API_TOKEN` | API token with Workers edit permission | Cloudflare Dashboard → My Profile → API Tokens → Create Token → Use "Edit Cloudflare Workers" template |
+| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID | Cloudflare Dashboard → Workers & Pages → Overview → Account ID (right sidebar) |
+
+**Generating Cloudflare API Token:**
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. Click on your profile icon → My Profile → API Tokens
+3. Click "Create Token"
+4. Use the "Edit Cloudflare Workers" template
+5. Customize the token:
+   - **Permissions:** Account / Workers Scripts / Edit
+   - **Account Resources:** Include your account
+   - **Zone Resources:** All zones (or specific zones if preferred)
+6. Click "Continue to summary" → "Create Token"
+7. Copy the token immediately (it won't be shown again)
+8. Add it to GitHub Secrets as `CLOUDFLARE_API_TOKEN`
+
+**Finding Cloudflare Account ID:**
+
+1. Go to [Cloudflare Dashboard](https://dash.cloudflare.com)
+2. Navigate to Workers & Pages
+3. Your Account ID is displayed in the right sidebar
+4. Copy and add it to GitHub Secrets as `CLOUDFLARE_ACCOUNT_ID`
+
+### Workflow Behavior
+
+- **All branches:** Run quality checks (lint, typecheck, test, build) but skip deployment
+- **Main branch:** Run all checks + deploy to production on success
+- **Pull requests:** Run all checks to ensure code quality before merge
+
+**Failed builds prevent deployment** - the workflow uses fail-fast strategy, halting immediately if any step fails.
+
+### Local Testing Before Push
+
+Recommended pre-commit checks to avoid CI failures:
+
+```bash
+# Run all quality checks locally
+npm run lint
+npm run format:check
+npx tsc --noEmit
+npm test
+npm run build
+```
+
+Or run them all at once:
+
+```bash
+npm ci && npm run lint && npm run format:check && npx tsc --noEmit && npm test -- --run && npm run build
+```
+
 ## Deployment
 
 ### Infrastructure Resources

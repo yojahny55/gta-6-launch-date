@@ -3,7 +3,7 @@
 export interface Prediction {
   id: number;
   predicted_date: string; // ISO 8601: "2027-03-15"
-  submitted_at: string;   // ISO 8601: "2025-11-13T10:30:00Z"
+  submitted_at: string; // ISO 8601: "2025-11-13T10:30:00Z"
   updated_at: string;
   ip_hash: string;
   cookie_id: string;
@@ -12,10 +12,10 @@ export interface Prediction {
 }
 
 export interface Stats {
-  median: string;      // Weighted median date
-  min: string;         // Earliest prediction
-  max: string;         // Latest prediction
-  total: number;       // Total predictions count
+  median: string; // Weighted median date
+  min: string; // Earliest prediction
+  max: string; // Latest prediction
+  total: number; // Total predictions count
 }
 
 export interface PredictionResponse {
@@ -39,6 +39,6 @@ export interface ErrorResponse {
 
 // Cloudflare Workers Environment
 export interface Env {
-  DB: D1Database;           // D1 database binding (Story 1.2)
-  IP_HASH_SALT: string;     // Secret for IP hashing (Story 1.2)
+  DB: D1Database; // D1 database binding (Story 1.2)
+  IP_HASH_SALT: string; // Secret for IP hashing (Story 1.2)
 }

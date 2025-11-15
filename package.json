@@ -8,7 +8,8 @@
     "build": "vite build && tsc",
     "test": "vitest",
     "deploy": "wrangler deploy",
-    "lint": "eslint src/**/*.ts"
+    "lint": "eslint src/**/*.ts",
+    "format:check": "prettier --check 'src/**/*.ts'"
   },
   "dependencies": {
     "dayjs": "^1.11.19",
@@ -26,7 +27,8 @@
     "typescript": "latest",
     "vite": "^5.0.0",
     "vitest": "^3.2.4",
-    "wrangler": "^4.48.0"
+    "wrangler": "^4.48.0",
+    "yaml": "^2.8.1"
   },
   "engines": {
     "node": ">=18.0.0",

@@ -245,9 +245,7 @@ describe('Database Schema - Predictions Table', () => {
         .bind('2027-03-15', 'hash_weight_default', 'cookie_weight_default')
         .run();
 
-      const result = await env.DB.prepare(
-        'SELECT weight FROM predictions WHERE cookie_id = ?'
-      )
+      const result = await env.DB.prepare('SELECT weight FROM predictions WHERE cookie_id = ?')
         .bind('cookie_weight_default')
         .first();
 
@@ -318,9 +316,7 @@ describe('Database Schema - Email Subscriptions Table', () => {
     it('should enforce UNIQUE constraint on email', async () => {
       const email = 'test@example.com';
 
-      await env.DB.prepare(
-        'INSERT INTO email_subscriptions (email, cookie_id) VALUES (?, ?)'
-      )
+      await env.DB.prepare('INSERT INTO email_subscriptions (email, cookie_id) VALUES (?, ?)')
         .bind(email, 'cookie_001')
         .run();
 
@@ -335,9 +331,7 @@ describe('Database Schema - Email Subscriptions Table', () => {
 
   describe('Default Values', () => {
     it('should set verified to 0 (false) by default', async () => {
-      await env.DB.prepare(
-        'INSERT INTO email_subscriptions (email, cookie_id) VALUES (?, ?)'
-      )
+      await env.DB.prepare('INSERT INTO email_subscriptions (email, cookie_id) VALUES (?, ?)')
         .bind('test@example.com', 'cookie_test')
         .run();
 

@@ -74,10 +74,16 @@ beforeAll(async () => {
           unsubscribe_token TEXT UNIQUE
         ) STRICT
       `),
-      env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_predictions_date ON predictions(predicted_date)'),
+      env.DB.prepare(
+        'CREATE INDEX IF NOT EXISTS idx_predictions_date ON predictions(predicted_date)'
+      ),
       env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_predictions_cookie ON predictions(cookie_id)'),
-      env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_predictions_submitted ON predictions(submitted_at)'),
-      env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_email_verified ON email_subscriptions(verified)'),
+      env.DB.prepare(
+        'CREATE INDEX IF NOT EXISTS idx_predictions_submitted ON predictions(submitted_at)'
+      ),
+      env.DB.prepare(
+        'CREATE INDEX IF NOT EXISTS idx_email_verified ON email_subscriptions(verified)'
+      ),
     ]);
 
     console.log('[Test Setup] Database schema applied successfully!');

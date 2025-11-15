@@ -1,0 +1,349 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>3</storyId>
+    <title>CI/CD Pipeline with GitHub Actions</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/var/www/html/others/gta-6-launch-date/docs/sprint-artifacts/1-3-ci-cd-pipeline-with-github-actions.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>automated testing and deployment on every commit</iWant>
+    <soThat>code quality is maintained and deployments are reliable</soThat>
+    <tasks>- [ ] Task 1: Create GitHub Actions workflow file (AC: 1-6)
+  - [ ] Create `.github/workflows/deploy.yml` file
+  - [ ] Configure workflow trigger: on push to all branches, on pull_request
+  - [ ] Add job: `build-and-deploy` with ubuntu-latest runner
+  - [ ] Add step: Checkout code (actions/checkout@v4)
+  - [ ] Add step: Setup Node.js 18 (actions/setup-node@v4)
+  - [ ] Add step: Install dependencies (`npm ci`)
+
+- [ ] Task 2: Add code quality checks to workflow (AC: 2-3)
+  - [ ] Add step: Run ESLint (`npm run lint`)
+  - [ ] Add step: Run TypeScript type check (`npx tsc --noEmit`)
+  - [ ] Add step: Run Prettier format check (`npm run format:check`)
+  - [ ] Ensure failures in any step halt workflow
+
+- [ ] Task 3: Add automated testing step (AC: 4)
+  - [ ] Add step: Run Vitest tests (`npm test`)
+  - [ ] Configure test output for CI (no watch mode)
+  - [ ] Ensure test failures prevent deployment
+  - [ ] Add test coverage reporting (optional for MVP)
+
+- [ ] Task 4: Add build step (AC: 5)
+  - [ ] Add step: Build TypeScript project (`npm run build`)
+  - [ ] Verify dist/ output artifacts exist
+  - [ ] Ensure build errors halt workflow
+
+- [ ] Task 5: Configure Cloudflare deployment (AC: 6)
+  - [ ] Add step: Deploy with Wrangler (cloudflare/wrangler-action@v3)
+  - [ ] Add conditional: only on main branch (`if: github.ref == 'refs/heads/main'`)
+  - [ ] Pass CLOUDFLARE_API_TOKEN from GitHub secrets
+  - [ ] Configure accountId and apiToken inputs for wrangler-action
+  - [ ] Add environment: production (for main branch)
+
+- [ ] Task 6: Configure GitHub secrets (AC: 7)
+  - [ ] Generate Cloudflare API token (Cloudflare Dashboard → Profile → API Tokens)
+  - [ ] Add CLOUDFLARE_API_TOKEN to GitHub repository secrets
+  - [ ] Add CLOUDFLARE_ACCOUNT_ID to GitHub repository secrets (optional for wrangler-action)
+  - [ ] Document secret setup in README.md
+
+- [ ] Task 7: Add deployment status reporting (AC: 8)
+  - [ ] Verify GitHub Actions automatically updates commit status
+  - [ ] Test PR deployments create preview URLs (optional)
+  - [ ] Configure status checks in branch protection (recommended)
+
+- [ ] Task 8: Test complete CI/CD pipeline (Testing)
+  - [ ] Create test branch and push code change
+  - [ ] Verify all steps execute: lint → typecheck → test → build
+  - [ ] Verify deployment does NOT occur on feature branch
+  - [ ] Merge to main branch
+  - [ ] Verify deployment occurs successfully to production
+  - [ ] Verify Workers URL serves updated code
+  - [ ] Test failed lint scenario (verify deployment blocked)
+  - [ ] Test failed test scenario (verify deployment blocked)
+
+- [ ] Task 9: Write automated tests for workflow validation (Testing - ADR-011)
+  - [ ] Create workflow test file: `tests/workflow-validation.test.ts`
+  - [ ] Test workflow YAML syntax is valid
+  - [ ] Test required secrets are referenced correctly
+  - [ ] Test conditional logic for main branch deployment
+  - [ ] Test all required steps are present in correct order</tasks>
+  </story>
+
+  <acceptanceCriteria>**Given** code is pushed to GitHub
+**When** GitHub Actions workflow runs
+**Then** the following steps execute in order:
+
+1. Install dependencies (npm ci)
+2. Run linter (eslint)
+3. Run TypeScript compiler (tsc --noEmit)
+4. Run tests (vitest)
+5. Build project (npm run build)
+6. Deploy to Cloudflare (on main branch only)
+
+**And** deployment uses secrets:
+- CLOUDFLARE_API_TOKEN (stored in GitHub secrets)
+- Wrangler automatically deploys to Workers
+
+**And** deployment status is reported back to commit
+
+**And** failed builds prevent deployment
+
+**And** automated tests exist covering main functionality
+
+### Testing Requirements
+- [ ] Unit tests for workflow validation (verify steps execute in order)
+- [ ] Integration tests for deployment process (test against staging environment)
+- [ ] Test failed build scenarios (verify deployment blocked)
+- [ ] Test branch-specific deployments (main vs PR branches)</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Deployment Architecture</title>
+        <section>Deployment Architecture</section>
+        <snippet>GitHub Actions for CI/CD automation. Cloudflare Workers via Wrangler CLI. Deployment process: Build → TypeScript compilation → Deploy Workers. Rollback capability (Story 1.5) via Cloudflare dashboard.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - Development Environment</title>
+        <section>Development Environment</section>
+        <snippet>Node.js >= 18 required for CI/CD environment. TypeScript strict mode must pass (tsc --noEmit). ESLint + Prettier configured for code quality. Vitest tests must pass before deployment.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - ADR-009: Vitest Testing Framework</title>
+        <section>ADR-009</section>
+        <snippet>Vitest v3.2 with @cloudflare/vitest-pool-workers. Works with Cloudflare Workers via workers pool. Test infrastructure established in Story 1.2. 30 tests (9 endpoint + 21 schema) as baseline.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document - ADR-011: Mandatory Automated Testing</title>
+        <section>ADR-011</section>
+        <snippet>ALL stories MUST include automated tests. Tests must pass before deployment. CI/CD pipeline enforces test execution. Stories without tests will be BLOCKED in code review. No exceptions.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-1-foundation-infrastructure-setup.md</path>
+        <title>Epic 1 - Story 1.3</title>
+        <section>Story 1.3: CI/CD Pipeline with GitHub Actions</section>
+        <snippet>Automated testing and deployment on every commit. GitHub Actions runs: install → lint → typecheck → test → build → deploy (main branch only). Deployment uses CLOUDFLARE_API_TOKEN secret.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/1-2-cloudflare-infrastructure-configuration.md</path>
+        <title>Previous Story 1.2 - Learnings</title>
+        <section>Dev Agent Record</section>
+        <snippet>Vitest 3.2 downgrade required for Workers pool compatibility. Test infrastructure established: vitest.config.ts, test-setup.ts, 30 comprehensive tests. Story initially shipped without tests - violated ADR-011, required changes.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>package.json</path>
+        <kind>configuration</kind>
+        <symbol>scripts</symbol>
+        <lines>6-12</lines>
+        <reason>Contains npm scripts that CI/CD workflow will execute: dev, build, test, deploy, lint. NOTE: Missing "format:check" script mentioned in story Task 2.</reason>
+      </artifact>
+      <artifact>
+        <path>wrangler.toml</path>
+        <kind>configuration</kind>
+        <symbol>D1 binding</symbol>
+        <lines>5-9</lines>
+        <reason>Cloudflare Workers configuration with D1 database binding. Wrangler deploy command will use this file.</reason>
+      </artifact>
+      <artifact>
+        <path>vitest.config.ts</path>
+        <kind>configuration</kind>
+        <symbol>defineWorkersConfig</symbol>
+        <lines>1-12</lines>
+        <reason>Test configuration using @cloudflare/vitest-pool-workers. Tests run via "npm test" in CI/CD pipeline.</reason>
+      </artifact>
+      <artifact>
+        <path>tsconfig.json</path>
+        <kind>configuration</kind>
+        <symbol>compilerOptions</symbol>
+        <lines>2-16</lines>
+        <reason>TypeScript strict mode configuration. CI/CD will run "npx tsc --noEmit" for type checking.</reason>
+      </artifact>
+      <artifact>
+        <path>.eslintrc.json</path>
+        <kind>configuration</kind>
+        <symbol>rules</symbol>
+        <lines>1-25</lines>
+        <reason>ESLint configuration with TypeScript plugin. CI/CD runs "npm run lint" to enforce code quality.</reason>
+      </artifact>
+      <artifact>
+        <path>.prettierrc</path>
+        <kind>configuration</kind>
+        <symbol>formatting rules</symbol>
+        <lines>1-10</lines>
+        <reason>Prettier code formatting rules. CI/CD should run format check (script needs to be added to package.json).</reason>
+      </artifact>
+      <artifact>
+        <path>src/test-setup.ts</path>
+        <kind>test infrastructure</kind>
+        <symbol>beforeAll</symbol>
+        <lines>47-88</lines>
+        <reason>Test setup that applies database schema before tests run. Shows pattern for Cloudflare Workers testing.</reason>
+      </artifact>
+      <artifact>
+        <path>src/index.test.ts</path>
+        <kind>test</kind>
+        <symbol>API Endpoints tests</symbol>
+        <lines>1-50</lines>
+        <reason>Example integration tests for API endpoints (9 tests total). Demonstrates testing pattern with Vitest + Workers pool.</reason>
+      </artifact>
+      <artifact>
+        <path>src/db/schema.test.ts</path>
+        <kind>test</kind>
+        <symbol>database schema tests</symbol>
+        <lines>N/A</lines>
+        <reason>Database schema validation tests (21 tests). Part of the 30-test baseline established in Story 1.2.</reason>
+      </artifact>
+      <artifact>
+        <path>README.md</path>
+        <kind>documentation</kind>
+        <symbol>setup instructions</symbol>
+        <lines>N/A</lines>
+        <reason>Project documentation where GitHub secrets setup should be documented (Task 6).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <runtime>
+        <engine name="node" version=">=18.0.0" />
+        <engine name="npm" version=">=9.0.0" />
+      </runtime>
+      <production>
+        <dependency name="hono" version="^4.10.0" purpose="Web framework for Cloudflare Workers" />
+        <dependency name="dayjs" version="^1.11.19" purpose="Date manipulation library" />
+        <dependency name="js-cookie" version="^3.0.5" purpose="Cookie management" />
+        <dependency name="tailwindcss" version="^4.0.0" purpose="CSS framework" />
+      </production>
+      <development>
+        <dependency name="wrangler" version="^4.48.0" purpose="Cloudflare Workers CLI - used in CI/CD deployment" />
+        <dependency name="vitest" version="^3.2.4" purpose="Test framework - CRITICAL: Must stay at 3.2.x for Workers pool" />
+        <dependency name="@cloudflare/vitest-pool-workers" version="^0.10.7" purpose="Cloudflare Workers test environment" />
+        <dependency name="typescript" version="latest" purpose="TypeScript compiler - CI/CD runs tsc --noEmit" />
+        <dependency name="eslint" version="^8.0.0" purpose="Linting - CI/CD runs npm run lint" />
+        <dependency name="@typescript-eslint/eslint-plugin" version="^6.0.0" purpose="TypeScript ESLint rules" />
+        <dependency name="@typescript-eslint/parser" version="^6.0.0" purpose="TypeScript ESLint parser" />
+        <dependency name="prettier" version="^3.0.0" purpose="Code formatter - CI/CD should run format check" />
+        <dependency name="vite" version="^5.0.0" purpose="Build tool for frontend assets" />
+        <dependency name="@cloudflare/workers-types" version="latest" purpose="TypeScript types for Cloudflare Workers" />
+      </development>
+      <github-actions>
+        <action name="actions/checkout" version="v4" purpose="Checkout repository code" />
+        <action name="actions/setup-node" version="v4" purpose="Setup Node.js 18 environment" />
+        <action name="cloudflare/wrangler-action" version="v3" purpose="Deploy to Cloudflare Workers" />
+      </github-actions>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>GitHub Actions Best Practices: Use "npm ci" instead of "npm install" for reproducible builds</constraint>
+    <constraint>Action Versions: Use latest stable versions - checkout@v4, setup-node@v4, wrangler-action@v3</constraint>
+    <constraint>Node.js Version: Must use Node.js 18 to match local development environment (package.json engines)</constraint>
+    <constraint>Deployment Branch: Only deploy to production on main branch using conditional: if: github.ref == 'refs/heads/main'</constraint>
+    <constraint>Test Enforcement: All tests must pass before deployment (ADR-011 Mandatory Testing)</constraint>
+    <constraint>Fail-Fast Strategy: Halt workflow on first failure (default GitHub Actions behavior)</constraint>
+    <constraint>Secrets Management: CLOUDFLARE_API_TOKEN must be stored in GitHub repository secrets, never committed to code</constraint>
+    <constraint>IP_HASH_SALT Secret: Also needs to be added to GitHub secrets for runtime environment variables (technical debt from Story 1.2)</constraint>
+    <constraint>Performance Target: Workflow execution time should be &lt; 5 minutes for lint + test + build + deploy</constraint>
+    <constraint>Vitest Version: Must remain at 3.2.x for @cloudflare/vitest-pool-workers compatibility (ADR-009)</constraint>
+    <constraint>Format Check Script: Needs to be added to package.json as "format:check" (currently missing)</constraint>
+    <constraint>Workflow Validation: This story MUST include automated tests per ADR-011 (tests/workflow-validation.test.ts)</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>GitHub Actions Workflow Triggers</name>
+      <kind>CI/CD event triggers</kind>
+      <signature>on: push (all branches), pull_request (main branch)</signature>
+      <path>.github/workflows/deploy.yml</path>
+    </interface>
+    <interface>
+      <name>npm scripts</name>
+      <kind>CLI commands</kind>
+      <signature>npm ci, npm run lint, npx tsc --noEmit, npm test, npm run build, npm run format:check (to be added)</signature>
+      <path>package.json</path>
+    </interface>
+    <interface>
+      <name>Wrangler CLI deployment</name>
+      <kind>Cloudflare deployment interface</kind>
+      <signature>cloudflare/wrangler-action@v3 with apiToken from secrets.CLOUDFLARE_API_TOKEN</signature>
+      <path>.github/workflows/deploy.yml</path>
+    </interface>
+    <interface>
+      <name>GitHub Commit Status API</name>
+      <kind>Status reporting</kind>
+      <signature>Automatic status updates on commit from GitHub Actions (built-in)</signature>
+      <path>N/A - GitHub automatic</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+Testing Framework: Vitest 3.2.4 with @cloudflare/vitest-pool-workers for Cloudflare Workers environment testing (ADR-009).
+
+Test Organization: Co-located tests next to source files (src/foo.ts → src/foo.test.ts) or in dedicated tests/ directory for workflow validation tests.
+
+Coverage Requirements:
+- Unit tests: 90%+ coverage for algorithms and utilities
+- Integration tests: API endpoints, database interactions
+- Infrastructure tests: Configuration validation, workflow structure
+
+Testing Patterns from Story 1.2:
+- Use Vitest's describe/it/expect API
+- Import from 'cloudflare:test' for env bindings
+- Test setup in src/test-setup.ts applies database schema automatically
+- Baseline: 30 tests established (9 endpoint + 21 schema)
+
+ADR-011 Mandatory Testing:
+- ALL stories MUST include automated tests
+- Tests must pass in CI/CD pipeline before deployment
+- This story requires workflow validation tests (tests/workflow-validation.test.ts)
+- No exceptions - stories without tests are BLOCKED in code review
+
+GitHub Actions Testing:
+- Workflow runs on every push and pull request
+- Tests execute via "npm test" command
+- Failed tests halt deployment (fail-fast strategy)
+- Test results visible in GitHub Actions UI
+    </standards>
+    <locations>
+      <location>src/**/*.test.ts - Co-located unit and integration tests</location>
+      <location>tests/workflow-validation.test.ts - GitHub Actions workflow validation tests (to be created)</location>
+      <location>tests/unit/ - Optional dedicated unit test directory</location>
+      <location>tests/integration/ - Optional dedicated integration test directory</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1-6: Workflow steps execute in order">
+        <test>Workflow YAML Syntax Validation - Parse .github/workflows/deploy.yml and verify valid YAML syntax</test>
+        <test>Required Steps Presence Check - Verify all 6 required steps exist: npm ci, lint, typecheck, test, build, deploy</test>
+        <test>Step Order Validation - Confirm steps execute in exact order specified in AC</test>
+        <test>Job Configuration Check - Verify job runs on ubuntu-latest runner</test>
+      </idea>
+      <idea ac="AC: Deployment uses secrets">
+        <test>Secret References Validation - Verify CLOUDFLARE_API_TOKEN is referenced from secrets context</test>
+        <test>Wrangler Action Configuration - Check cloudflare/wrangler-action@v3 is configured with apiToken input</test>
+        <test>No Hardcoded Secrets - Scan workflow file to ensure no plaintext secrets</test>
+      </idea>
+      <idea ac="AC: Deploy on main branch only">
+        <test>Conditional Logic Validation - Verify deployment step has "if: github.ref == 'refs/heads/main'" condition</test>
+        <test>Branch Filter Check - Confirm workflow triggers on all branches for testing but deploys only on main</test>
+      </idea>
+      <idea ac="AC: Failed builds prevent deployment">
+        <test>Fail-Fast Behavior - Verify workflow doesn't have "continue-on-error: true" for critical steps</test>
+        <test>Step Dependencies - Confirm deployment step depends on successful completion of previous steps</test>
+      </idea>
+      <idea ac="Testing Requirements">
+        <test>Integration Test: End-to-End Workflow Simulation - Test complete workflow execution in a controlled environment</test>
+        <test>Integration Test: Failed Lint Scenario - Simulate lint failure and verify deployment is blocked</test>
+        <test>Integration Test: Failed Test Scenario - Simulate test failure and verify deployment is blocked</test>
+        <test>Manual Validation: Branch-Specific Deployment - Push to feature branch and verify no deployment, merge to main and verify deployment</test>
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

@@ -15,9 +15,7 @@ app.get('/health', (c) => {
 app.get('/api/db-test', async (c) => {
   try {
     // Test database connection by querying the predictions table
-    const result = await c.env.DB.prepare(
-      'SELECT COUNT(*) as count FROM predictions'
-    ).first();
+    const result = await c.env.DB.prepare('SELECT COUNT(*) as count FROM predictions').first();
 
     return c.json({
       success: true,
@@ -25,17 +23,20 @@ app.get('/api/db-test', async (c) => {
       data: {
         predictions_count: result?.count || 0,
         database_connected: true,
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     });
   } catch (error) {
     console.error('Database connection test failed:', error);
-    return c.json({
-      success: false,
-      message: 'Database connection failed',
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
-    }, 500);
+    return c.json(
+      {
+        success: false,
+        message: 'Database connection failed',
+        error: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      },
+      500
+    );
   }
 });
 
