@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "wrangler dev",
     "build": "vite build && tsc",
-    "test": "vitest",
+    "test": "npm run test:unit && npm run test:workers",
+    "test:unit": "vitest --config vitest.config.unit.ts",
+    "test:workers": "vitest --config vitest.config.ts",
     "deploy": "wrangler deploy",
     "lint": "eslint src/**/*.ts",
     "format:check": "prettier --check 'src/**/*.ts'"

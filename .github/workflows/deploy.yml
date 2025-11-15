@@ -38,9 +38,13 @@ jobs:
       - name: TypeScript type check
         run: npx tsc --noEmit
 
-      # Step 7: Run Vitest tests
-      - name: Run tests
-        run: npm test -- --run
+      # Step 7a: Run unit tests (standard Node.js environment)
+      - name: Run unit tests
+        run: npm run test:unit -- --run
+
+      # Step 7b: Run Workers tests (Cloudflare Workers environment)
+      - name: Run Workers tests
+        run: npm run test:workers -- --run
 
       # Step 8: Build project
       - name: Build TypeScript project
