@@ -220,7 +220,8 @@ Recommended pre-commit checks to avoid CI failures:
 npm run lint
 npm run format:check
 npx tsc --noEmit
-npm test
+npm run test:unit -- --run
+npm run test:workers -- --run  # Important: Workers tests only run locally
 npm run build
 ```
 
@@ -229,6 +230,8 @@ Or run them all at once:
 ```bash
 npm ci && npm run lint && npm run format:check && npx tsc --noEmit && npm test -- --run && npm run build
 ```
+
+**Important:** Workers tests currently only run locally due to a [known issue](https://github.com/cloudflare/workers-sdk/issues/10600) with `vitest-pool-workers` in CI environments. Always run `npm run test:workers -- --run` locally before pushing to ensure your changes don't break the Workers runtime tests.
 
 ## Deployment
 
