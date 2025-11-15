@@ -41,6 +41,29 @@ describe('Environment Configuration', () => {
       expect(content).toContain('ENVIRONMENT = "preview"');
     });
 
+    it('should have D1 database binding in production environment', () => {
+      const wranglerPath = path.join(process.cwd(), 'wrangler.toml');
+      const content = fs.readFileSync(wranglerPath, 'utf-8');
+
+      expect(content).toContain('[[env.production.d1_databases]]');
+      expect(content).toContain('binding = "DB"');
+      expect(content).toContain('database_name = "gta6-predictions"');
+    });
+
+    it('should have D1 database binding in dev environment', () => {
+      const wranglerPath = path.join(process.cwd(), 'wrangler.toml');
+      const content = fs.readFileSync(wranglerPath, 'utf-8');
+
+      expect(content).toContain('[[env.dev.d1_databases]]');
+    });
+
+    it('should have D1 database binding in preview environment', () => {
+      const wranglerPath = path.join(process.cwd(), 'wrangler.toml');
+      const content = fs.readFileSync(wranglerPath, 'utf-8');
+
+      expect(content).toContain('[[env.preview.d1_databases]]');
+    });
+
     it('should have shared D1 database binding', () => {
       const wranglerPath = path.join(process.cwd(), 'wrangler.toml');
       const content = fs.readFileSync(wranglerPath, 'utf-8');

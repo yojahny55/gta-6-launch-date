@@ -459,6 +459,7 @@ export default defineConfig(({ mode }) => {
 - Implemented generic TypeScript type for callAPI function (<T = unknown>) to avoid ESLint any errors
 - Moved API tests to tests/ directory to align with vitest.config.unit.ts include pattern
 - Added detailed multi-environment workflow documentation in README for user guidance
+- **CRITICAL FIX:** Added D1 database bindings to each environment section (`[[env.*.d1_databases]]`) - Wrangler does NOT inherit top-level bindings in environment configurations
 - Shared D1 database binding across all environments (MVP strategy per ADR-012)
 
 ### Completion Notes List
@@ -484,9 +485,19 @@ export default defineConfig(({ mode }) => {
 - Created `tests/api-utils.test.ts` with 14 tests (100% coverage of API helper functions)
 
 **All automated tests passing:**
-- 64 total tests (3 test files)
+- 67 total tests (3 test files)
+  - 15 tests for environment-config.test.ts (includes D1 binding verification)
+  - 14 tests for api-utils.test.ts
+  - 38 tests for workflow-validation.test.ts
 - Lint, format check, TypeScript compilation: ✅
 - Build: ✅
+
+**Critical Bug Fix (Post-Initial Implementation):**
+- Fixed missing D1 database bindings in dev and preview environments
+- Root cause: Wrangler does NOT inherit top-level `[[d1_databases]]` in environment configurations
+- Solution: Added `[[env.production.d1_databases]]`, `[[env.dev.d1_databases]]`, and `[[env.preview.d1_databases]]` sections
+- Verification: Added 3 additional tests to verify D1 bindings in all environments
+- Result: All environments now have DB binding access (confirmed by tests)
 
 **Manual tasks remaining (Tasks 4, 7, 8):**
 - Task 4: Configure Cloudflare Pages dashboard environment variables (requires manual UI configuration)
