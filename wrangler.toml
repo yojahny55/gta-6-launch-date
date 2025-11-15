@@ -2,8 +2,12 @@ name = "gta6-tracker"
 main = "src/index.ts"
 compatibility_date = "2025-11-13"
 
-# D1 Database binding (to be configured in Story 1.2)
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "gta6_predictions_db"
-# database_id = "<to-be-created-in-story-1.2>"
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "gta6-predictions"
+database_id = "150217ee-5408-406e-98be-37b15a8e5990"
+
+# Environment variables (secrets set in Cloudflare dashboard for production)
+[vars]
+# IP_HASH_SALT is set as a secret in Cloudflare dashboard

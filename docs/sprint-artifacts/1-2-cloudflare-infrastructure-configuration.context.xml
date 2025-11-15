@@ -1,0 +1,303 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Cloudflare Infrastructure Configuration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-14</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/1-2-cloudflare-infrastructure-configuration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>Cloudflare Pages, Workers, and D1 database configured</iWant>
+    <soThat>I have a deployment target and data storage ready</soThat>
+    <tasks>
+      - Task 1: Authenticate with Cloudflare and create D1 database (AC: 3)
+        - Run `npx wrangler login` to authenticate Cloudflare account
+        - Create D1 database: `npx wrangler d1 create gta6-predictions`
+        - Copy database_id from output for wrangler.toml configuration
+        - Verify database appears in Cloudflare dashboard → D1
+
+      - Task 2: Configure wrangler.toml with D1 binding (AC: 3, 4)
+        - Uncomment D1 binding section in wrangler.toml
+        - Add database_id from Task 1
+        - Add database_name as "gta6_predictions_db"
+        - Configure binding name as "DB" (matches Env interface from Story 1.1)
+        - Add IP_HASH_SALT environment variable binding
+
+      - Task 3: Deploy database schema to D1 (AC: 4)
+        - Execute schema file: `npx wrangler d1 execute gta6-predictions --file=./src/db/schema.sql`
+        - Verify tables created: `npx wrangler d1 execute gta6-predictions --command="SELECT name FROM sqlite_master WHERE type='table'"`
+        - Verify indexes created: `npx wrangler d1 execute gta6-predictions --command="SELECT name FROM sqlite_master WHERE type='index'"`
+        - Confirm UNIQUE constraints on ip_hash and cookie_id
+
+      - Task 4: Create Cloudflare Pages project (AC: 1)
+        - Navigate to Cloudflare Dashboard → Pages
+        - Create new project named "gta6-predictions"
+        - Set build command: `npm run build` (or leave empty for manual deployment)
+        - Set build output directory: `dist` or `public`
+        - Configure custom domain (optional for MVP)
+
+      - Task 5: Test database connection from Workers (AC: 5)
+        - Create test endpoint in src/index.ts: `GET /api/db-test`
+        - Test endpoint queries database: `SELECT COUNT(*) FROM predictions`
+        - Deploy Workers: `npx wrangler deploy`
+        - Access endpoint: `curl https://gta6-predictions.workers.dev/api/db-test`
+        - Verify successful response with connection status
+
+      - Task 6: Configure environment variables (AC: 4)
+        - Create .dev.vars file from .env.example template
+        - Generate random salt for IP_HASH_SALT (32+ characters)
+        - Add IP_HASH_SALT to Cloudflare dashboard → Workers → Settings → Variables
+        - Verify local dev environment: `npm run dev`
+        - Confirm Workers can access environment variables
+
+      - Task 7: Verify complete infrastructure setup (Testing)
+        - Verify D1 database accessible from Cloudflare dashboard
+        - Verify Workers deployed and accessible
+        - Verify Pages project created (if applicable)
+        - Test database query from deployed Workers endpoint
+        - Document all resource IDs and URLs in README.md
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    Given Cloudflare account exists
+    When I configure infrastructure
+    Then the following resources are created:
+
+    1. Cloudflare Pages project named "gta6-predictions"
+    2. Cloudflare Workers service configured with routes
+    3. Cloudflare D1 database "gta6_predictions_db" created
+    4. Wrangler.toml configuration file with bindings
+
+    And database schema is deployed:
+    - predictions table with all fields (id, predicted_date, submitted_at, updated_at, ip_hash, cookie_id, user_agent, weight)
+    - STRICT mode enabled
+    - UNIQUE constraints on ip_hash and cookie_id
+    - Indexes on predicted_date, cookie_id, submitted_at
+    - email_subscriptions table (optional, for post-MVP)
+
+    And database connection test succeeds from Workers environment
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Database Schema</section>
+        <snippet>Database uses Cloudflare D1 (serverless SQLite) with predictions table containing predicted_date, ip_hash (hashed), cookie_id (UUID), and weight fields for weighted median algorithm. Free tier provides 5M reads/day and 100K writes/day.</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>Technical Stack</section>
+        <snippet>Cloudflare stack: Pages for static hosting, Workers for serverless API, D1 for database. All on free tier (100K requests/day). IP addresses hashed with BLAKE2/SHA-256 before storage for GDPR compliance.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Core Technologies</section>
+        <snippet>Cloudflare D1 is serverless SQLite optimized for read-heavy workloads. Free tier: 5GB storage, 5M reads/day, 100K writes/day. Automatic backups with Time Travel feature. Access only via Workers environment binding.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Data Architecture - Database Schema</section>
+        <snippet>STRICT tables prevent type mismatches. ip_hash UNIQUE constraint enforces one submission per IP (FR5). cookie_id UNIQUE allows updates via cookie (FR4). weight pre-calculated and stored for performance (FR8 algorithm). Indexes on frequently queried columns.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture</section>
+        <snippet>IP hashing with SHA-256 + salt before storage (NFR-S2). Database access only via Workers environment binding. Secrets managed in Cloudflare dashboard (IP_HASH_SALT). All queries use D1 prepared statements (NFR-S5, FR78).</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-1-foundation-infrastructure-setup.md</path>
+        <title>Epic 1: Foundation & Infrastructure Setup</title>
+        <section>Story 1.2: Cloudflare Infrastructure Configuration</section>
+        <snippet>D1 is SQLite-based, supports 5M reads/day on free tier. Use D1 prepared statements for FR78 (parameterized queries). UNIQUE constraints enforce FR5 (one submission per IP). Indexes optimize FR7-12 (median calculation queries). Store dates as ISO 8601 format for FR73 (UTC storage).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>Data Models and Contracts - Database Schema</section>
+        <snippet>Schema uses STRICT mode to prevent SQLite type coercion bugs. ip_hash field enforces one submission per IP (FR5). cookie_id UNIQUE allows unlimited updates (FR4). weight pre-calculated for weighted median algorithm performance. All dates stored in ISO 8601 format.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-1.md</path>
+        <title>Epic 1 Technical Specification</title>
+        <section>APIs and Interfaces - D1 Database Connection</section>
+        <snippet>Access D1 via Hono context using c.env.DB. Use prepared statements with .bind() for parameterized queries to prevent SQL injection. Example: await c.env.DB.prepare('SELECT * FROM predictions WHERE cookie_id = ?').bind(cookieId).first()</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table, email_subscriptions table</symbol>
+        <lines>1-33</lines>
+        <reason>Complete database schema ready to deploy. Contains predictions table with all required fields, UNIQUE constraints, STRICT mode, and indexes. Schema already created in Story 1.1.</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>TypeScript interfaces</kind>
+        <symbol>Env interface</symbol>
+        <lines>41-44</lines>
+        <reason>Env interface defines DB (D1Database) and IP_HASH_SALT bindings that wrangler.toml must configure. Already defined in Story 1.1.</reason>
+      </artifact>
+      <artifact>
+        <path>wrangler.toml</path>
+        <kind>configuration file</kind>
+        <symbol>d1_databases binding (commented)</symbol>
+        <lines>5-9</lines>
+        <reason>D1 binding configuration is commented out and awaits database_id from 'wrangler d1 create' command. Needs to be uncommented and configured in this story.</reason>
+      </artifact>
+      <artifact>
+        <path>src/index.ts</path>
+        <kind>API entry point</kind>
+        <symbol>Hono app, /health endpoint</symbol>
+        <lines>1-14</lines>
+        <reason>Base Hono app structure. Task 5 will add /api/db-test endpoint here to verify database connection from Workers environment.</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>dependency manifest</kind>
+        <symbol>scripts (dev, build, test, deploy)</symbol>
+        <lines>6-11</lines>
+        <reason>Contains wrangler commands for local dev, deployment, and database operations. deploy script uses 'wrangler deploy' to push to Cloudflare.</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>hono</package>
+        <version>^4.10.0</version>
+        <reason>Web framework for Cloudflare Workers API endpoints</reason>
+      </node>
+      <node>
+        <package>wrangler</package>
+        <version>^4.48.0</version>
+        <reason>Cloudflare CLI for deployment and D1 database management</reason>
+      </node>
+      <node>
+        <package>@cloudflare/workers-types</package>
+        <version>latest</version>
+        <reason>TypeScript types for Cloudflare Workers, includes D1Database interface</reason>
+      </node>
+      <node>
+        <package>typescript</package>
+        <version>latest</version>
+        <reason>Type safety and compilation for Workers code</reason>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Must use Cloudflare free tier (100K requests/day, 5M database reads/day)</constraint>
+    <constraint>Database schema must be backward-compatible for rollback capability (Story 1.5)</constraint>
+    <constraint>All database queries must use D1 prepared statements (parameterized queries) to prevent SQL injection (NFR-S5, FR78)</constraint>
+    <constraint>IP addresses must be SHA-256 hashed with salt before storage, never stored in plain text (NFR-S2)</constraint>
+    <constraint>Database access only via Workers environment binding (c.env.DB), no public access</constraint>
+    <constraint>Use STRICT mode on all tables to prevent SQLite type coercion bugs</constraint>
+    <constraint>Wrangler CLI must be authenticated before database creation: npx wrangler login</constraint>
+    <constraint>Environment variables (IP_HASH_SALT) must be set in both .dev.vars (local) and Cloudflare dashboard (production)</constraint>
+    <constraint>Database schema file location: src/db/schema.sql (already created in Story 1.1)</constraint>
+    <constraint>D1 binding name must be "DB" to match Env interface in src/types/index.ts</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>D1 Database Binding</name>
+      <kind>Cloudflare Workers Environment Binding</kind>
+      <signature>interface Env { DB: D1Database; IP_HASH_SALT: string; }</signature>
+      <path>src/types/index.ts</path>
+      <usage>Access database via c.env.DB in Hono handlers. Example: await c.env.DB.prepare(sql).bind(params).all()</usage>
+    </interface>
+    <interface>
+      <name>Wrangler D1 Commands</name>
+      <kind>CLI commands</kind>
+      <signature>
+        - npx wrangler d1 create [database-name]
+        - npx wrangler d1 execute [database-name] --file=[schema.sql]
+        - npx wrangler d1 execute [database-name] --command="[SQL]"
+        - npx wrangler deploy
+      </signature>
+      <path>N/A - CLI</path>
+      <usage>Create database, deploy schema, execute SQL queries, and deploy Workers</usage>
+    </interface>
+    <interface>
+      <name>Wrangler Configuration</name>
+      <kind>TOML configuration</kind>
+      <signature>
+        [[d1_databases]]
+        binding = "DB"
+        database_name = "gta6_predictions_db"
+        database_id = "[uuid-from-create-command]"
+      </signature>
+      <path>wrangler.toml</path>
+      <usage>Binds D1 database to Workers environment. Currently commented out, needs database_id from Task 1.</usage>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing standards for this story focus on infrastructure verification rather than unit tests. Use manual verification via Cloudflare dashboard, wrangler CLI commands, and integration tests with actual database connections. Verify schema deployment by querying SQLite system tables. Test database connection from Workers by deploying a test endpoint that executes a simple COUNT query. All database operations should use prepared statements for security (parameterized queries).
+    </standards>
+    <locations>
+      - Manual verification: Cloudflare Dashboard → D1, Pages, Workers
+      - CLI verification: wrangler d1 execute commands
+      - Integration test: src/index.ts (/api/db-test endpoint)
+      - Future unit tests: src/**/*.test.ts (co-located with source)
+    </locations>
+    <ideas>
+      <test id="AC1">
+        <description>Verify Cloudflare Pages project "gta6-predictions" exists</description>
+        <approach>Manual check in Cloudflare Dashboard → Pages section</approach>
+        <acceptance>Project appears in dashboard with correct name and settings</acceptance>
+      </test>
+      <test id="AC2">
+        <description>Verify Cloudflare Workers service configured and accessible</description>
+        <approach>Deploy with 'npx wrangler deploy', curl the /health endpoint</approach>
+        <acceptance>Workers URL returns 200 OK with JSON response</acceptance>
+      </test>
+      <test id="AC3">
+        <description>Verify D1 database "gta6_predictions_db" created</description>
+        <approach>Run 'npx wrangler d1 list' to see all databases</approach>
+        <acceptance>Database appears in list with correct name and database_id</acceptance>
+      </test>
+      <test id="AC4-schema">
+        <description>Verify database schema deployed with all tables and indexes</description>
+        <approach>Run 'npx wrangler d1 execute gta6-predictions --command="SELECT name FROM sqlite_master WHERE type='table'"'</approach>
+        <acceptance>Returns predictions and email_subscriptions tables</acceptance>
+      </test>
+      <test id="AC4-indexes">
+        <description>Verify indexes created on predictions table</description>
+        <approach>Run 'npx wrangler d1 execute gta6-predictions --command="SELECT name FROM sqlite_master WHERE type='index'"'</approach>
+        <acceptance>Returns idx_predictions_date, idx_predictions_cookie, idx_predictions_submitted</acceptance>
+      </test>
+      <test id="AC4-constraints">
+        <description>Verify UNIQUE constraints on ip_hash and cookie_id</description>
+        <approach>Attempt to insert duplicate ip_hash or cookie_id, verify UNIQUE constraint error</approach>
+        <acceptance>Database rejects duplicate values with constraint violation error</acceptance>
+      </test>
+      <test id="AC4-wrangler-config">
+        <description>Verify wrangler.toml configured with D1 binding</description>
+        <approach>Read wrangler.toml, confirm d1_databases section uncommented with correct binding, database_name, database_id</approach>
+        <acceptance>Binding name is "DB", database_name is "gta6_predictions_db", database_id matches created database</acceptance>
+      </test>
+      <test id="AC5-connection">
+        <description>Verify database connection from Workers environment</description>
+        <approach>Create /api/db-test endpoint that queries 'SELECT COUNT(*) FROM predictions', deploy and curl the endpoint</approach>
+        <acceptance>Endpoint returns 200 OK with count result (0 initially), confirms database accessible from Workers</acceptance>
+      </test>
+      <test id="AC-env-vars">
+        <description>Verify environment variables configured (IP_HASH_SALT)</description>
+        <approach>Check .dev.vars file exists, verify IP_HASH_SALT in Cloudflare dashboard → Workers → Settings → Variables</approach>
+        <acceptance>Local dev can access env vars, production Workers can access secrets</acceptance>
+      </test>
+    </ideas>
+  </tests>
+</story-context>

@@ -14,8 +14,10 @@ This architecture uses **Hono + Cloudflare Workers + D1** with **vanilla HTML/CS
 1. **Ruthlessly Simple:** Vanilla JS frontend, minimal framework overhead
 2. **Edge-First:** Cloudflare Workers for global low-latency
 3. **Type-Safe:** TypeScript throughout for reliability
-4. **Test-Driven:** Vitest for critical business logic (weighted median)
+4. **Test-Driven:** **MANDATORY** automated tests for all stories (ADR-011)
 5. **Privacy-First:** SHA-256 IP hashing, GDPR-compliant
+
+**Critical:** Per ADR-011, all stories MUST include automated tests. No exceptions.
 
 ---
 
@@ -68,7 +70,7 @@ npm run dev
 | **Cookie Library** | js-cookie | v3.0.5 | User tracking | Clean API, 2KB, handles edge cases |
 | **Date Library** | day.js | v1.11.19 | Algorithm, display | Tiny (2KB), clean diff/format API |
 | **IP Hashing** | SHA-256 (Web Crypto) | Built-in | Rate limiting, privacy | Zero dependencies, GDPR-compliant |
-| **Testing** | Vitest | v4.0 | Algorithm, APIs | Fast, Vite-integrated, modern DX |
+| **Testing** | Vitest | v3.2 | Algorithm, APIs | Fast, Vite-integrated, Workers-compatible |
 | **Analytics** | Cloudflare Web Analytics | Built-in | Tracking | Free, <1KB, privacy-friendly, no cookie banner |
 | **SEO** | Dynamic meta via Workers | N/A | Social sharing | Server-rendered tags for crawlers |
 | **Widget** | Separate /widget endpoint | N/A | Embeds | Optimized <50KB, independent |
@@ -1029,18 +1031,26 @@ npx tsc --noEmit
 
 **Context:** Need testing framework for weighted median algorithm and APIs
 
-**Decision:** Use Vitest v4.0
+**Decision:** Use Vitest v3.2 with @cloudflare/vitest-pool-workers
 
 **Rationale:**
 - Integrates seamlessly with Vite (already using for Tailwind)
 - Faster test execution than Jest
 - Modern, well-maintained
-- Works with Cloudflare Workers via miniflare
+- Works with Cloudflare Workers via @cloudflare/vitest-pool-workers
+- Version 3.2 required for Cloudflare Workers pool compatibility
 
 **Consequences:**
 - Newer than Jest (less mature)
 - Excellent DX, fast iteration
 - Compatible with existing Vite setup
+- Workers pool enables D1 database testing in local environment
+
+**Implementation:**
+- Test infrastructure established in Story 1.2
+- 30 tests (9 endpoint + 21 schema) as baseline
+- vitest.config.ts configured for Cloudflare Workers
+- Test setup auto-applies database schema
 
 ---
 
@@ -1063,6 +1073,81 @@ npx tsc --noEmit
 
 ---
 
+### ADR-011: Mandatory Automated Testing for All Stories
+
+**Context:** Story 1.2 was initially implemented without automated tests, violating ADR-009 (Vitest) and Epic 1 Tech Spec requirements. This created a critical gap in code quality and regression protection.
+
+**Decision:** **MANDATORY** automated testing for every story going forward
+
+**Requirements:**
+
+1. **All Stories MUST Include:**
+   - Acceptance Criterion explicitly stating: "And automated tests exist covering main functionality"
+   - Testing Requirements subsection in Acceptance Criteria
+   - Test files created alongside implementation code
+   - Tests passing before story can be marked "done"
+
+2. **Minimum Test Coverage by Story Type:**
+   - **Infrastructure Stories:** Integration tests for connectivity, configuration validation
+   - **API Endpoint Stories:** Request/response tests, error handling, validation
+   - **Algorithm Stories:** Unit tests with 90%+ coverage, edge cases, boundary conditions
+   - **UI Stories:** Component tests, user interaction tests
+   - **Database Stories:** Schema tests, constraint validation, index verification
+
+3. **Test File Location:**
+   - Co-located with source: `src/foo.ts` → `src/foo.test.ts`
+   - Or in dedicated test directory: `tests/unit/`, `tests/integration/`
+
+4. **CI/CD Integration (Story 1.3):**
+   - All tests run automatically in CI/CD pipeline
+   - Failed tests block deployment
+   - Test coverage reports generated
+
+5. **Story Template Update:**
+   ```markdown
+   ## Acceptance Criteria
+
+   **Given** [scenario]
+   **When** [action]
+   **Then** [expected outcome]
+   **And** automated tests exist covering main functionality
+
+   ### Testing Requirements
+   - [ ] Unit tests for [component/function]
+   - [ ] Integration tests for [API/database interaction]
+   - [ ] Error handling tests
+   - [ ] Edge case validation
+   ```
+
+**Rationale:**
+- **Quality Assurance:** Prevents regressions in production
+- **Documentation:** Tests serve as executable specifications
+- **Confidence:** Developers can refactor safely with test coverage
+- **Compliance:** Meets architecture ADR-009 and tech spec requirements
+- **CI/CD Enablement:** Automated tests enable continuous deployment (Story 1.3)
+- **AI Agent Guidance:** Clear testing requirements prevent future oversights
+
+**Consequences:**
+- ✅ Higher code quality and reliability
+- ✅ Faster debugging (failing tests pinpoint issues)
+- ✅ Better documentation (tests show usage examples)
+- ✅ Enables refactoring with confidence
+- ⚠️ Slightly longer development time per story (~15-20% overhead)
+- ⚠️ Requires test infrastructure setup (already done in Story 1.2)
+
+**Non-Negotiable:**
+- Stories without tests will be **BLOCKED** in code review
+- "Changes Requested" status until tests are added
+- No exceptions unless explicitly justified and documented
+
+**Reference Implementation:**
+- Story 1.2: 30 tests (9 endpoint + 21 schema tests)
+- Test files: `src/index.test.ts`, `src/db/schema.test.ts`
+- Test setup: `vitest.config.ts`, `src/test-setup.ts`
+
+---
+
 _Generated by BMad Decision Architecture Workflow v1.0_
 _Date: 2025-11-13_
+_Updated: 2025-11-15 (Added ADR-011 Mandatory Testing)_
 _For: yojahny_

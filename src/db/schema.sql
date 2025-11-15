@@ -4,9 +4,9 @@
 -- Predictions table
 CREATE TABLE IF NOT EXISTS predictions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  predicted_date DATE NOT NULL,
-  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  predicted_date TEXT NOT NULL,  -- ISO 8601 format (YYYY-MM-DD)
+  submitted_at TEXT DEFAULT CURRENT_TIMESTAMP,  -- ISO 8601 timestamp
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP,    -- ISO 8601 timestamp
   ip_hash TEXT NOT NULL,
   cookie_id TEXT NOT NULL UNIQUE,
   user_agent TEXT,
@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS email_subscriptions (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT NOT NULL UNIQUE,
   cookie_id TEXT NOT NULL,
-  subscribed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  verified BOOLEAN DEFAULT FALSE,
+  subscribed_at TEXT DEFAULT CURRENT_TIMESTAMP,  -- ISO 8601 timestamp
+  verified INTEGER DEFAULT 0,  -- SQLite STRICT mode: 0=false, 1=true
   verification_token TEXT,
   unsubscribe_token TEXT UNIQUE
 ) STRICT;

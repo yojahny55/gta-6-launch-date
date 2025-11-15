@@ -76,14 +76,35 @@ Available endpoints:
 
 ### 5. Run Tests
 
+The project includes comprehensive test coverage using Vitest and Cloudflare Workers testing pool:
+
 ```bash
 npm test
 ```
 
-For watch mode during development:
+**Test Coverage:**
+- ✅ API Endpoints (`src/index.test.ts`) - 9 tests
+  - Health check and root endpoints
+  - Database connection testing
+  - Error handling validation
+  - Response header verification
+- ✅ Database Schema (`src/db/schema.test.ts`) - 21 tests
+  - UNIQUE constraints (ip_hash, cookie_id, email)
+  - STRICT mode type enforcement
+  - Indexes verification
+  - Default values testing
+  - Auto-increment validation
+
+**Watch Mode:** For continuous testing during development:
 ```bash
 npm test -- --watch
 ```
+
+**Test Infrastructure:**
+- Framework: Vitest v3.2
+- Workers Testing: @cloudflare/vitest-pool-workers
+- Database: Local D1 with schema auto-applied
+- Setup File: `src/test-setup.ts`
 
 ### 6. Lint and Format Code
 
@@ -136,11 +157,30 @@ gta6-tracker/
 
 ## Deployment
 
+### Infrastructure Resources
+
+**Cloudflare D1 Database:**
+- Database Name: `gta6-predictions`
+- Database ID: `150217ee-5408-406e-98be-37b15a8e5990`
+- Created: 2025-11-14
+- Status: Active with schema deployed
+
+**Cloudflare Workers:**
+- Worker Name: `gta6-tracker`
+- Production URL: `https://gta6-tracker.yojahnychavez.workers.dev`
+- Endpoints:
+  - `GET /` - API welcome
+  - `GET /health` - Health check
+  - `GET /api/db-test` - Database connection test
+
+**Cloudflare Pages:**
+- Project Name: `gta6-predictions` (to be configured when frontend is ready)
+
 ### Prerequisites for Deployment
 
 1. **Cloudflare Account** with Workers enabled
 2. **Wrangler CLI** authenticated: `npx wrangler login`
-3. **D1 Database** created (Story 1.2)
+3. **D1 Database** created (Story 1.2 - ✅ Complete)
 
 ### Deploy to Production
 
