@@ -1,0 +1,503 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>7</storyId>
+    <title>Multi-Environment Deployment Setup</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-15</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/1-7-multi-environment-deployment-setup.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a developer</asA>
+    <iWant>separate dev and production deployment environments</iWant>
+    <soThat>I can safely test changes in a live environment before deploying to production</soThat>
+    <tasks>
+- Task 1: Update wrangler.toml with environment configurations
+  - Add [env.production] section with name "gta6-tracker"
+  - Add [env.dev] section with name "gta6-tracker-dev"
+  - Add [env.preview] section with name "gta6-tracker-preview" (optional)
+  - Add vars = { ENVIRONMENT = "..." } for each environment
+  - Verify shared D1 binding works across all environments
+  - Test locally: npx wrangler dev --env dev
+  - Test locally: npx wrangler dev --env production
+
+- Task 2: Update GitHub Actions workflow for branch-based deployments
+  - Add deployment step for dev branch with --env dev flag
+  - Update production deployment step to use --env production flag
+  - Add optional preview deployment for pull requests with --env preview
+  - Ensure deployment conditionals are mutually exclusive
+  - Verify secrets (CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID) are passed correctly
+  - Update workflow comments to document environment strategy
+
+- Task 3: Create .env.development for local frontend development
+  - Create .env.development file with VITE_API_URL=http://localhost:8787
+  - Add VITE_ENVIRONMENT=local
+  - Add .env and .env.*.local to .gitignore (if not already)
+  - Document local development environment variables in README
+
+- Task 4: Configure Cloudflare Pages environment variables
+  - Navigate to Cloudflare Dashboard → Pages → gta6-tracker → Settings → Environment variables
+  - Add Production environment variable: VITE_API_URL = https://gta6-tracker.yojahnychavez.workers.dev
+  - Add Production environment variable: VITE_ENVIRONMENT = production
+  - Add Preview environment variable: VITE_API_URL = https://gta6-tracker-dev.yojahnychavez.workers.dev
+  - Add Preview environment variable: VITE_ENVIRONMENT = dev
+  - Document this configuration in README with screenshots/instructions
+
+- Task 5: Update frontend code to use environment-aware API URLs
+  - Create API utility module: src/utils/api.ts or update existing
+  - Use import.meta.env.VITE_API_URL with fallback to localhost
+  - Create callAPI() helper function for all API calls
+  - Update all existing fetch calls to use environment-aware API URL
+  - Add TypeScript types for environment variables: src/vite-env.d.ts
+  - Test locally with .env.development
+
+- Task 6: Update Vite configuration for environment variable handling
+  - Update vite.config.ts to load environment variables
+  - Configure define option for build-time variable replacement
+  - Ensure environment variables are injected during build
+  - Test build with: npm run build (should use .env.production)
+
+- Task 7: Test dev environment deployment
+  - Create dev branch: git checkout -b dev
+  - Make a small test change (e.g., add console.log to Worker)
+  - Push to dev branch: git push origin dev
+  - Verify GitHub Actions deploys to dev environment
+  - Verify dev Worker URL is accessible
+  - Verify Worker logs show ENVIRONMENT = "dev"
+  - Verify Pages preview deployment created
+  - Test frontend → backend communication on dev environment
+
+- Task 8: Test production environment deployment
+  - Ensure main branch has latest changes
+  - Push to main branch: git push origin main
+  - Verify GitHub Actions deploys to production environment
+  - Verify production Worker URL is accessible
+  - Verify Worker logs show ENVIRONMENT = "production"
+  - Verify Pages production deployment updated
+  - Test frontend → backend communication on production environment
+
+- Task 9: Update documentation
+  - Update README.md with multi-environment strategy section
+  - Document dev branch workflow (push → test → merge)
+  - Document local development setup with .env.development
+  - Document Cloudflare Pages environment variable configuration
+  - Add environment URLs to README (dev vs production)
+  - Update deployment commands section
+
+- Task 10: Write automated tests for environment configuration
+  - Create test file: tests/environment-config.test.ts
+  - Test environment variable resolution (VITE_API_URL)
+  - Test API URL helper functions
+  - Test fallback to localhost when VITE_API_URL is undefined
+  - Test Vite config loads environment variables correctly
+  - Verify wrangler.toml has all required environments
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Given** the CI/CD pipeline is configured (Story 1.3)
+**When** I push code to different branches
+**Then** the following deployment behavior occurs:
+
+1. **Dev branch:** Auto-deploys to dev Worker environment (gta6-tracker-dev.*.workers.dev)
+2. **Main branch:** Auto-deploys to production Worker environment (gta6-tracker.*.workers.dev)
+3. **Pull requests:** Creates preview deployments (optional for MVP)
+
+**And** Wrangler environments are configured:
+- [env.production] with name "gta6-tracker"
+- [env.dev] with name "gta6-tracker-dev"
+- [env.preview] with name "gta6-tracker-preview" (optional)
+
+**And** frontend knows which Worker URL to call:
+- Cloudflare Pages environment variables configured
+- Production Pages → Production Worker URL
+- Preview Pages → Dev Worker URL
+- Local development → localhost:8787
+
+**And** environment variable ENVIRONMENT distinguishes environments:
+- Production: ENVIRONMENT = "production"
+- Dev: ENVIRONMENT = "dev"
+- Preview: ENVIRONMENT = "preview"
+
+**And** all environments share the same D1 database (simple strategy for MVP)
+
+**And** automated tests exist covering main functionality
+
+### Testing Requirements
+- Unit tests for environment variable resolution
+- Integration tests verifying dev deployment works
+- Integration tests verifying production deployment works
+- Manual validation: push to dev branch, verify dev Worker URL responds
+- Manual validation: merge to main, verify production Worker URL responds
+- Manual validation: frontend calls correct Worker URL per environment
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- ADR-012: Multi-Environment Deployment Strategy -->
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Decision Record: Multi-Environment Deployment Strategy</title>
+        <section>ADR-012</section>
+        <snippet>
+          Three-tier environment strategy using Wrangler environments and branch-based deployments:
+          1. Local: localhost:8787 (wrangler dev)
+          2. Dev: gta6-tracker-dev.*.workers.dev (dev branch auto-deploy)
+          3. Production: gta6-tracker.*.workers.dev (main branch auto-deploy)
+
+          Frontend-to-Backend configuration via Vite environment variables (VITE_API_URL).
+          Shared D1 database across environments (simple MVP strategy).
+        </snippet>
+      </artifact>
+
+      <!-- Epic 1: Foundation & Infrastructure Setup -->
+      <artifact>
+        <path>docs/epics/epic-1-foundation-infrastructure-setup.md</path>
+        <title>Epic 1: Foundation & Infrastructure Setup</title>
+        <section>Full Epic Context</section>
+        <snippet>
+          Epic containing 7 stories including this one (Story 1.7).
+          Previous stories established: project structure, Cloudflare infrastructure, CI/CD pipeline,
+          database transactions, rollback capability, and performance monitoring.
+          Story 1.7 builds on Story 1.3 (CI/CD Pipeline) to add multi-environment support.
+        </snippet>
+      </artifact>
+
+      <!-- Architecture: Deployment Architecture -->
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Deployment Architecture</title>
+        <section>Deployment Configuration</section>
+        <snippet>
+          Wrangler environments configuration examples showing [env.production], [env.dev], and [env.preview]
+          sections with different Worker names and ENVIRONMENT variables.
+          GitHub Actions workflow patterns for branch-based deployments.
+        </snippet>
+      </artifact>
+
+      <!-- Architecture: Frontend-to-Backend Integration -->
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Frontend-to-Backend API Configuration</title>
+        <section>Environment Variable Strategy</section>
+        <snippet>
+          Cloudflare Pages environment variables: VITE_API_URL and VITE_ENVIRONMENT.
+          Local development uses .env.development file.
+          Frontend code pattern: const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787'
+        </snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <!-- Current wrangler.toml (to be extended) -->
+      <artifact>
+        <path>wrangler.toml</path>
+        <kind>config</kind>
+        <symbol>base configuration</symbol>
+        <lines>1-15</lines>
+        <reason>
+          Current Wrangler config has base setup with D1 binding but NO environment configurations yet.
+          Need to add [env.production], [env.dev], and [env.preview] sections.
+        </reason>
+      </artifact>
+
+      <!-- GitHub Actions workflow (to be modified) -->
+      <artifact>
+        <path>.github/workflows/deploy.yml</path>
+        <kind>ci-cd</kind>
+        <symbol>Deploy to Cloudflare Workers</symbol>
+        <lines>56-64</lines>
+        <reason>
+          Current workflow only deploys to production on main branch (line 58: if: github.ref == 'refs/heads/main').
+          Need to add dev branch deployment step and optional preview deployment.
+        </reason>
+      </artifact>
+
+      <!-- Current Vite config (to be modified) -->
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>vite config</symbol>
+        <lines>1-18</lines>
+        <reason>
+          Current Vite config has test and build setup but NO environment variable loading.
+          Need to add loadEnv() and define option for VITE_API_URL and VITE_ENVIRONMENT.
+        </reason>
+      </artifact>
+
+      <!-- Main Worker entry point -->
+      <artifact>
+        <path>src/index.ts</path>
+        <kind>worker</kind>
+        <symbol>Hono app</symbol>
+        <lines>1-44</lines>
+        <reason>
+          Main Worker application using Hono framework. Currently has basic health check and db-test endpoints.
+          Future frontend will need to call these endpoints using environment-aware API URLs.
+        </reason>
+      </artifact>
+
+      <!-- .gitignore (to verify .env coverage) -->
+      <artifact>
+        <path>.gitignore</path>
+        <kind>config</kind>
+        <symbol>environment files</symbol>
+        <lines>7-11</lines>
+        <reason>
+          Already ignores .env, .env.local, .env.*.local pattern - covers .env.development we'll create.
+          No changes needed.
+        </reason>
+      </artifact>
+
+      <!-- Test configuration files -->
+      <artifact>
+        <path>vitest.config.ts</path>
+        <kind>test-config</kind>
+        <symbol>Workers test config</symbol>
+        <lines>all</lines>
+        <reason>
+          Vitest config for Workers environment tests. Will use for environment configuration tests.
+        </reason>
+      </artifact>
+
+      <artifact>
+        <path>vitest.config.unit.ts</path>
+        <kind>test-config</kind>
+        <symbol>Unit test config</symbol>
+        <lines>all</lines>
+        <reason>
+          Vitest config for standard Node.js unit tests. Will use for API helper function tests.
+        </reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework for Cloudflare Workers" />
+        <package name="vite" version="^5.0.0" usage="Build tool with environment variable support" />
+        <package name="wrangler" version="^4.48.0" usage="Cloudflare Workers deployment tool with environment support" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework for unit and integration tests" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers environment testing" />
+        <package name="typescript" version="latest" usage="Type safety for environment variables" />
+        <package name="dayjs" version="^1.11.19" usage="Date utilities (existing dependency)" />
+        <package name="js-cookie" version="^3.0.5" usage="Cookie handling (existing dependency)" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Constraints from Architecture and Dev Notes -->
+    <constraint type="deployment">
+      Branch-based deployment strategy is MANDATORY:
+      - dev branch → Dev environment (gta6-tracker-dev)
+      - main branch → Production environment (gta6-tracker)
+      - Pull requests → Preview environment (optional for MVP)
+    </constraint>
+
+    <constraint type="configuration">
+      All environment configurations must use Wrangler's built-in environment support via wrangler.toml.
+      Do NOT create separate wrangler config files per environment.
+    </constraint>
+
+    <constraint type="database">
+      Shared D1 database across all environments (dev and production use same database).
+      This is the approved MVP strategy per ADR-012.
+      Future: Can split databases post-MVP if needed.
+    </constraint>
+
+    <constraint type="environment-variables">
+      Frontend environment variables MUST use VITE_ prefix for Vite to expose them.
+      Required variables: VITE_API_URL, VITE_ENVIRONMENT.
+      Local dev uses .env.development file (NOT committed to git).
+      Production/Preview use Cloudflare Pages dashboard configuration.
+    </constraint>
+
+    <constraint type="security">
+      NEVER commit .env files or credentials to git.
+      .gitignore already covers .env* pattern - verify this remains in place.
+    </constraint>
+
+    <constraint type="testing">
+      Per ADR-011: Automated tests are MANDATORY.
+      Test coverage requirements:
+      - Environment variable resolution tests
+      - API helper function tests with 100% coverage (critical path)
+      - Manual validation of each environment before marking story "done"
+    </constraint>
+
+    <constraint type="backward-compatibility">
+      Changes must NOT break existing functionality.
+      Current production deployment (main branch) must continue working.
+      Adding dev/preview environments is additive only.
+    </constraint>
+
+    <constraint type="documentation">
+      README.md MUST be updated with:
+      - Multi-environment strategy explanation
+      - Dev branch workflow (how to test changes before production)
+      - Environment URLs (dev vs production)
+      - Local development setup with .env.development
+      - Cloudflare Pages configuration instructions
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- No external API interfaces to implement -->
+    <!-- This story configures infrastructure, not application APIs -->
+
+    <interface type="vite-env">
+      <name>ImportMetaEnv</name>
+      <kind>TypeScript interface</kind>
+      <signature>
+interface ImportMetaEnv {
+  readonly VITE_API_URL: string;
+  readonly VITE_ENVIRONMENT: 'local' | 'dev' | 'production' | 'preview';
+}
+      </signature>
+      <path>src/vite-env.d.ts</path>
+      <reason>TypeScript types for environment variables used in frontend code</reason>
+    </interface>
+
+    <interface type="api-helper">
+      <name>callAPI</name>
+      <kind>Utility function</kind>
+      <signature>
+export async function callAPI(endpoint: string, options?: RequestInit): Promise&lt;any&gt;
+      </signature>
+      <path>src/utils/api.ts (to be created)</path>
+      <reason>
+        Centralized API call function that uses environment-aware API URL.
+        All future frontend fetch() calls should use this helper.
+      </reason>
+    </interface>
+
+    <interface type="wrangler-env">
+      <name>Environment Variable Access</name>
+      <kind>Worker runtime interface</kind>
+      <signature>
+// In Worker code:
+env.ENVIRONMENT // "production" | "dev" | "preview"
+      </signature>
+      <path>src/index.ts (existing)</path>
+      <reason>
+        Worker code can access ENVIRONMENT variable set in wrangler.toml [env.*] sections.
+        Useful for environment-specific logging or behavior.
+      </reason>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing framework: Vitest with dual configuration approach
+      - vitest.config.unit.ts: Standard Node.js environment for unit tests (API helpers, utilities)
+      - vitest.config.ts: Cloudflare Workers environment for integration tests
+
+      Per ADR-011: Automated tests are MANDATORY for all stories.
+      Coverage requirements:
+      - Critical path code (API helpers): 100% coverage
+      - Environment configuration: 90%+ coverage
+      - Manual validation required for deployment workflows (dev, production environments)
+
+      Test naming convention: *.test.ts files colocated with source or in /tests directory
+      Test structure: Arrange-Act-Assert pattern with descriptive test names
+
+      From existing tests (Story 1.2):
+      - Tests use describe/it blocks with clear, descriptive names
+      - Mock/stub external dependencies (D1 database via Miniflare)
+      - Edge cases and error conditions are tested
+    </standards>
+
+    <locations>
+      <location>tests/environment-config.test.ts</location>
+      <location>src/utils/api.test.ts (if creating src/utils/api.ts)</location>
+      <location>vitest.config.unit.ts (existing - for unit tests)</location>
+      <location>vitest.config.ts (existing - for Workers tests)</location>
+    </locations>
+
+    <ideas>
+      <!-- AC-based test ideas mapped to acceptance criteria -->
+
+      <!-- AC 2: Wrangler environments configured -->
+      <idea ac="2" type="unit">
+        Test: Parse wrangler.toml and verify [env.production], [env.dev], [env.preview] sections exist
+        Verify: Each environment has correct name and ENVIRONMENT variable
+        Method: Read wrangler.toml, parse TOML, assert structure
+      </idea>
+
+      <!-- AC 3: Frontend knows which Worker URL to call -->
+      <idea ac="3" type="unit">
+        Test: Environment variable resolution in different contexts
+        - Test VITE_API_URL resolves correctly when set
+        - Test fallback to localhost:8787 when VITE_API_URL is undefined
+        - Test VITE_ENVIRONMENT values ('local', 'dev', 'production', 'preview')
+        Method: Mock import.meta.env and verify resolution logic
+      </idea>
+
+      <idea ac="3" type="unit">
+        Test: callAPI() helper function behavior
+        - Test constructs correct URL using VITE_API_URL
+        - Test adds correct headers (Content-Type: application/json)
+        - Test handles successful responses (200-299)
+        - Test throws error on non-OK responses (4xx, 5xx)
+        - Test logs environment and URL for debugging
+        Coverage target: 100% (critical path)
+      </idea>
+
+      <!-- AC 4: ENVIRONMENT variable distinguishes environments -->
+      <idea ac="4" type="integration">
+        Test: Verify wrangler.toml ENVIRONMENT variable is accessible in Worker
+        - Mock Worker env object with ENVIRONMENT = "dev"
+        - Verify Worker code can read env.ENVIRONMENT
+        - Test different environment values (production, dev, preview)
+        Method: Use Vitest Workers pool to simulate Worker environment
+      </idea>
+
+      <!-- AC 1: Branch-based deployments (manual validation) -->
+      <idea ac="1" type="manual">
+        Manual Test: Dev branch deployment workflow
+        1. Create dev branch: git checkout -b dev
+        2. Make small change (e.g., console.log)
+        3. Push to origin: git push origin dev
+        4. Verify GitHub Actions triggers deploy job
+        5. Verify deployment uses --env dev flag
+        6. Verify dev Worker URL is accessible
+        7. Verify Worker logs show ENVIRONMENT = "dev"
+      </idea>
+
+      <idea ac="1" type="manual">
+        Manual Test: Production branch deployment workflow
+        1. Ensure main branch has latest changes
+        2. Push to main: git push origin main
+        3. Verify GitHub Actions triggers deploy job
+        4. Verify deployment uses --env production flag
+        5. Verify production Worker URL is accessible
+        6. Verify Worker logs show ENVIRONMENT = "production"
+      </idea>
+
+      <idea ac="3" type="manual">
+        Manual Test: Frontend-to-backend communication
+        1. Local dev: npm run dev → Verify frontend calls localhost:8787
+        2. Dev Pages preview → Verify frontend calls gta6-tracker-dev Worker URL
+        3. Production Pages → Verify frontend calls gta6-tracker Worker URL
+        Method: Check browser network tab for API calls
+      </idea>
+
+      <!-- Additional edge case tests -->
+      <idea type="unit">
+        Test: Vite config loadEnv() behavior
+        - Test environment variables load from .env.development in dev mode
+        - Test environment variables load from .env.production in production mode
+        - Test define option injects variables at build time
+        Method: Mock process.env and verify Vite config output
+      </idea>
+
+      <idea type="integration">
+        Test: .gitignore properly excludes .env files
+        - Verify .env pattern matches .env, .env.local, .env.development, .env.*.local
+        - Verify .env.example is NOT ignored
+        Method: Parse .gitignore and test glob patterns
+      </idea>
+    </ideas>
+  </tests>
+</story-context>

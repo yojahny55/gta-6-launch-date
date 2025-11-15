@@ -53,11 +53,35 @@ jobs:
       - name: Build TypeScript project
         run: npm run build
 
-      # Step 9: Deploy to Cloudflare Workers (main branch only)
-      - name: Deploy to Cloudflare Workers
-        if: github.ref == 'refs/heads/main'
+      # Step 9a: Deploy to Cloudflare Workers - DEV environment (dev branch)
+      # Deploys to gta6-tracker-dev Worker when changes are pushed to dev branch
+      - name: Deploy to Cloudflare Workers (DEV)
+        if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy --env dev
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Step 9b: Deploy to Cloudflare Workers - PRODUCTION environment (main branch)
+      # Deploys to gta6-tracker Worker when changes are pushed to main branch
+      - name: Deploy to Cloudflare Workers (PRODUCTION)
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy --env production
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      # Step 9c: Deploy to Cloudflare Workers - PREVIEW environment (pull requests)
+      # Deploys to gta6-tracker-preview Worker for pull request previews
+      - name: Deploy to Cloudflare Workers (PREVIEW)
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          command: deploy --env preview
         env:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

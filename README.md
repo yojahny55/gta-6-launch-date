@@ -155,9 +155,116 @@ gta6-tracker/
 | `npm run lint` | Check code quality with ESLint |
 | `npm run deploy` | Deploy to Cloudflare Workers (production) |
 
+## Multi-Environment Deployment Strategy
+
+This project uses a three-tier deployment strategy to ensure safe, iterative development:
+
+### Environments
+
+| Environment | Branch | Worker URL | Purpose |
+|-------------|--------|------------|---------|
+| **Local** | N/A | `http://localhost:8787` | Local development with `wrangler dev` |
+| **Dev** | `dev` | `https://gta6-tracker-dev.yojahnychavez.workers.dev` | Testing changes in a live environment before production |
+| **Production** | `main` | `https://gta6-tracker.yojahnychavez.workers.dev` | Live production deployment |
+| **Preview** | Pull Requests | `https://gta6-tracker-preview.yojahnychavez.workers.dev` | Preview deployments for PRs (optional) |
+
+### Development Workflow
+
+**Standard Feature Development:**
+
+```bash
+# 1. Create feature branch from dev
+git checkout dev
+git pull origin dev
+git checkout -b feature/my-feature
+
+# 2. Develop locally
+npm run dev  # Runs on localhost:8787
+
+# 3. Test and commit changes
+git add .
+git commit -m "feat: implement feature"
+
+# 4. Push to dev branch for live testing
+git checkout dev
+git merge feature/my-feature
+git push origin dev  # Auto-deploys to dev environment
+
+# 5. Test on dev environment
+# Visit https://gta6-tracker-dev.yojahnychavez.workers.dev
+# Verify feature works correctly in live environment
+
+# 6. Merge to main for production deployment
+git checkout main
+git merge dev
+git push origin main  # Auto-deploys to production
+```
+
+**Why this workflow?**
+- **Safety:** Test changes in dev environment before production
+- **Risk Reduction:** Catch environment-specific issues early
+- **Iteration:** Experiment freely in dev without impacting production users
+
+### Local Development Setup
+
+Create a `.env.development` file for frontend environment variables (local development only):
+
+```env
+# Local development environment variables
+VITE_API_URL=http://localhost:8787
+VITE_ENVIRONMENT=local
+```
+
+**Note:** This file is already in `.gitignore` and should never be committed to git.
+
+### Frontend-to-Backend Configuration
+
+The frontend automatically uses the correct backend URL based on the environment:
+
+- **Local development:** Calls `localhost:8787` (via `.env.development`)
+- **Dev Pages preview:** Calls `gta6-tracker-dev` Worker (Cloudflare Pages env vars)
+- **Production Pages:** Calls `gta6-tracker` Worker (Cloudflare Pages env vars)
+
+**Cloudflare Pages Environment Variables:**
+
+Configure these in **Cloudflare Dashboard → Pages → gta6-tracker → Settings → Environment variables**:
+
+**Production:**
+- `VITE_API_URL` = `https://gta6-tracker.yojahnychavez.workers.dev`
+- `VITE_ENVIRONMENT` = `production`
+
+**Preview (for dev and PRs):**
+- `VITE_API_URL` = `https://gta6-tracker-dev.yojahnychavez.workers.dev`
+- `VITE_ENVIRONMENT` = `dev`
+
+### Using the API Helper
+
+All frontend API calls should use the environment-aware API utility:
+
+```typescript
+import { callAPI, submitPrediction, getStats } from './utils/api';
+
+// Make a prediction
+const result = await submitPrediction('2025-12-31');
+
+// Get current stats
+const stats = await getStats();
+
+// Check environment info
+import { getEnvironmentInfo } from './utils/api';
+console.log(getEnvironmentInfo());
+// { apiUrl: 'http://localhost:8787', environment: 'local' }
+```
+
+**Benefits:**
+- Automatic environment detection
+- Centralized error handling
+- Debugging logs with environment context
+- Type-safe API calls
+
 ## CI/CD Pipeline
 
-This project uses GitHub Actions for automated testing and deployment. Every push triggers a comprehensive quality check pipeline.
+This project uses GitHub Actions for automated testing and deployment. Deployments are triggered based on the branch:
 
 ### GitHub Actions Workflow
 
@@ -167,9 +274,12 @@ The workflow executes the following steps in order:
 2. **Run linter** (`npm run lint`)
 3. **Check code formatting** (`npm run format:check`)
 4. **Run TypeScript type check** (`npx tsc --noEmit`)
-5. **Run tests** (`npm test`)
+5. **Run unit tests** (`npm run test:unit`)
 6. **Build project** (`npm run build`)
-7. **Deploy to Cloudflare** (main branch only)
+7. **Deploy to Cloudflare Workers:**
+   - **Dev branch** → Deploy to `gta6-tracker-dev` (dev environment)
+   - **Main branch** → Deploy to `gta6-tracker` (production environment)
+   - **Pull Requests** → Deploy to `gta6-tracker-preview` (preview environment)
 
 ### Required GitHub Secrets
 
@@ -205,9 +315,10 @@ To enable automated deployment, configure the following secrets in your GitHub r
 
 ### Workflow Behavior
 
-- **All branches:** Run quality checks (lint, typecheck, test, build) but skip deployment
-- **Main branch:** Run all checks + deploy to production on success
-- **Pull requests:** Run all checks to ensure code quality before merge
+- **Dev branch:** Run quality checks + deploy to dev environment (`gta6-tracker-dev`)
+- **Main branch:** Run quality checks + deploy to production environment (`gta6-tracker`)
+- **Pull Requests:** Run quality checks + deploy to preview environment (`gta6-tracker-preview`)
+- **Other branches:** Run quality checks only (no deployment)
 
 **Failed builds prevent deployment** - the workflow uses fail-fast strategy, halting immediately if any step fails.
 
@@ -244,12 +355,28 @@ npm ci && npm run lint && npm run format:check && npx tsc --noEmit && npm test -
 - Status: Active with schema deployed
 
 **Cloudflare Workers:**
-- Worker Name: `gta6-tracker`
-- Production URL: `https://gta6-tracker.yojahnychavez.workers.dev`
-- Endpoints:
-  - `GET /` - API welcome
-  - `GET /health` - Health check
-  - `GET /api/db-test` - Database connection test
+
+Three separate Workers for different environments:
+
+- **Production Worker:**
+  - Name: `gta6-tracker`
+  - URL: `https://gta6-tracker.yojahnychavez.workers.dev`
+  - Deployed from: `main` branch
+
+- **Dev Worker:**
+  - Name: `gta6-tracker-dev`
+  - URL: `https://gta6-tracker-dev.yojahnychavez.workers.dev`
+  - Deployed from: `dev` branch
+
+- **Preview Worker:**
+  - Name: `gta6-tracker-preview`
+  - URL: `https://gta6-tracker-preview.yojahnychavez.workers.dev`
+  - Deployed from: Pull requests
+
+**Endpoints (all environments):**
+- `GET /` - API welcome
+- `GET /health` - Health check
+- `GET /api/db-test` - Database connection test
 
 **Cloudflare Pages:**
 - Project Name: `gta6-predictions` (to be configured when frontend is ready)
@@ -260,13 +387,36 @@ npm ci && npm run lint && npm run format:check && npx tsc --noEmit && npm test -
 2. **Wrangler CLI** authenticated: `npx wrangler login`
 3. **D1 Database** created (Story 1.2 - ✅ Complete)
 
-### Deploy to Production
+### Manual Deployment Commands
+
+**Deploy to specific environment:**
 
 ```bash
-npm run deploy
+# Deploy to dev environment
+npx wrangler deploy --env dev
+
+# Deploy to production environment
+npx wrangler deploy --env production
+
+# Deploy to preview environment
+npx wrangler deploy --env preview
 ```
 
-This command:
+**Legacy command (deploys to production):**
+```bash
+npm run deploy  # Same as: wrangler deploy --env production
+```
+
+**Test environment locally:**
+```bash
+# Test dev environment configuration locally
+npx wrangler dev --env dev
+
+# Test production environment configuration locally
+npx wrangler dev --env production
+```
+
+Each deployment:
 1. Builds the application
 2. Uploads to Cloudflare Workers
 3. Deploys globally to edge network (~2 minutes)

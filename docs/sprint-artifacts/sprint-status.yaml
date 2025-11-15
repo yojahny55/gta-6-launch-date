@@ -43,10 +43,11 @@ development_status:
   epic-1: contexted
   1-1-project-initialization-and-repository-setup: review
   1-2-cloudflare-infrastructure-configuration: done
-  1-3-ci-cd-pipeline-with-github-actions: review
-  1-4-database-transaction-support-and-error-handling: backlog
-  1-5-rollback-capability-and-deployment-safety: backlog
-  1-6-basic-performance-monitoring-via-cloudflare-analytics: backlog
+  1-3-ci-cd-pipeline-with-github-actions: done
+  1-4-database-transaction-support-and-error-handling: done
+  1-5-rollback-capability-and-deployment-safety: done
+  1-6-basic-performance-monitoring-via-cloudflare-analytics: done
+  1-7-multi-environment-deployment-setup: review
   epic-1-retrospective: optional
 
   # Epic 2: Core Prediction Engine

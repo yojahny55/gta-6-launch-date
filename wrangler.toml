@@ -9,6 +9,17 @@ binding = "DB"
 database_name = "gta6-predictions"
 database_id = "150217ee-5408-406e-98be-37b15a8e5990"
 
-# Environment variables (secrets set in Cloudflare dashboard for production)
-[vars]
-# IP_HASH_SALT is set as a secret in Cloudflare dashboard
+# Production environment configuration
+[env.production]
+name = "gta6-tracker"
+vars = { ENVIRONMENT = "production" }
+
+# Dev environment configuration
+[env.dev]
+name = "gta6-tracker-dev"
+vars = { ENVIRONMENT = "dev" }
+
+# Preview environment configuration (for pull requests)
+[env.preview]
+name = "gta6-tracker-preview"
+vars = { ENVIRONMENT = "preview" }
