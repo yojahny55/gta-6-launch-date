@@ -754,6 +754,16 @@ console.log(JSON.stringify({
 - **API:** Cloudflare Workers (serverless functions)
 - **Database:** Cloudflare D1 (serverless SQLite)
 
+**Multi-Environment Strategy:**
+
+The project uses **three deployment environments** to ensure safe iteration and testing before production:
+
+| Environment | Branch | Worker URL | Pages URL | Use Case |
+|-------------|--------|------------|-----------|----------|
+| **Local** | N/A | `localhost:8787` | `localhost:5173` | Local development and testing |
+| **Dev** | `dev` | `gta6-tracker-dev.*.workers.dev` | `<hash>.gta6-tracker.pages.dev` | Preview changes before production |
+| **Production** | `main` | `gta6-tracker.*.workers.dev` | `gta6-tracker.pages.dev` | Live production environment |
+
 **Deployment Process:**
 
 1. **Build:**
@@ -765,31 +775,116 @@ console.log(JSON.stringify({
    npm run build
    ```
 
-2. **Deploy:**
+2. **Deploy to Dev Environment:**
    ```bash
-   # Deploy Workers + D1
-   npx wrangler deploy
+   # Deploy Workers to dev environment
+   npx wrangler deploy --env dev
 
-   # Deploy Pages (auto via Git push)
+   # Push to dev branch (Pages auto-deploys preview)
+   git push origin dev
+   ```
+
+3. **Deploy to Production:**
+   ```bash
+   # Deploy Workers to production environment
+   npx wrangler deploy --env production
+
+   # Push to main branch (Pages auto-deploys production)
    git push origin main
    ```
 
-3. **Environment Variables:**
-   - Set in Cloudflare dashboard: `IP_HASH_SALT`
-   - D1 binding configured in `wrangler.toml`
+**Wrangler Environments Configuration:**
 
-**Environments:**
-- **Development:** Local via `wrangler dev` (uses `.dev.vars`)
-- **Production:** Cloudflare global network
+```toml
+# wrangler.toml
+name = "gta6-tracker"
+main = "src/index.ts"
+compatibility_date = "2025-11-09"
+compatibility_flags = ["nodejs_compat"]
+
+# Shared D1 binding across all environments
+[[d1_databases]]
+binding = "DB"
+database_name = "gta6-predictions"
+database_id = "150217ee-5408-406e-98be-37b15a8e5990"
+
+# PRODUCTION ENVIRONMENT (main branch)
+[env.production]
+name = "gta6-tracker"
+vars = { ENVIRONMENT = "production" }
+
+# DEV ENVIRONMENT (dev branch)
+[env.dev]
+name = "gta6-tracker-dev"
+vars = { ENVIRONMENT = "dev" }
+
+# PREVIEW ENVIRONMENT (pull requests)
+[env.preview]
+name = "gta6-tracker-preview"
+vars = { ENVIRONMENT = "preview" }
+```
+
+**Frontend-to-Backend API Configuration:**
+
+The frontend needs to know which Worker URL to call based on the deployment environment. This is handled via **Vite environment variables**:
+
+**Cloudflare Pages Environment Variables** (set in dashboard):
+- **Production:** `VITE_API_URL = https://gta6-tracker.yojahnychavez.workers.dev`
+- **Preview/Dev:** `VITE_API_URL = https://gta6-tracker-dev.yojahnychavez.workers.dev`
+
+**Local Development** (`.env.development`):
+```env
+VITE_API_URL=http://localhost:8787
+VITE_ENVIRONMENT=local
+```
+
+**Frontend Code Usage:**
+```javascript
+// Environment-aware API calls
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+
+async function callAPI(endpoint, options = {}) {
+  const url = `${API_URL}${endpoint}`;
+  return fetch(url, options);
+}
+
+// Usage
+await callAPI('/api/predict', { method: 'POST', body: ... });
+await callAPI('/api/stats');
+```
+
+**Environment Variables:**
+- **Secrets (Cloudflare Dashboard):** `IP_HASH_SALT`, `CLOUDFLARE_API_TOKEN`
+- **Runtime Variables (wrangler.toml):** `ENVIRONMENT` (production/dev/preview)
+- **Build-time Variables (Pages Dashboard):** `VITE_API_URL`, `VITE_ENVIRONMENT`
+- **Local Development (.dev.vars):** `IP_HASH_SALT=your-random-salt`
+
+**Branch Strategy:**
+```
+main (production)
+  ↑
+  └── Pull Request (preview deployment)
+        ↑
+        └── dev (dev environment)
+              ↑
+              └── feature/* (local dev, no auto-deploy)
+```
+
+**Deployment Flow:**
+1. Developer works on `feature/xyz` branch locally
+2. Push to `dev` branch → Auto-deploys to dev environment
+3. Test changes on dev Worker + Pages preview
+4. Create PR from `dev` → `main` → Preview deployment created
+5. Merge PR → Auto-deploys to production
 
 **Rollback:**
-- Workers: Previous deployment via Cloudflare dashboard
-- Pages: Git revert + redeploy
-- D1: Time Travel feature for database rollback
+- **Workers:** Revert to previous deployment via Cloudflare dashboard or `wrangler rollback`
+- **Pages:** Git revert + redeploy via dashboard or CLI
+- **D1:** Time Travel feature for database rollback (point-in-time recovery)
 
 **Monitoring:**
-- Cloudflare Analytics (built-in)
-- Workers logs in dashboard
+- Cloudflare Analytics (built-in, per-environment)
+- Workers logs in dashboard (filterable by environment)
 - Alerts: Set up via Cloudflare Notifications (optional)
 
 ---
@@ -1147,7 +1242,140 @@ npx tsc --noEmit
 
 ---
 
+### ADR-012: Multi-Environment Deployment Strategy
+
+**Context:** Initial CI/CD implementation (Story 1.3) deployed directly to production on main branch. This creates risk: developers cannot preview changes in a live environment before production deployment. Need a safe way to test changes before they reach end users.
+
+**Decision:** Implement **three-tier environment strategy** using Wrangler environments and branch-based deployments
+
+**Environments:**
+
+1. **Local Development:**
+   - Branch: Any (feature/*, dev, main)
+   - Worker: `localhost:8787` via `wrangler dev`
+   - Pages: `localhost:5173` via `vite dev`
+   - Database: Local D1 via Miniflare
+   - Purpose: Rapid development iteration
+
+2. **Dev Environment:**
+   - Branch: `dev`
+   - Worker: `gta6-tracker-dev.*.workers.dev` via `wrangler deploy --env dev`
+   - Pages: Preview deployment (automatic on push to dev)
+   - Database: Shared production D1 (same database)
+   - Purpose: Preview changes in live environment before production
+
+3. **Production Environment:**
+   - Branch: `main`
+   - Worker: `gta6-tracker.*.workers.dev` via `wrangler deploy --env production`
+   - Pages: Production deployment (automatic on push to main)
+   - Database: Production D1
+   - Purpose: Live user-facing environment
+
+**Implementation:**
+
+**wrangler.toml configuration:**
+```toml
+# Base configuration (shared)
+name = "gta6-tracker"
+main = "src/index.ts"
+[[d1_databases]]
+binding = "DB"
+database_name = "gta6-predictions"
+database_id = "150217ee-5408-406e-98be-37b15a8e5990"
+
+# Production environment
+[env.production]
+name = "gta6-tracker"
+vars = { ENVIRONMENT = "production" }
+
+# Dev environment
+[env.dev]
+name = "gta6-tracker-dev"
+vars = { ENVIRONMENT = "dev" }
+
+# Preview environment (PRs)
+[env.preview]
+name = "gta6-tracker-preview"
+vars = { ENVIRONMENT = "preview" }
+```
+
+**GitHub Actions workflow:**
+```yaml
+# Deploy to dev environment (dev branch)
+- name: Deploy to Cloudflare Workers (DEV)
+  if: github.ref == 'refs/heads/dev'
+  uses: cloudflare/wrangler-action@v3
+  with:
+    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    command: deploy --env dev
+
+# Deploy to production (main branch)
+- name: Deploy to Cloudflare Workers (PRODUCTION)
+  if: github.ref == 'refs/heads/main'
+  uses: cloudflare/wrangler-action@v3
+  with:
+    apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    command: deploy --env production
+```
+
+**Frontend-to-Backend Configuration:**
+
+Problem: Frontend needs to know which Worker URL to call based on environment.
+
+Solution: **Vite environment variables** configured in Cloudflare Pages dashboard:
+- Production: `VITE_API_URL = https://gta6-tracker.*.workers.dev`
+- Preview/Dev: `VITE_API_URL = https://gta6-tracker-dev.*.workers.dev`
+- Local: `.env.development` → `VITE_API_URL=http://localhost:8787`
+
+Frontend code:
+```javascript
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8787';
+await fetch(`${API_URL}/api/predict`, { ... });
+```
+
+**Rationale:**
+- **Risk Reduction:** Test changes in dev before production, catch issues early
+- **Developer Confidence:** See actual behavior in live Cloudflare environment
+- **Fast Iteration:** Push to dev branch → auto-deploy → test → merge to main
+- **Zero Additional Cost:** All environments run on Cloudflare free tier
+- **Simple Database Strategy:** Shared D1 database (dev data doesn't conflict with production)
+- **Standard Industry Practice:** Dev/staging/production is industry standard
+- **Cloudflare Native:** Uses Wrangler's built-in environment support
+
+**Consequences:**
+- ✅ Safer deployments (test before production)
+- ✅ Faster debugging (dev environment for reproducing issues)
+- ✅ Better developer experience (confidence in changes)
+- ✅ No additional cost (free tier covers all environments)
+- ✅ Automatic preview URLs for each environment
+- ⚠️ Need to manage dev branch (additional git workflow)
+- ⚠️ Dev environment can have stale/test data in shared database (acceptable trade-off)
+- ⚠️ Pages environment variables must be configured in dashboard
+
+**Alternative Considered: Separate D1 Databases**
+- Rejected because:
+  - More complex (schema migrations for both databases)
+  - Additional cost (multiple databases)
+  - Unnecessary for MVP (shared database is acceptable)
+  - Can migrate to separate databases post-MVP if needed
+
+**Migration Path:**
+1. Update `wrangler.toml` with environment configurations
+2. Update GitHub Actions workflow for branch-based deployments
+3. Configure Pages environment variables in Cloudflare dashboard
+4. Create `.env.development` for local development
+5. Update frontend code to use `import.meta.env.VITE_API_URL`
+6. Test dev deployment workflow
+7. Document in README
+
+**Reference:**
+- Implemented in Story 1.7 (Multi-Environment CI/CD Setup)
+- Cloudflare Workers Environments: https://developers.cloudflare.com/workers/wrangler/environments/
+- Cloudflare Pages Environment Variables: https://developers.cloudflare.com/pages/platform/build-configuration/#environment-variables
+
+---
+
 _Generated by BMad Decision Architecture Workflow v1.0_
 _Date: 2025-11-13_
-_Updated: 2025-11-15 (Added ADR-011 Mandatory Testing)_
+_Updated: 2025-11-15 (Added ADR-011 Mandatory Testing, ADR-012 Multi-Environment Strategy)_
 _For: yojahny_
