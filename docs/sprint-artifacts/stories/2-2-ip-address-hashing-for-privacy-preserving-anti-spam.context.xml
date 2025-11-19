@@ -1,0 +1,398 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>2</storyId>
+    <title>IP Address Hashing for Privacy-Preserving Anti-Spam</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/var/www/html/others/gta-6-launch-date/docs/sprint-artifacts/stories/2-2-ip-address-hashing-for-privacy-preserving-anti-spam.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to hash IP addresses before storage</iWant>
+    <soThat>user privacy is protected while preventing spam submissions</soThat>
+    <tasks>
+- Task 1: Create IP hashing utility module (AC: 1, 2, 3)
+  - Create `src/utils/ip-hash.ts` module
+  - Implement `hashIP(ip: string, salt: string): Promise<string>` using BLAKE2b
+  - Implement `extractClientIP(request: Request): string` to get CF-Connecting-IP
+  - Implement `validateIPAddress(ip: string): boolean` for basic IP format validation
+  - Export TypeScript types: `IPHash` type alias (64-char hex string)
+  - Handle edge cases: IPv4, IPv6, invalid IPs
+
+- Task 2: Environment configuration for salt (AC: 1)
+  - Add `SALT_V1` to `.dev.vars` for local development (generate random salt)
+  - Document salt setup in README (Cloudflare dashboard for production)
+  - Add validation: fail fast if SALT_V1 not configured
+  - Add salt rotation support comment (for future FR79)
+
+- Task 3: Integrate IP hashing into prediction workflow (AC: 2)
+  - Update `src/routes/predict.ts` to extract and hash IP (deferred to Story 2.7)
+  - Store `ip_hash` in database `predictions` table (deferred to Story 2.7)
+  - Verify UNIQUE constraint on `ip_hash` enforces one submission per IP (deferred to Story 2.7)
+  - Log hashed IP (not raw IP) for debugging (deferred to Story 2.7)
+
+- Task 4: Write automated tests (ADR-011 Testing Requirements)
+  - Create `src/utils/ip-hash.test.ts`
+  - Test BLAKE2b hashing: deterministic output (same input = same hash)
+  - Test hash length: exactly 64 hex characters
+  - Test IP extraction: CF-Connecting-IP header parsed correctly
+  - Test edge cases: IPv6, localhost, invalid IP formats
+  - Test salt versioning: different salts produce different hashes
+  - Test security: verify hash output appears random (entropy check)
+  - Verify test coverage: 100% for IP hashing utility functions
+
+- Task 5: Update TypeScript types (AC: 4)
+  - Add `IPHash` type to `src/types/index.ts` (64-char hex string)
+  - Update `Prediction` interface to include `ip_hash: IPHash` field
+  - Update request interfaces if needed
+
+- Task 6: Security and privacy validation
+  - Verify salt is NOT committed to git (.dev.vars in .gitignore)
+  - Test rainbow table attack resistance (use known IP + salt combinations)
+  - Verify original IP is never logged or stored
+  - Document GDPR compliance in privacy policy (hash before storage)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Given** a user submits a prediction
+**When** the API receives the request
+**Then** the user's IP address is hashed:
+- Extract IP from request headers (CF-Connecting-IP for Cloudflare)
+- Hash using BLAKE2b algorithm with 256-bit output
+- Salt: Environment variable SALT_V1 (versioned for FR79 future rotation)
+- Output: Hex string (64 characters)
+
+**And** hashed IP is stored in database:
+- predictions.ip_hash field
+- Original IP is NEVER stored
+- Hash is deterministic (same IP = same hash with same salt)
+
+**And** hash collision is handled:
+- Probability is negligible (2^128 security)
+- If collision occurs (DB constraint violation), log as error
+
+**And** Cloudflare Workers API provides helper:
+```typescript
+async function hashIP(ip: string, salt: string): Promise<string>
+```
+
+**And** automated tests exist covering main functionality
+
+### Testing Requirements
+- Unit tests for BLAKE2b hashing (deterministic output, correct length)
+- Unit tests for IP extraction from CF-Connecting-IP header
+- Integration tests verifying hash storage in database
+- Edge case tests: invalid IP, missing header, empty salt
+- Security tests: rainbow table resistance, collision probability
+- Error handling tests: malformed IPs, missing environment variables
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Tech Spec Epic 2 - IP Address Hashing -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Tech Spec - IP Hashing Service</title>
+        <section>Services and Modules (lines 99-110)</section>
+        <snippet>IP Hashing Service: Responsible for hashing IP addresses with BLAKE2b. Inputs: IP address, salt. Outputs: ip_hash (hex string). Implements NFR-S2 (IP addresses hashed before storage). Uses CF-Connecting-IP header for real client IP.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Tech Spec - TypeScript Interfaces - IPHash</title>
+        <section>Data Models and Contracts (lines 140-141)</section>
+        <snippet>IPHash type: string (64-character hex string)</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Tech Spec - IP Hashing Utility Function</title>
+        <section>APIs and Interfaces (lines 295-304)</section>
+        <snippet>async function hashIP(ip: string, salt: string): Promise&lt;string&gt; using BLAKE2b-256. Note: Cloudflare Workers may not have native BLAKE2b support in crypto.subtle. May need to use SHA-256 as fallback or import BLAKE2b library.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Tech Spec - Acceptance Criteria AC2</title>
+        <section>Acceptance Criteria (lines 653-660)</section>
+        <snippet>AC2: IP Address Hashing - IP addresses hashed with BLAKE2b before database storage. Salt from environment variable SALT_V1. Hash output: 64-character hex string. Original IP NEVER stored in database. Hash is deterministic (same IP = same hash with same salt). Cloudflare Workers helper function hashIP(ip, salt) exists.</snippet>
+      </doc>
+
+      <!-- Architecture - IP Hashing -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - IP Hashing</title>
+        <section>Security Architecture (lines 673-706)</section>
+        <snippet>IP Address Privacy: Hash with SHA-256 + salt before storage. Use CF-Connecting-IP header for real IP. Never log raw IPs. GDPR Compliance: Cookie consent, Privacy Policy, IP hashing (SHA-256 with salt), data deletion endpoint.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - ADR-004: SHA-256 for IP Hashing</title>
+        <section>ADR-004 (lines 1030-1046)</section>
+        <snippet>Use SHA-256 with salt (Web Crypto API). Built into Cloudflare Workers (zero dependencies). Fast enough for edge compute. Sufficient security for IP hashing use case. Note: Tech Spec specifies BLAKE2b, but ADR-004 recommends SHA-256 as fallback if BLAKE2b unavailable.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - ADR-011: Mandatory Automated Testing</title>
+        <section>ADR-011 (lines 1171-1243)</section>
+        <snippet>MANDATORY automated testing for every story. Minimum Coverage: 100% for utility functions (IP hashing, validation). Test Location: Co-located with source (src/utils/ip-hash.test.ts). CI/CD Integration: Tests run automatically. Story Completion: Tests must pass before story marked "done".</snippet>
+      </doc>
+
+      <!-- Epic 2 Breakdown -->
+      <doc>
+        <path>docs/epics/epic-2-core-prediction-engine.md</path>
+        <title>Epic 2 - Story 2.2 Definition</title>
+        <section>Story 2.2 (lines 46-85)</section>
+        <snippet>Story 2.2: IP Address Hashing for Privacy-Preserving Anti-Spam. Implements FR53 (IP hashing), FR80 (secure hashing prevents rainbow table attacks). Supports FR5 (one submission per IP via UNIQUE constraint), FR79 (salt versioning for future rotation). BLAKE2b is faster and more secure than SHA-256. Salt must be kept secret (environment variable, not in code).</snippet>
+      </doc>
+
+      <!-- Previous Story Learnings -->
+      <doc>
+        <path>docs/sprint-artifacts/stories/2-1-secure-cookie-id-generation.md</path>
+        <title>Story 2.1 - Learnings for IP Hashing</title>
+        <section>Completion Summary (lines 163-195)</section>
+        <snippet>Follow cookie.ts module structure: pure functions, type exports, comprehensive tests. Aim for 100% test coverage per ADR-011. Use similar naming conventions: hashIP() async function, IPHash type alias. Test deterministic hashing (same input = same output). Consider crypto.subtle compatibility: BLAKE2b may not be available, have SHA-256 fallback. Tests co-located in src/utils/*.test.ts with 52 test cases achieving 100% coverage.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <!-- Existing Cookie Utility Pattern -->
+      <artifact>
+        <path>src/utils/cookie.ts</path>
+        <kind>utility-module</kind>
+        <symbol>generateCookieID, validateCookieID, setCookie, getCookie</symbol>
+        <lines>1-210</lines>
+        <reason>Pattern to follow for IP hashing utility module. Shows TypeScript documentation style, pure functions, type exports, crypto.randomUUID() usage, and comprehensive error handling.</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/cookie.test.ts</path>
+        <kind>test-file</kind>
+        <symbol>Cookie utility tests</symbol>
+        <lines>1-end</lines>
+        <reason>Test structure pattern to follow. Shows 52 test cases achieving 100% coverage, deterministic testing, edge case validation, and Vitest setup.</reason>
+      </artifact>
+
+      <!-- TypeScript Types -->
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>type-definitions</kind>
+        <symbol>CookieID, Prediction, Env</symbol>
+        <lines>1-52</lines>
+        <reason>Type definitions file. Need to add IPHash type alias (64-char hex string) and update Prediction interface to include ip_hash: IPHash field.</reason>
+      </artifact>
+
+      <!-- Database Schema Reference -->
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database-schema</kind>
+        <symbol>predictions table</symbol>
+        <lines>N/A</lines>
+        <reason>Database schema reference. predictions table has ip_hash TEXT NOT NULL with UNIQUE constraint. Understanding constraint is critical for Story 2.7 integration.</reason>
+      </artifact>
+
+      <!-- Environment Configuration -->
+      <artifact>
+        <path>.dev.vars</path>
+        <kind>config-file</kind>
+        <symbol>IP_HASH_SALT</symbol>
+        <lines>N/A</lines>
+        <reason>Local environment variables. Need to add SALT_V1 for development (generate random salt). Salt must be cryptographically random (32+ bytes recommended).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <package>crypto (Web Crypto API)</package>
+        <version>built-in</version>
+        <purpose>crypto.subtle.digest() for SHA-256/BLAKE2b hashing. Built into Cloudflare Workers and browsers.</purpose>
+      </node>
+      <node>
+        <package>vitest</package>
+        <version>^3.2.4</version>
+        <purpose>Testing framework for unit tests (ADR-009). Workers pool for D1 integration tests.</purpose>
+      </node>
+      <node>
+        <package>@cloudflare/workers-types</package>
+        <version>latest</version>
+        <purpose>TypeScript types for Cloudflare Workers APIs including crypto.subtle</purpose>
+      </node>
+      <cloudflare>
+        <service>Cloudflare Workers</service>
+        <binding>c.env.SALT_V1</binding>
+        <purpose>Environment variable for cryptographically secure salt. Set in Cloudflare dashboard (production) and .dev.vars (local).</purpose>
+      </cloudflare>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Development Constraints -->
+    <constraint>
+      <type>security</type>
+      <description>Original IP addresses must NEVER be stored in database or logs. Only hashed values (ip_hash) are permitted.</description>
+      <source>NFR-S2, Tech Spec AC2</source>
+    </constraint>
+    <constraint>
+      <type>security</type>
+      <description>Salt (SALT_V1) must be stored in environment variable, never committed to git. Must be cryptographically random (32+ bytes recommended).</description>
+      <source>ADR-004, Epic 2 Story 2.2</source>
+    </constraint>
+    <constraint>
+      <type>algorithm</type>
+      <description>Hash must be deterministic: same IP + same salt = same hash output. Required for duplicate IP detection via UNIQUE constraint.</description>
+      <source>Tech Spec AC2</source>
+    </constraint>
+    <constraint>
+      <type>output-format</type>
+      <description>Hash output must be exactly 64-character hex string (256-bit hash). Format: lowercase hexadecimal [0-9a-f]{64}</description>
+      <source>Tech Spec Epic 2 Data Models, Story 2.2 AC</source>
+    </constraint>
+    <constraint>
+      <type>testing</type>
+      <description>MANDATORY 100% test coverage for utility functions per ADR-011. Tests must cover deterministic output, correct length, edge cases, security validation.</description>
+      <source>ADR-011 Mandatory Testing</source>
+    </constraint>
+    <constraint>
+      <type>architecture</type>
+      <description>Follow cookie.ts module pattern: pure functions, TypeScript type exports, comprehensive JSDoc comments, no side effects.</description>
+      <source>Story 2.1 learnings</source>
+    </constraint>
+    <constraint>
+      <type>compatibility</type>
+      <description>Cloudflare Workers may not support BLAKE2b in crypto.subtle. Must implement SHA-256 fallback if BLAKE2b unavailable. Check crypto.subtle.digest support at runtime.</description>
+      <source>Tech Spec Epic 2 line 296-304, ADR-004</source>
+    </constraint>
+    <constraint>
+      <type>versioning</type>
+      <description>Salt environment variable named SALT_V1 (not IP_HASH_SALT) to support future rotation per FR79.</description>
+      <source>Tech Spec Epic 2 AC2, Story 2.2 Dev Notes</source>
+    </constraint>
+  </constraints>
+  <interfaces>
+    <!-- IP Hashing Utility Function Interface -->
+    <interface>
+      <name>hashIP</name>
+      <kind>async-function</kind>
+      <signature>async function hashIP(ip: string, salt: string): Promise&lt;string&gt;</signature>
+      <path>src/utils/ip-hash.ts</path>
+      <description>Core IP hashing function using BLAKE2b (or SHA-256 fallback). Concatenates salt + ip, hashes with crypto.subtle.digest(), returns 64-char hex string.</description>
+    </interface>
+    <interface>
+      <name>extractClientIP</name>
+      <kind>function</kind>
+      <signature>function extractClientIP(request: Request): string</signature>
+      <path>src/utils/ip-hash.ts</path>
+      <description>Extracts real client IP from Cloudflare request headers. Uses CF-Connecting-IP header (Cloudflare-specific). Fallback to request.headers.get('X-Forwarded-For') or connection IP.</description>
+    </interface>
+    <interface>
+      <name>validateIPAddress</name>
+      <kind>function</kind>
+      <signature>function validateIPAddress(ip: string): boolean</signature>
+      <path>src/utils/ip-hash.ts</path>
+      <description>Basic IP format validation for IPv4 and IPv6. Regex-based validation to prevent malformed inputs.</description>
+    </interface>
+    <interface>
+      <name>IPHash</name>
+      <kind>type-alias</kind>
+      <signature>type IPHash = string</signature>
+      <path>src/types/index.ts</path>
+      <description>Type alias for IP hash value. 64-character lowercase hexadecimal string. Used in Prediction interface and API responses.</description>
+    </interface>
+    <interface>
+      <name>Env.SALT_V1</name>
+      <kind>environment-variable</kind>
+      <signature>SALT_V1: string</signature>
+      <path>Cloudflare dashboard, .dev.vars</path>
+      <description>Cryptographically secure salt for IP hashing. Versioned (V1) to support future rotation. Must be 32+ bytes, base64-encoded recommended.</description>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Per ADR-011 Mandatory Automated Testing: All utility functions require 100% test coverage. Tests must be co-located with source (src/utils/ip-hash.test.ts). Use Vitest framework (ADR-009) with @cloudflare/vitest-pool-workers for Workers API compatibility. Follow Story 2.1 test pattern: 52 tests achieving 100% coverage. Tests must cover: deterministic output (same input = same hash), correct hash length (64 hex chars), edge cases (IPv4, IPv6, invalid IPs, empty salt), security validation (rainbow table resistance, entropy check). All tests must pass before story marked "done" per CI/CD pipeline.
+    </standards>
+    <locations>
+      - src/utils/ip-hash.test.ts (co-located with ip-hash.ts)
+      - vitest.config.unit.ts (unit test configuration)
+      - vitest.config.ts (Workers pool configuration for D1/crypto.subtle)
+    </locations>
+    <ideas>
+      <!-- AC1: BLAKE2b Hashing with Salt -->
+      <test-idea ac="AC1">
+        <name>Deterministic hash output</name>
+        <description>Verify same IP + same salt always produces identical hash. Test with known IP addresses (127.0.0.1, 8.8.8.8) and fixed salt.</description>
+      </test-idea>
+      <test-idea ac="AC1">
+        <name>Hash length validation</name>
+        <description>Verify hash output is exactly 64 hexadecimal characters. Test with multiple IPs to ensure consistency.</description>
+      </test-idea>
+      <test-idea ac="AC1">
+        <name>Hex format validation</name>
+        <description>Verify hash contains only [0-9a-f] characters (lowercase hex). No uppercase, no special chars.</description>
+      </test-idea>
+      <test-idea ac="AC1">
+        <name>Salt versioning support</name>
+        <description>Verify different salts (SALT_V1, SALT_V2) produce different hashes for same IP. Validates FR79 future rotation.</description>
+      </test-idea>
+
+      <!-- AC2: CF-Connecting-IP Extraction -->
+      <test-idea ac="AC2">
+        <name>Extract CF-Connecting-IP header</name>
+        <description>Mock Request with CF-Connecting-IP header. Verify extractClientIP() returns correct IP.</description>
+      </test-idea>
+      <test-idea ac="AC2">
+        <name>Fallback to X-Forwarded-For</name>
+        <description>Mock Request without CF-Connecting-IP. Verify fallback to X-Forwarded-For header.</description>
+      </test-idea>
+      <test-idea ac="AC2">
+        <name>Handle missing headers</name>
+        <description>Test behavior when all IP headers missing. Should return fallback or throw descriptive error.</description>
+      </test-idea>
+
+      <!-- AC3: IP Address Validation -->
+      <test-idea ac="AC3">
+        <name>Valid IPv4 addresses</name>
+        <description>Test validateIPAddress() with valid IPv4: 127.0.0.1, 192.168.1.1, 8.8.8.8. All should return true.</description>
+      </test-idea>
+      <test-idea ac="AC3">
+        <name>Valid IPv6 addresses</name>
+        <description>Test with valid IPv6: ::1, 2001:0db8:85a3::8a2e:0370:7334. All should return true.</description>
+      </test-idea>
+      <test-idea ac="AC3">
+        <name>Invalid IP formats</name>
+        <description>Test with invalid IPs: empty string, "abc", "999.999.999.999", "localhost". All should return false.</description>
+      </test-idea>
+
+      <!-- Security Tests -->
+      <test-idea ac="Security">
+        <name>Rainbow table resistance</name>
+        <description>Hash known IP + salt combination. Verify output is NOT in precomputed rainbow table. Hash should appear random.</description>
+      </test-idea>
+      <test-idea ac="Security">
+        <name>Hash entropy check</name>
+        <description>Hash multiple IPs, calculate Shannon entropy of outputs. Entropy should be high (near 4.0 for hex) indicating randomness.</description>
+      </test-idea>
+      <test-idea ac="Security">
+        <name>Collision probability</name>
+        <description>Hash 1000 different IPs. Verify all hashes are unique (no collisions). 256-bit hash provides 2^128 security.</description>
+      </test-idea>
+
+      <!-- Edge Cases -->
+      <test-idea ac="Edge Cases">
+        <name>Empty salt handling</name>
+        <description>Test hashIP() with empty string salt. Should throw error or use default salt (document behavior).</description>
+      </test-idea>
+      <test-idea ac="Edge Cases">
+        <name>BLAKE2b fallback to SHA-256</name>
+        <description>If BLAKE2b unavailable in crypto.subtle, verify automatic fallback to SHA-256. Hash should still be 64 chars (SHA-256 = 256 bits).</description>
+      </test-idea>
+      <test-idea ac="Edge Cases">
+        <name>Malformed IP injection</name>
+        <description>Test with SQL injection patterns in IP string: "'; DROP TABLE--". Verify sanitization or validation prevents issues.</description>
+      </test-idea>
+
+      <!-- Integration with Database Constraint -->
+      <test-idea ac="Integration">
+        <name>UNIQUE constraint enforcement</name>
+        <description>(Deferred to Story 2.7) Test duplicate IP hash insertion into database. Should fail with UNIQUE constraint violation per predictions table schema.</description>
+      </test-idea>
+    </ideas>
+  </tests>
+</story-context>
