@@ -47,12 +47,12 @@ development_status:
   1-4-database-transaction-support-and-error-handling: done
   1-5-rollback-capability-and-deployment-safety: done
   1-6-basic-performance-monitoring-via-cloudflare-analytics: done
-  1-7-multi-environment-deployment-setup: review
+  1-7-multi-environment-deployment-setup: done
   epic-1-retrospective: optional
 
   # Epic 2: Core Prediction Engine
-  epic-2: backlog
-  2-1-secure-cookie-id-generation: backlog
+  epic-2: contexted
+  2-1-secure-cookie-id-generation: done
   2-2-ip-address-hashing-for-privacy-preserving-anti-spam: backlog
   2-3-date-picker-with-validation: backlog
   2-4-input-validation-and-xss-prevention: backlog

@@ -1,4 +1,185 @@
 // GTA 6 Tracker - Frontend JavaScript
-// This file will be populated in Epic 2-3 with prediction form and results display
+// Cookie Management and User Tracking (Story 2.1)
 
-console.log('GTA 6 Tracker initialized');
+/**
+ * Cookie Configuration Constants
+ * Per ADR-010 and AC1: Security flags for user tracking
+ */
+const COOKIE_NAME = 'gta6_user_id';
+const COOKIE_MAX_AGE_DAYS = 730; // 2 years (63072000 seconds / 86400)
+const COOKIE_OPTIONS = {
+  expires: COOKIE_MAX_AGE_DAYS, // js-cookie uses days, not seconds
+  secure: true,                  // HTTPS only (prevents MITM attacks)
+  sameSite: 'strict',           // Prevents CSRF attacks
+  path: '/'                      // Site-wide access
+};
+
+/**
+ * UUID v4 validation regex
+ * Format: 8-4-4-4-12 hex digits with '4' in version position and '[89ab]' in variant position
+ */
+const UUID_V4_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Generate a cryptographically secure cookie ID using UUID v4
+ * Uses Web Crypto API's crypto.randomUUID() which provides CSPRNG
+ *
+ * @returns {string} UUID v4 string (e.g., "550e8400-e29b-41d4-a716-446655440000")
+ */
+function generateCookieID() {
+  if (!crypto || !crypto.randomUUID) {
+    console.error('Web Crypto API not available. Fallback to Math.random (INSECURE)');
+    // Fallback for very old browsers (should never happen in practice)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  return crypto.randomUUID();
+}
+
+/**
+ * Validate if a given string is a valid UUID v4 format
+ *
+ * @param {string} cookieId - The cookie ID to validate
+ * @returns {boolean} True if valid UUID v4, false otherwise
+ */
+function validateCookieID(cookieId) {
+  if (!cookieId || typeof cookieId !== 'string') {
+    return false;
+  }
+  return UUID_V4_REGEX.test(cookieId);
+}
+
+/**
+ * Simple cookie utility functions (inline, no external dependency for now)
+ * Note: js-cookie library will be loaded from CDN for production
+ */
+const Cookies = {
+  /**
+   * Set a cookie with options
+   * @param {string} name - Cookie name
+   * @param {string} value - Cookie value
+   * @param {object} options - Cookie options (expires, secure, sameSite, path)
+   */
+  set(name, value, options = {}) {
+    let cookieString = `${encodeURIComponent(name)}=${encodeURIComponent(value)}`;
+
+    if (options.expires) {
+      const date = new Date();
+      date.setTime(date.getTime() + (options.expires * 24 * 60 * 60 * 1000));
+      cookieString += `; expires=${date.toUTCString()}`;
+    }
+
+    if (options.path) {
+      cookieString += `; path=${options.path}`;
+    }
+
+    if (options.secure) {
+      cookieString += '; secure';
+    }
+
+    if (options.sameSite) {
+      cookieString += `; samesite=${options.sameSite}`;
+    }
+
+    document.cookie = cookieString;
+  },
+
+  /**
+   * Get a cookie by name
+   * @param {string} name - Cookie name
+   * @returns {string|undefined} Cookie value or undefined
+   */
+  get(name) {
+    const cookies = document.cookie.split(';').map(c => c.trim());
+    const targetCookie = cookies.find(cookie => cookie.startsWith(`${name}=`));
+
+    if (!targetCookie) {
+      return undefined;
+    }
+
+    const value = targetCookie.substring(name.length + 1);
+    return decodeURIComponent(value);
+  }
+};
+
+/**
+ * Initialize or retrieve user cookie ID
+ *
+ * Workflow per AC1:
+ * 1. Check for existing cookie
+ * 2. If exists: validate format → use existing
+ * 3. If invalid: regenerate and replace
+ * 4. If no cookie: generate UUID → set cookie with security flags
+ *
+ * @returns {string} User's cookie ID (UUID v4)
+ */
+function initializeCookieID() {
+  // Check for existing cookie
+  let cookieId = Cookies.get(COOKIE_NAME);
+
+  if (cookieId) {
+    // Validate existing cookie format
+    if (validateCookieID(cookieId)) {
+      console.log('Cookie already exists (valid):', cookieId);
+      return cookieId;
+    } else {
+      // Invalid cookie: regenerate
+      console.warn('Invalid cookie format detected. Regenerating...', cookieId);
+      cookieId = generateCookieID();
+      Cookies.set(COOKIE_NAME, cookieId, COOKIE_OPTIONS);
+      console.log('Cookie regenerated:', cookieId);
+      return cookieId;
+    }
+  } else {
+    // No cookie: generate new UUID
+    cookieId = generateCookieID();
+    Cookies.set(COOKIE_NAME, cookieId, COOKIE_OPTIONS);
+    console.log('Cookie generated (first visit):', cookieId);
+    return cookieId;
+  }
+}
+
+/**
+ * Get the current user's cookie ID
+ * @returns {string|undefined} Current cookie ID or undefined if not set
+ */
+function getCookieID() {
+  return Cookies.get(COOKIE_NAME);
+}
+
+/**
+ * Application Initialization
+ * Runs on page load to set up cookie tracking
+ */
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('GTA 6 Tracker initialized');
+
+  // Initialize cookie ID (AC1: generate on first visit, persist across sessions)
+  const userId = initializeCookieID();
+
+  // Log cookie generation event for debugging (as per AC1)
+  console.log('User ID:', userId);
+  console.log('Cookie flags:', COOKIE_OPTIONS);
+
+  // Store in global scope for later use by form submission logic
+  window.userCookieID = userId;
+
+  // TODO (Epic 2, Story 2.3): Date picker implementation
+  // TODO (Epic 2, Story 2.7): Prediction submission API integration
+  // TODO (Epic 3): Results display
+});
+
+// Export functions for testing and future use
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    generateCookieID,
+    validateCookieID,
+    initializeCookieID,
+    getCookieID,
+    COOKIE_NAME,
+    COOKIE_MAX_AGE_DAYS
+  };
+}
