@@ -8,9 +8,44 @@
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div id="app">
-    <h1>GTA 6 Launch Date Prediction Tracker</h1>
-    <p>Coming soon...</p>
+  <div id="app" class="container mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-center mb-8">GTA 6 Launch Date Prediction Tracker</h1>
+
+    <form id="prediction-form" class="max-w-md mx-auto space-y-6">
+      <div class="form-control w-full">
+        <label for="predicted-date" class="label">
+          <span class="label-text text-lg font-medium">When do you think GTA 6 will launch?</span>
+        </label>
+        <input
+          type="date"
+          id="predicted-date"
+          name="predicted-date"
+          class="input input-bordered w-full text-base"
+          min="2025-01-01"
+          max="2125-12-31"
+          required
+          aria-label="Predicted launch date for GTA 6"
+          aria-describedby="date-help"
+        />
+        <label class="label">
+          <span id="date-help" class="label-text-alt">Select a date between Jan 1, 2025 and Dec 31, 2125</span>
+        </label>
+      </div>
+
+      <div id="validation-message" class="hidden" role="alert" aria-live="polite"></div>
+
+      <button
+        type="submit"
+        class="btn btn-primary w-full"
+        aria-label="Submit your prediction"
+      >
+        Submit Prediction
+      </button>
+    </form>
+
+    <div id="stats-display" class="max-w-md mx-auto mt-8">
+      <!-- Statistics will be displayed here -->
+    </div>
   </div>
   <script src="/app.js"></script>
 </body>

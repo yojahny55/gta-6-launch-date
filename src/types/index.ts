@@ -52,6 +52,15 @@ export interface ErrorResponse {
   };
 }
 
+/**
+ * Date validation result interface
+ * Used by date-validation utility functions (Story 2.3)
+ */
+export interface DateValidationResult {
+  valid: boolean;
+  error?: string;
+}
+
 // Cloudflare Workers Environment
 export interface Env {
   DB: D1Database; // D1 database binding (Story 1.2)

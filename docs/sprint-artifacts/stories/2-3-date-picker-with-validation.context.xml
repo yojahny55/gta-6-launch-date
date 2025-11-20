@@ -1,0 +1,445 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>3</storyId>
+    <title>Date Picker with Validation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/var/www/html/others/gta-6-launch-date/docs/sprint-artifacts/stories/2-3-date-picker-with-validation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to select a date for when I think GTA 6 will launch</iWant>
+    <soThat>I can submit my prediction</soThat>
+    <tasks>
+      - Task 1: Create HTML5 date picker component (AC: 1)
+        - Add input type="date" to public/index.html with min/max attributes
+        - Set min="2025-01-01" and max="2125-12-31" attributes
+        - Add required attribute to prevent empty submissions
+        - Style with DaisyUI input component classes
+        - Add ARIA labels for screen reader accessibility (FR71)
+        - Test on mobile browsers (iOS Safari, Android Chrome)
+
+      - Task 2: Implement client-side validation (AC: 2)
+        - Create src/utils/date-validation.ts utility module
+        - Implement validateDateRange(date: string): boolean function
+        - Implement isValidDateFormat(date: string): boolean using regex
+        - Implement isLeapYear(year: number): boolean helper
+        - Add validation on form submit event in public/app.js
+        - Export TypeScript types: DateValidationResult interface
+
+      - Task 3: Add user-friendly validation messages (AC: 3)
+        - Create validation message display component (DaisyUI alert class)
+        - Show "Please select a date between Jan 1, 2025 and Dec 31, 2125" for range errors
+        - Show "GTA 6 can't launch in the past!" for past dates
+        - Show "Please enter a valid date" for format errors
+        - Clear messages on successful validation
+
+      - Task 4: Handle edge cases and UTC conversion (AC: 4)
+        - Install and configure day.js library (ADR-010)
+        - Implement convertToUTC(localDate: string): string using day.js
+        - Test leap year validation (Feb 29, 2024, 2028, 2100)
+        - Ensure timezone-independent date handling
+        - Add boundary date tests (2025-01-01, 2125-12-31)
+
+      - Task 5: Implement keyboard accessibility (AC: 1, FR69)
+        - Verify tab navigation works correctly
+        - Test Enter key to submit form
+        - Test Escape key to clear date picker
+        - Add keyboard shortcuts documentation (optional)
+        - Verify WCAG 2.1 AA compliance
+
+      - Task 6: Write automated tests (ADR-011 Testing Requirements)
+        - Create src/utils/date-validation.test.ts
+        - Test date range validation (min/max boundaries)
+        - Test ISO 8601 format validation (YYYY-MM-DD)
+        - Test leap year handling (Feb 29 valid years vs invalid)
+        - Test UTC conversion accuracy with day.js
+        - Test edge cases: empty string, invalid format, past dates
+        - Verify test coverage: 100% for date validation utility functions
+        - Add integration tests for form submission with valid/invalid dates
+
+      - Task 7: Update TypeScript types (AC: Supporting)
+        - Add date validation types to src/types/index.ts
+        - Create DateValidationResult interface
+        - Update form submission types to include predicted_date: string
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Native HTML5 date input is presented
+    - input type="date" min="2025-01-01" max="2125-12-31"
+    - Default value: Empty (forces user to choose)
+    - Mobile-friendly (native date pickers on iOS/Android)
+    - Keyboard accessible (FR69 requirement)
+
+    AC2: Date validation occurs on client-side
+    - Minimum date: January 1, 2025 (past dates rejected)
+    - Maximum date: December 31, 2125 (100-year range, FR2)
+    - Invalid format rejected (only YYYY-MM-DD accepted)
+    - Empty submission prevented (required field)
+
+    AC3: Validation messages are clear
+    - "Please select a date between Jan 1, 2025 and Dec 31, 2125"
+    - "GTA 6 can't launch in the past!"
+    - "Please enter a valid date"
+
+    AC4: Edge cases are handled
+    - Leap years validated correctly (Feb 29, 2028 is valid)
+    - Timezone-independent (date only, no time component)
+    - Date is converted to UTC before submission (FR73)
+
+    AC5: Automated tests exist covering main functionality
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- Tech Spec Epic 2 - Date Picker Component -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic Technical Specification: Core Prediction Engine</title>
+        <section>Date Picker Component</section>
+        <snippet>HTML5 input type="date" component with min/max attributes. Client and server-side validation. ISO 8601 format (YYYY-MM-DD). Implements FR2 (date range validation). Supports FR69 (keyboard accessible), FR73 (UTC storage).</snippet>
+      </doc>
+
+      <!-- Tech Spec Epic 2 - AC3 Date Picker with Validation -->
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification - AC3</title>
+        <section>Date Picker with Validation</section>
+        <snippet>Native HTML5 date input with min="2025-01-01" max="2125-12-31". Client-side validation prevents invalid dates. Mobile-friendly (native OS date pickers). Keyboard accessible with ARIA labels. Leap years validated correctly. Date converted to UTC (ISO 8601) before submission.</snippet>
+      </doc>
+
+      <!-- Architecture - ADR-010: day.js for Date Handling -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Decision Records</title>
+        <section>ADR-010: day.js for Date Handling</section>
+        <snippet>day.js library (1.11.19) for date calculations. ISO 8601 format throughout (YYYY-MM-DD). UTC storage per FR73 requirements. Tiny (2KB core), clean API for date differences.</snippet>
+      </doc>
+
+      <!-- Architecture - ADR-009: Vitest for Testing -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Testing Framework</title>
+        <section>ADR-009: Vitest over Jest for testing</section>
+        <snippet>Use Vitest v3.2 with @cloudflare/vitest-pool-workers. Integrates seamlessly with Vite. Faster test execution. Works with Cloudflare Workers via Workers pool.</snippet>
+      </doc>
+
+      <!-- Architecture - ADR-011: Mandatory Automated Testing -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Mandatory Testing Policy</title>
+        <section>ADR-011: Mandatory Automated Testing for All Stories</section>
+        <snippet>MANDATORY automated testing for every story. All stories MUST include automated tests before marked "done". Minimum coverage: 100% for utility functions (date validation). Test files co-located with source. Tests run in CI/CD pipeline. No exceptions.</snippet>
+      </doc>
+
+      <!-- Architecture - Naming Conventions -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - Code Organization</title>
+        <section>Naming Conventions</section>
+        <snippet>Functions: camelCase (validateDateRange(), convertToUTC()). Files: camelCase (date-validation.ts). Tests: {name}.test.ts co-located. Constants: SCREAMING_SNAKE_CASE (MIN_DATE, MAX_DATE).</snippet>
+      </doc>
+
+      <!-- Architecture - Project Structure -->
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture - File Structure</title>
+        <section>Project Structure</section>
+        <snippet>Date validation utility: src/utils/date-validation.ts (following ip-hash.ts pattern). TypeScript types: src/types/index.ts (add DateValidationResult interface). Tests: src/utils/date-validation.test.ts (co-located per ADR-009). Frontend HTML: public/index.html. Frontend JS: public/app.js.</snippet>
+      </doc>
+
+      <!-- UX Design - DaisyUI Components -->
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification - Design System</title>
+        <section>DaisyUI v4.x for Component Styling</section>
+        <snippet>DaisyUI is zero-JS, pure CSS plugin for Tailwind. Semantic classes: input input-bordered for date picker. Mobile-first responsive design. WCAG-compliant base components.</snippet>
+      </doc>
+
+      <!-- PRD - Date Range Validation -->
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR2: Date Range Validation</section>
+        <snippet>Users can select any date within a reasonable range (2025-2125, 100-year max). Reasonable validation prevents extreme troll submissions while allowing skepticism expression.</snippet>
+      </doc>
+
+      <!-- Epic 2 Story 2.3 Definition -->
+      <doc>
+        <path>docs/epics/epic-2-core-prediction-engine.md</path>
+        <title>Epic 2 - Story 2.3 Definition</title>
+        <section>Date Picker with Validation</section>
+        <snippet>User story: "As a user, I want to select a date for when I think GTA 6 will launch, so that I can submit my prediction." Native HTML5 date input with range validation (2025-01-01 to 2125-12-31). Client-side validation with clear error messages. Mobile-friendly with native OS date pickers. Keyboard accessible with ARIA labels. Leap year validation. UTC conversion before submission.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Existing IP Hash Utility Pattern -->
+      <artifact>
+        <path>src/utils/ip-hash.ts</path>
+        <kind>utility module</kind>
+        <symbol>hashIP, validateIPAddress, extractClientIP</symbol>
+        <lines>1-232</lines>
+        <reason>Reference pattern for creating date-validation.ts: pure functions, comprehensive JSDoc, type exports, error handling, 100% test coverage approach</reason>
+      </artifact>
+
+      <!-- Existing Cookie Utility Pattern -->
+      <artifact>
+        <path>src/utils/cookie.ts</path>
+        <kind>utility module</kind>
+        <symbol>generateCookieID, validateCookieID, getCookie, setCookie</symbol>
+        <lines>1-210</lines>
+        <reason>Reference pattern for validation functions, regex patterns, type aliases, and default constants (e.g., MIN_DATE, MAX_DATE)</reason>
+      </artifact>
+
+      <!-- TypeScript Type Definitions -->
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>type definitions</kind>
+        <symbol>CookieID, IPHash, Prediction, Stats, ErrorResponse</symbol>
+        <lines>1-61</lines>
+        <reason>Add DateValidationResult interface and date-related type aliases to this file per project structure</reason>
+      </artifact>
+
+      <!-- HTML Landing Page (to modify) -->
+      <artifact>
+        <path>public/index.html</path>
+        <kind>frontend HTML</kind>
+        <symbol>N/A</symbol>
+        <lines>1-18</lines>
+        <reason>Add HTML5 date picker input element with min/max attributes, ARIA labels, and DaisyUI styling classes</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <!-- Core Dependencies from package.json -->
+      <dependency ecosystem="npm" name="dayjs" version="1.11.19" scope="production">
+        Already installed per ADR-010. Use for UTC conversion: dayjs(localDate).utc().format('YYYY-MM-DD')
+      </dependency>
+      <dependency ecosystem="npm" name="hono" version="4.10.0" scope="production">
+        Web framework for Cloudflare Workers API endpoints
+      </dependency>
+      <dependency ecosystem="npm" name="tailwindcss" version="4.0.0" scope="production">
+        CSS framework (DaisyUI dependency)
+      </dependency>
+
+      <!-- Development Dependencies -->
+      <dependency ecosystem="npm" name="vitest" version="3.2.4" scope="development">
+        Testing framework per ADR-009. Use for unit tests with 100% coverage requirement
+      </dependency>
+      <dependency ecosystem="npm" name="@cloudflare/vitest-pool-workers" version="0.10.7" scope="development">
+        Enables testing Cloudflare Workers locally with D1 database
+      </dependency>
+      <dependency ecosystem="npm" name="typescript" version="latest" scope="development">
+        Type safety throughout (NFR-M1)
+      </dependency>
+
+      <!-- To be Added -->
+      <dependency ecosystem="npm" name="daisyui" version="latest (4.x)" scope="development">
+        Need to add: npm install -D daisyui@latest. Pure CSS component library for Tailwind. Provides input component styling.
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Architectural Constraints -->
+    <constraint type="architectural">
+      Must work on Cloudflare free tier (100K requests/day, 5M D1 reads/day). Performance budget: client-side validation < 50ms.
+    </constraint>
+
+    <!-- Testing Mandate -->
+    <constraint type="testing">
+      ADR-011: MANDATORY automated tests for all stories. 100% coverage required for utility functions (date validation). Tests must pass before story marked "done". No exceptions.
+    </constraint>
+
+    <!-- Code Organization -->
+    <constraint type="structure">
+      Follow ip-hash.ts module pattern: pure utility functions, comprehensive JSDoc documentation, co-located tests (src/utils/date-validation.test.ts), type exports from types/index.ts.
+    </constraint>
+
+    <!-- Naming Conventions -->
+    <constraint type="naming">
+      Functions: camelCase (validateDateRange(), isValidDateFormat()). Constants: SCREAMING_SNAKE_CASE (MIN_DATE, MAX_DATE, DATE_REGEX). Files: camelCase (date-validation.ts).
+    </constraint>
+
+    <!-- Date Handling -->
+    <constraint type="implementation">
+      ISO 8601 format throughout (YYYY-MM-DD). Use day.js for UTC conversion per ADR-010. No time component, date only. Timezone-independent validation.
+    </constraint>
+
+    <!-- Accessibility -->
+    <constraint type="accessibility">
+      Keyboard accessible per FR69, FR71. ARIA labels for screen readers. WCAG 2.1 AA compliance (4.5:1 contrast ratio minimum). Tab navigation, Enter key submit, Escape key clear.
+    </constraint>
+
+    <!-- Mobile Requirements -->
+    <constraint type="mobile">
+      Native HTML5 date picker provides OS-specific date pickers on iOS Safari and Android Chrome. No custom JavaScript date pickers needed. Test on mobile browsers.
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Date Validation Function Signature -->
+    <interface>
+      <name>validateDateRange</name>
+      <kind>function signature</kind>
+      <signature>function validateDateRange(dateString: string): boolean</signature>
+      <path>src/utils/date-validation.ts (NEW)</path>
+    </interface>
+
+    <!-- Date Format Validation -->
+    <interface>
+      <name>isValidDateFormat</name>
+      <kind>function signature</kind>
+      <signature>function isValidDateFormat(date: string): boolean</signature>
+      <path>src/utils/date-validation.ts (NEW)</path>
+    </interface>
+
+    <!-- Leap Year Helper -->
+    <interface>
+      <name>isLeapYear</name>
+      <kind>function signature</kind>
+      <signature>function isLeapYear(year: number): boolean</signature>
+      <path>src/utils/date-validation.ts (NEW)</path>
+    </interface>
+
+    <!-- UTC Conversion -->
+    <interface>
+      <name>convertToUTC</name>
+      <kind>function signature</kind>
+      <signature>function convertToUTC(localDate: string): string</signature>
+      <path>src/utils/date-validation.ts (NEW)</path>
+    </interface>
+
+    <!-- TypeScript Interface for Validation Result -->
+    <interface>
+      <name>DateValidationResult</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface DateValidationResult { valid: boolean; error?: string; }</signature>
+      <path>src/types/index.ts (MODIFY - add this interface)</path>
+    </interface>
+
+    <!-- HTML5 Date Input API -->
+    <interface>
+      <name>HTML5 Date Input</name>
+      <kind>DOM API</kind>
+      <signature>&lt;input type="date" min="2025-01-01" max="2125-12-31" required aria-label="Predicted launch date"&gt;</signature>
+      <path>public/index.html (MODIFY)</path>
+    </interface>
+
+    <!-- DaisyUI Input Classes -->
+    <interface>
+      <name>DaisyUI Input Component</name>
+      <kind>CSS classes</kind>
+      <signature>class="input input-bordered w-full max-w-xs"</signature>
+      <path>public/index.html styling</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, all stories MANDATORY include automated tests. Testing framework: Vitest v3.2 with @cloudflare/vitest-pool-workers. Coverage target: 100% for utility functions (date validation). Test location: Co-located with source (src/utils/date-validation.test.ts). Tests run in CI/CD pipeline (GitHub Actions). Story cannot be marked "done" until all tests pass. Reference implementation: Story 2.2 (IP Address Hashing) with 42 test cases achieving 100% coverage.
+    </standards>
+
+    <locations>
+      src/utils/date-validation.test.ts (NEW - unit tests for validation logic)
+      src/utils/date-validation.ts (NEW - implementation with inline JSDoc examples)
+      vitest.config.ts (EXISTS - configured for Cloudflare Workers pool)
+      vitest.config.unit.ts (EXISTS - unit test configuration)
+    </locations>
+
+    <ideas>
+      <!-- Unit Tests for Date Range Validation -->
+      <test id="AC2-T1" acceptance-criteria="AC2">
+        Test validateDateRange() with minimum boundary (2025-01-01) - should return true
+      </test>
+      <test id="AC2-T2" acceptance-criteria="AC2">
+        Test validateDateRange() with maximum boundary (2125-12-31) - should return true
+      </test>
+      <test id="AC2-T3" acceptance-criteria="AC2">
+        Test validateDateRange() with past date (2024-12-31) - should return false
+      </test>
+      <test id="AC2-T4" acceptance-criteria="AC2">
+        Test validateDateRange() with future date beyond max (2126-01-01) - should return false
+      </test>
+
+      <!-- Unit Tests for ISO 8601 Format Validation -->
+      <test id="AC2-T5" acceptance-criteria="AC2">
+        Test isValidDateFormat() with valid ISO 8601 (YYYY-MM-DD: "2026-11-19") - should return true
+      </test>
+      <test id="AC2-T6" acceptance-criteria="AC2">
+        Test isValidDateFormat() with invalid format (MM/DD/YYYY: "11/19/2026") - should return false
+      </test>
+      <test id="AC2-T7" acceptance-criteria="AC2">
+        Test isValidDateFormat() with malformed input ("invalid-date") - should return false
+      </test>
+
+      <!-- Unit Tests for Leap Year Handling -->
+      <test id="AC4-T1" acceptance-criteria="AC4">
+        Test leap year validation: Feb 29, 2024 (leap year) - should return true
+      </test>
+      <test id="AC4-T2" acceptance-criteria="AC4">
+        Test leap year validation: Feb 29, 2028 (leap year) - should return true
+      </test>
+      <test id="AC4-T3" acceptance-criteria="AC4">
+        Test leap year validation: Feb 29, 2100 (NOT leap year - century rule) - should return false
+      </test>
+      <test id="AC4-T4" acceptance-criteria="AC4">
+        Test isLeapYear() helper function with various years (2024: true, 2025: false, 2100: false, 2000: true)
+      </test>
+
+      <!-- Unit Tests for UTC Conversion -->
+      <test id="AC4-T5" acceptance-criteria="AC4">
+        Test convertToUTC() with valid local date - should return ISO 8601 UTC string (YYYY-MM-DD format)
+      </test>
+      <test id="AC4-T6" acceptance-criteria="AC4">
+        Test convertToUTC() output format - verify day.js .utc().format('YYYY-MM-DD') produces correct ISO 8601
+      </test>
+
+      <!-- Integration Tests for HTML5 Date Picker -->
+      <test id="AC1-T1" acceptance-criteria="AC1">
+        Verify HTML5 date input has min="2025-01-01" and max="2125-12-31" attributes
+      </test>
+      <test id="AC1-T2" acceptance-criteria="AC1">
+        Test native browser validation prevents submission of out-of-range dates
+      </test>
+      <test id="AC1-T3" acceptance-criteria="AC1">
+        Verify ARIA labels exist for accessibility (aria-label attribute present)
+      </test>
+
+      <!-- Browser Tests for Keyboard Navigation -->
+      <test id="AC1-T4" acceptance-criteria="AC1, FR69">
+        Manual test: Tab key navigates to date picker correctly
+      </test>
+      <test id="AC1-T5" acceptance-criteria="AC1, FR69">
+        Manual test: Enter key submits form from date picker
+      </test>
+      <test id="AC1-T6" acceptance-criteria="AC1, FR69">
+        Manual test: Escape key clears date picker value
+      </test>
+
+      <!-- Mobile Browser Tests -->
+      <test id="AC1-T7" acceptance-criteria="AC1">
+        Manual test: iOS Safari displays native date picker
+      </test>
+      <test id="AC1-T8" acceptance-criteria="AC1">
+        Manual test: Android Chrome displays native date picker
+      </test>
+
+      <!-- Edge Case Tests -->
+      <test id="AC4-T7" acceptance-criteria="AC4">
+        Test with empty string input - should return validation error
+      </test>
+      <test id="AC4-T8" acceptance-criteria="AC4">
+        Test with invalid calendar dates (Feb 30, Month 13) - should return false
+      </test>
+      <test id="AC2-T8" acceptance-criteria="AC2">
+        Test boundary dates: 2024-12-31 (just before min), 2025-01-01 (min), 2125-12-31 (max), 2126-01-01 (just after max)
+      </test>
+    </ideas>
+  </tests>
+</story-context>

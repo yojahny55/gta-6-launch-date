@@ -151,8 +151,137 @@ function getCookieID() {
 }
 
 /**
+ * Date Validation Constants (Story 2.3)
+ * Mirrors backend validation rules from src/utils/date-validation.ts
+ */
+const MIN_DATE = '2025-01-01';
+const MAX_DATE = '2125-12-31';
+const DATE_REGEX =
+  /^(202[5-9]|20[3-9]\d|21[0-2][0-5])-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+
+/**
+ * Validate date format (ISO 8601: YYYY-MM-DD)
+ * @param {string} date - Date string to validate
+ * @returns {boolean} True if valid format
+ */
+function isValidDateFormat(date) {
+  if (!date || typeof date !== 'string') {
+    return false;
+  }
+  return DATE_REGEX.test(date);
+}
+
+/**
+ * Validate date is within allowed range (2025-01-01 to 2125-12-31)
+ * @param {string} dateString - ISO 8601 date string
+ * @returns {boolean} True if within range
+ */
+function validateDateRange(dateString) {
+  const date = new Date(dateString);
+  const min = new Date(MIN_DATE);
+  const max = new Date(MAX_DATE);
+  return date >= min && date <= max;
+}
+
+/**
+ * Comprehensive date validation with user-friendly error messages
+ * @param {string} dateString - Date to validate
+ * @returns {{ valid: boolean, error?: string }}
+ */
+function validateDate(dateString) {
+  // Check format
+  if (!isValidDateFormat(dateString)) {
+    return { valid: false, error: 'Please enter a valid date' };
+  }
+
+  // Check range
+  const date = new Date(dateString);
+  const min = new Date(MIN_DATE);
+  const max = new Date(MAX_DATE);
+
+  if (date < min) {
+    return { valid: false, error: "GTA 6 can't launch in the past!" };
+  }
+
+  if (date > max) {
+    return {
+      valid: false,
+      error: 'Please select a date between Jan 1, 2025 and Dec 31, 2125',
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Display validation message to user (AC3: user-friendly messages)
+ * @param {string|null} message - Error message or null to clear
+ * @param {string} type - Message type: 'error' or 'success'
+ */
+function showValidationMessage(message, type = 'error') {
+  const messageDiv = document.getElementById('validation-message');
+
+  if (!message) {
+    // Clear message
+    messageDiv.classList.add('hidden');
+    messageDiv.innerHTML = '';
+    return;
+  }
+
+  // Show message with appropriate styling
+  messageDiv.classList.remove('hidden');
+  const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+  messageDiv.innerHTML = `
+    <div class="alert ${alertClass} shadow-lg">
+      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>${message}</span>
+    </div>
+  `;
+}
+
+/**
+ * Handle form submission with validation (Story 2.3, Task 3)
+ * @param {Event} event - Form submit event
+ */
+function handleFormSubmit(event) {
+  event.preventDefault();
+
+  const dateInput = document.getElementById('predicted-date');
+  const dateValue = dateInput.value;
+
+  // Clear previous validation messages
+  showValidationMessage(null);
+
+  // Validate date
+  const validation = validateDate(dateValue);
+
+  if (!validation.valid) {
+    showValidationMessage(validation.error, 'error');
+    dateInput.focus();
+    return;
+  }
+
+  // TODO (Story 2.7): Send to API endpoint
+  console.log('Date validated successfully:', dateValue);
+  showValidationMessage('Prediction validated! (API integration pending)', 'success');
+}
+
+/**
+ * Clear date picker (Escape key handler for AC: keyboard accessibility)
+ */
+function handleEscapeKey(event) {
+  if (event.key === 'Escape') {
+    const dateInput = document.getElementById('predicted-date');
+    dateInput.value = '';
+    showValidationMessage(null);
+  }
+}
+
+/**
  * Application Initialization
- * Runs on page load to set up cookie tracking
+ * Runs on page load to set up cookie tracking and form handling
  */
 document.addEventListener('DOMContentLoaded', function() {
   console.log('GTA 6 Tracker initialized');
@@ -167,9 +296,16 @@ document.addEventListener('DOMContentLoaded', function() {
   // Store in global scope for later use by form submission logic
   window.userCookieID = userId;
 
-  // TODO (Epic 2, Story 2.3): Date picker implementation
-  // TODO (Epic 2, Story 2.7): Prediction submission API integration
-  // TODO (Epic 3): Results display
+  // Set up form submission handler (Story 2.3, AC3)
+  const form = document.getElementById('prediction-form');
+  if (form) {
+    form.addEventListener('submit', handleFormSubmit);
+  }
+
+  // Set up keyboard accessibility (Story 2.3, Task 5)
+  document.addEventListener('keydown', handleEscapeKey);
+
+  console.log('Date picker initialized with validation');
 });
 
 // Export functions for testing and future use
