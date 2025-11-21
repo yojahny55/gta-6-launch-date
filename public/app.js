@@ -153,11 +153,15 @@ function getCookieID() {
 /**
  * Date Validation Constants (Story 2.3)
  * Mirrors backend validation rules from src/utils/date-validation.ts
+ *
+ * NOTE: DATE_REGEX only validates format (YYYY-MM-DD), not range.
+ * Range validation (2025-2125) happens separately in validateDateRange().
+ * This ensures consistency between frontend and backend validation logic.
  */
 const MIN_DATE = '2025-01-01';
 const MAX_DATE = '2125-12-31';
 const DATE_REGEX =
-  /^(202[5-9]|20[3-9]\d|21[0-2][0-5])-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+  /^(\d{4})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
 
 /**
  * Validate date format (ISO 8601: YYYY-MM-DD)
@@ -222,23 +226,45 @@ function showValidationMessage(message, type = 'error') {
   const messageDiv = document.getElementById('validation-message');
 
   if (!message) {
-    // Clear message
+    // Clear message (use textContent to avoid XSS)
     messageDiv.classList.add('hidden');
-    messageDiv.innerHTML = '';
+    messageDiv.textContent = '';
     return;
   }
 
   // Show message with appropriate styling
   messageDiv.classList.remove('hidden');
   const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
-  messageDiv.innerHTML = `
-    <div class="alert ${alertClass} shadow-lg">
-      <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <span>${message}</span>
-    </div>
-  `;
+
+  // Create alert div (avoid innerHTML to prevent XSS)
+  const alertDiv = document.createElement('div');
+  alertDiv.className = `alert ${alertClass} shadow-lg`;
+
+  // Create SVG icon
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'stroke-current flex-shrink-0 h-6 w-6');
+  svg.setAttribute('fill', 'none');
+  svg.setAttribute('viewBox', '0 0 24 24');
+
+  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  path.setAttribute('stroke-linecap', 'round');
+  path.setAttribute('stroke-linejoin', 'round');
+  path.setAttribute('stroke-width', '2');
+  path.setAttribute('d', 'M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z');
+
+  svg.appendChild(path);
+
+  // Create message span with textContent (prevents XSS)
+  const span = document.createElement('span');
+  span.textContent = message;
+
+  // Assemble the alert
+  alertDiv.appendChild(svg);
+  alertDiv.appendChild(span);
+
+  // Clear previous content and append new alert
+  messageDiv.textContent = '';
+  messageDiv.appendChild(alertDiv);
 }
 
 /**

@@ -1,0 +1,106 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>9</storyId>
+    <title>Weighted Median Algorithm Implementation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-9-weighted-median-algorithm-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to calculate the community median using weighted values</iWant>
+    <soThat>troll predictions (2099, 1999) have reduced influence</soThat>
+    <tasks>
+      - Task 1: Create weighted median utility module
+      - Task 2: Implement weight calculation logic (1.0, 0.3, 0.1 tiers based on years difference)
+      - Task 3: Implement weighted median algorithm (50th percentile by cumulative weight)
+      - Task 4: Handle edge cases (empty predictions, single prediction, all weights 0)
+      - Task 5: Integrate with submission/update endpoints (calculate and store weight)
+      - Task 6: Write automated tests (90%+ coverage)
+      - Task 7: Optimize for performance (O(n) time complexity)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Weight calculation function with three tiers (years diff <=5: 1.0, <=50: 0.3, >50: 0.1)
+    AC2: Official date reference: 2026-11-19 (calculate years difference from this date)
+    AC3: Weighted median calculation (fetch all predictions, sort by date, find 50th percentile by cumulative weight)
+    AC4: Edge cases handled (no predictions return null, single prediction, all weights 0 fallback to simple median)
+    AC5: Weights pre-calculated and stored in predictions.weight field during submission/update
+    AC6: Algorithm is O(n) time complexity (efficient for large datasets)
+    AC7: Automated tests covering main functionality (90%+ coverage)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.9 Definition" snippet="Weight calculation based on reasonableness (years from official date). Years diff <=5: weight=1.0, <=50: weight=0.3, >50: weight=0.1. Weighted median: 50th percentile by cumulative weight." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC9: Weighted Median Algorithm" snippet="Weight calculation function exists with three tiers. Weighted median calculation: fetch all, sort, find 50th percentile. Edge cases handled. Weights pre-calculated during submission." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Weight Calculation" snippet="Official date reference: 2026-11-19. Calculate years difference using day.js. Apply weight tiers." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Weighted Median Calculation" snippet="Complete algorithm implementation with code examples." />
+      <doc path="docs/architecture.md" title="System Architecture" section="Implementation Patterns - Weighted Median Algorithm" snippet="Full TypeScript implementation with day.js usage, weight calculation, and median finding logic." />
+      <doc path="docs/sprint-artifacts/stories/2-3-date-picker-with-validation.md" title="Story 2.3" section="Reference" snippet="day.js library already installed (v1.11.19) per ADR-010. Use for date difference calculations." />
+    </docs>
+    <code>
+      <file path="src/utils/date-validation.ts" kind="utility" symbol="date utilities" lines="1-214" reason="Reference pattern for date calculations with day.js" />
+      <file path="src/routes/predict.ts" kind="route" symbol="POST/PUT handlers" lines="1-300" reason="Integrate calculateWeight() for weight calculation during submission/update" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="dayjs" version="^1.11.19" usage="Date difference calculations for weight tiers" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework" />
+      </node>
+      <cloudflare>
+        <service name="Cloudflare D1" binding="DB" usage="Query all predictions with weights for median calculation" />
+      </cloudflare>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Official date: 2026-11-19 (GTA 6 announced release date)
+    - Weight tiers: Years diff <=5 (1.0), <=50 (0.3), >50 (0.1)
+    - Use day.js for date difference calculations (already installed per ADR-010)
+    - Pre-calculate weights during submission/update: Store in predictions.weight field
+    - Algorithm: O(n) time complexity (fetch all, sort, iterate once)
+    - Edge cases: Empty predictions (return null), single prediction (return that date), all weights 0 (fallback to simple median per FR63)
+    - Even number of predictions: Return lower of two middle values
+    - Testing: 90%+ coverage for algorithm (ADR-011)
+    - Test location: src/utils/weighted-median.test.ts
+    - Test with realistic data distributions (80% reasonable, 20% outliers)
+    - Test boundary conditions (exactly 5 years, exactly 50 years)
+  </constraints>
+
+  <interfaces>
+    <interface name="calculateWeight" kind="Function" signature="function calculateWeight(predictedDate: Date | string): number" path="src/utils/weighted-median.ts" />
+    <interface name="calculateWeightedMedian" kind="Function" signature="async function calculateWeightedMedian(db: D1Database): Promise&lt;Date | null&gt;" path="src/utils/weighted-median.ts" />
+    <interface name="WeightedPrediction" kind="TypeScript interface" signature="{ date: string; weight: number }" path="src/types/index.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: src/utils/weighted-median.test.ts. Coverage target: 90%+. Test patterns: Weight tier calculations, boundary conditions, edge cases, algorithm correctness with known datasets. Mock database for median calculation tests.
+    </standards>
+    <locations>
+      src/utils/weighted-median.test.ts (unit tests for weight calculation and median algorithm)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test weight calculation: date 2026-11-19 (0 years diff) returns weight 1.0" />
+      <test ac="AC1" idea="Test weight calculation: date 2031-11-19 (5 years diff) returns weight 1.0 (boundary)" />
+      <test ac="AC1" idea="Test weight calculation: date 2031-11-20 (5.003 years diff) returns weight 0.3 (just over boundary)" />
+      <test ac="AC1" idea="Test weight calculation: date 2076-11-19 (50 years diff) returns weight 0.3 (boundary)" />
+      <test ac="AC1" idea="Test weight calculation: date 2076-11-20 (50.003 years diff) returns weight 0.1 (just over boundary)" />
+      <test ac="AC1" idea="Test weight calculation: date 2099-12-31 (73 years diff) returns weight 0.1" />
+      <test ac="AC2" idea="Test official date reference: 2026-11-19 is correctly used in calculations" />
+      <test ac="AC3" idea="Test weighted median: all reasonable dates (all weight 1.0) returns true median" />
+      <test ac="AC3" idea="Test weighted median: mix of reasonable (80%) + outliers (20%) reduces outlier influence" />
+      <test ac="AC4" idea="Test edge case: empty predictions array returns null" />
+      <test ac="AC4" idea="Test edge case: single prediction returns that date" />
+      <test ac="AC4" idea="Test edge case: all weights 0 fallback to simple median" />
+      <test ac="AC5" idea="Integration test: submission calculates and stores weight in database" />
+      <test ac="AC5" idea="Integration test: update recalculates and updates weight in database" />
+      <test ac="AC6" idea="Performance test: Algorithm handles 10K+ predictions efficiently (< 200ms)" />
+    </ideas>
+  </tests>
+</story-context>

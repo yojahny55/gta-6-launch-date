@@ -1,0 +1,110 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>6</storyId>
+    <title>Rate Limiting Per IP Address</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-6-rate-limiting-per-ip-address.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to limit requests per IP address</iWant>
+    <soThat>automated scripts cannot overwhelm the API</soThat>
+    <tasks>
+      - Task 1: Create rate limiter utility module (RateLimiter class with Cloudflare KV)
+      - Task 2: Integrate with Cloudflare KV (configure namespace, atomic counter, TTL)
+      - Task 3: Add rate limiting middleware to Hono
+      - Task 4: Configure endpoint-specific limits (10/min submit, 30/min update, 60/min stats)
+      - Task 5: Add rate limit response headers (X-RateLimit-*, Retry-After)
+      - Task 6: Implement user-friendly error messages
+      - Task 7: Write automated tests (90%+ coverage)
+      - Task 8: Add rate limit monitoring (log violations, track per IP)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Submission endpoint (POST /api/predict): 10 requests/min per IP
+    AC2: Update endpoint (PUT /api/predict): 30 requests/min per IP
+    AC3: Stats endpoint (GET /api/stats): 60 requests/min per IP
+    AC4: Sliding window algorithm (not fixed intervals)
+    AC5: Rate limit storage uses Cloudflare KV with 60-second TTL
+    AC6: 429 Too Many Requests with headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After)
+    AC7: User-friendly error message: "You're submitting too quickly. Please wait X seconds and try again."
+    AC8: Automated tests covering main functionality (90%+ coverage)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.6 Definition" snippet="Limit requests per IP address. Submission: 10/min, Update: 30/min, Stats: 60/min. Sliding window algorithm. Cloudflare KV storage with 60-second TTL. Return 429 with headers." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC6: Rate Limiting Per IP Address" snippet="Sliding window algorithm. Storage: Cloudflare KV with 60-second TTL. Error message with wait time. Headers: X-RateLimit-*, Retry-After." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Rate Limiting Sequence" snippet="19-step sequence: Request arrives, hash IP, construct key, atomic KV operations, set response headers." />
+      <doc path="docs/architecture.md" title="System Architecture" section="Performance Considerations - Rate Limiting" snippet="IP-based: 1 initial submission per IP. Cookie-based: Unlimited updates. Implemented via UNIQUE constraint on ip_hash." />
+      <doc path="docs/sprint-artifacts/stories/2-2-ip-address-hashing-for-privacy-preserving-anti-spam.md" title="Story 2.2: IP Hashing" section="Reference" snippet="Use existing hashIP() utility from Story 2.2 for IP hashing." />
+      <doc path="docs/sprint-artifacts/stories/2-5-recaptcha-v3-integration-for-bot-protection.md" title="Story 2.5: reCAPTCHA" section="Learnings" snippet="Cloudflare KV usage patterns. Graceful error handling. Fail-open pattern for service unavailability." />
+    </docs>
+    <code>
+      <file path="src/utils/ip-hash.ts" kind="utility" symbol="hashIP" lines="1-100" reason="Reuse IP hashing function for rate limit keys" />
+      <file path="src/utils/error-handler.ts" kind="utility" symbol="formatErrorResponse" lines="1-50" reason="Use for 429 Too Many Requests error responses" />
+      <file path="src/index.ts" kind="main" symbol="Hono app" lines="1-100" reason="Add rate limiting middleware before API routes" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework for middleware integration" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers integration tests" />
+        <package name="@cloudflare/workers-types" version="latest" usage="KVNamespace TypeScript types" />
+      </node>
+      <cloudflare>
+        <service name="Cloudflare KV" namespace="gta6-rate-limit" usage="Distributed rate limit counter storage" />
+      </cloudflare>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Sliding window algorithm MANDATORY (not fixed intervals)
+    - Storage: Cloudflare KV with atomic counter increment
+    - TTL: 60 seconds (auto-expiration)
+    - Key format: `ratelimit:${ipHash}:${endpoint}`
+    - Endpoint limits: POST /api/predict (10/min), PUT /api/predict (30/min), GET /api/stats (60/min)
+    - Make limits configurable via environment variables
+    - Response headers MANDATORY: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset, Retry-After
+    - Error message: Include wait time in seconds
+    - IP hashing: Reuse hashIP() from Story 2.2
+    - Fail-open pattern: If KV unavailable, allow request (don't block all traffic)
+    - Testing: 90%+ coverage for rate limiter (ADR-011)
+    - Test location: Co-located (src/middleware/rate-limiter.test.ts)
+    - Monitor KV usage: Track reads/writes per day (free tier: 100K reads, 1K writes)
+  </constraints>
+
+  <interfaces>
+    <interface name="RateLimiter" kind="Class" signature="class RateLimiter { checkLimit(ipHash: string, endpoint: string, limit: number): Promise&lt;RateLimitResult&gt; }" path="src/middleware/rate-limiter.ts" />
+    <interface name="RateLimitResult" kind="TypeScript interface" signature="{ allowed: boolean; remaining: number; resetAt: number }" path="src/types/index.ts" />
+    <interface name="rateLimitMiddleware" kind="Hono middleware" signature="(c: Context, next: Next) => Promise&lt;Response | void&gt;" path="src/middleware/rate-limiter.ts" />
+    <interface name="KV.get/put" kind="Cloudflare KV API" signature="await kv.get(key); await kv.put(key, value, { expirationTtl: 60 })" path="Cloudflare Workers API" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: Co-located (src/middleware/rate-limiter.test.ts). Coverage target: 90%+ for rate limiter. Mock Cloudflare KV for predictable testing. Test patterns: Sliding window logic, counter increment, TTL expiration, concurrent requests. Integration tests: Full middleware integration with each API endpoint.
+    </standards>
+    <locations>
+      src/middleware/rate-limiter.test.ts (unit tests for sliding window, counter logic)
+      src/routes/predict.test.ts (integration tests for API endpoints with rate limiting)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test submission endpoint: 11th request in 60s returns 429 (limit: 10/min)" />
+      <test ac="AC2" idea="Test update endpoint: 31st request in 60s returns 429 (limit: 30/min)" />
+      <test ac="AC3" idea="Test stats endpoint: 61st request in 60s returns 429 (limit: 60/min)" />
+      <test ac="AC4" idea="Test sliding window: Submit 10 requests, wait 30s, submit 1 more (should succeed)" />
+      <test ac="AC5" idea="Test KV TTL: Counter expires after 60 seconds, resets to 0" />
+      <test ac="AC6" idea="Test headers: X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset present in all responses" />
+      <test ac="AC6" idea="Test headers: Retry-After header present in 429 response with correct wait time" />
+      <test ac="AC7" idea="Test error message: '...wait 45 seconds...' message in 429 response body" />
+      <test ac="AC8" idea="Test concurrent requests: Race condition handling for atomic counter increment" />
+      <test ac="AC8" idea="Test KV failure: Fail open (allow request if KV unavailable)" />
+    </ideas>
+  </tests>
+</story-context>

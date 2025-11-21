@@ -1,0 +1,106 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>8</storyId>
+    <title>Prediction Update API Endpoint</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-8-prediction-update-api-endpoint.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to update my existing prediction</iWant>
+    <soThat>I can change my mind without creating a duplicate</soThat>
+    <tasks>
+      - Task 1: Add PUT endpoint to prediction route
+      - Task 2: Implement request processing (cookie extraction, reCAPTCHA, validation, rate limit 30/min)
+      - Task 3: Implement database update logic (UPDATE by cookie_id)
+      - Task 4: Implement IP conflict resolution (cookie_id takes precedence, update ip_hash)
+      - Task 5: Implement response formatting (200 OK with previous_date)
+      - Task 6: Implement error handling (404, 400, 429, 503, 500)
+      - Task 7: Write automated tests (90%+ coverage)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: PUT /api/predict endpoint accepts predicted_date and recaptcha_token
+    AC2: Request processing: cookie extraction, reCAPTCHA verification, date validation, rate limiting (30/min)
+    AC3: Database UPDATE by cookie_id: predicted_date, weight, updated_at, ip_hash (if changed)
+    AC4: Cookie not found returns 404 "No prediction found. Please submit first."
+    AC5: Same date returns 200 "Your prediction remains unchanged." (idempotent)
+    AC6: IP conflict resolution: cookie_id takes precedence over IP (FR67), updates ip_hash to new IP
+    AC7: Success returns 200 OK with predicted_date, previous_date, message
+    AC8: Automated tests covering main functionality (90%+ coverage)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.8 Definition" snippet="PUT /api/predict endpoint. Update existing prediction via cookie_id lookup. Validate new date, verify reCAPTCHA, check rate limit (30/min). Return previous_date for UX feedback." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC8: Prediction Update API" snippet="PUT /api/predict exists. Updates existing prediction via cookie_id lookup. Success returns 200 OK with previous_date. Cookie not found returns 404. IP conflict resolved: cookie_id takes precedence." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Prediction Update Workflow" snippet="Complete 13-step workflow from user action to 200 response." />
+      <doc path="docs/architecture.md" title="System Architecture" section="API Contracts - PUT /api/predict" snippet="Request format, success response (200), error response (404)." />
+      <doc path="docs/sprint-artifacts/stories/2-7-prediction-submission-api-endpoint.md" title="Story 2.7" section="Reference" snippet="Reuse validation pipeline from submission endpoint. Share prediction service logic." />
+    </docs>
+    <code>
+      <file path="src/routes/predict.ts" kind="route" symbol="POST handler" lines="1-200" reason="Add PUT endpoint alongside POST, share validation logic" />
+      <file path="src/services/predictions.service.ts" kind="service" symbol="create" lines="1-100" reason="Add update method to prediction service" />
+      <file path="src/utils/validation.ts" kind="utility" symbol="PredictionRequestSchema" lines="1-200" reason="Reuse same validation schema for updates" />
+      <file path="src/utils/recaptcha.ts" kind="utility" symbol="verifyRecaptchaToken" lines="1-100" reason="reCAPTCHA verification for updates" />
+      <file path="src/middleware/rate-limiter.ts" kind="middleware" symbol="rateLimitMiddleware" lines="1-150" reason="Rate limiting (30/min for updates, more lenient)" />
+      <file path="src/utils/weighted-median.ts" kind="utility" symbol="calculateWeight" lines="1-100" reason="Recalculate weight for new date" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework" />
+        <package name="zod" version="^3.22.0" usage="Input validation" />
+        <package name="dayjs" version="^1.11.19" usage="Date manipulation" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework" />
+      </node>
+      <cloudflare>
+        <service name="Cloudflare D1" binding="DB" usage="Prediction update storage" />
+      </cloudflare>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - RESTful conventions: PUT for updating existing resources
+    - Database UPDATE by cookie_id: WHERE cookie_id = ?
+    - Rate limit: 30/min (more lenient than submission 10/min)
+    - Cookie not found: 404 Not Found with helpful message
+    - Idempotent behavior: Same date returns 200 without database write
+    - IP conflict resolution: cookie_id takes precedence (FR67), update ip_hash field
+    - Weight recalculation: Calculate new weight based on new predicted_date
+    - Return previous_date: Improve UX by showing what changed
+    - Testing: 90%+ coverage for update endpoint (ADR-011)
+    - Test location: src/routes/predict.test.ts (add update tests)
+    - Log IP changes for security monitoring
+  </constraints>
+
+  <interfaces>
+    <interface name="PUT /api/predict" kind="REST endpoint" signature="PUT /api/predict {predicted_date, recaptcha_token} → 200 OK {predicted_date, previous_date, message}" path="src/routes/predict.ts" />
+    <interface name="PredictionService.update" kind="Service method" signature="async update(cookieId: string, newDate: string, newWeight: number, newIpHash?: string): Promise&lt;string&gt;" path="src/services/predictions.service.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: src/routes/predict.test.ts. Coverage target: 90%+. Integration tests with validation layers. Test idempotent behavior. Test IP conflict resolution.
+    </standards>
+    <locations>
+      src/routes/predict.test.ts (integration tests for update workflow)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test PUT /api/predict with valid predicted_date returns 200" />
+      <test ac="AC2" idea="Test cookie extraction and validation" />
+      <test ac="AC2" idea="Test reCAPTCHA verification for updates" />
+      <test ac="AC2" idea="Test rate limit: 31st request in 60s returns 429 (limit: 30/min)" />
+      <test ac="AC3" idea="Test database UPDATE: predicted_date, weight, updated_at fields updated" />
+      <test ac="AC4" idea="Test cookie not found returns 404 with helpful message" />
+      <test ac="AC5" idea="Test idempotent: same date returns 200 without database write" />
+      <test ac="AC6" idea="Test IP conflict resolution: cookie_id takes precedence, ip_hash updated to new IP" />
+      <test ac="AC7" idea="Test 200 response includes predicted_date, previous_date, message" />
+      <test ac="AC8" idea="Test error handling: 404 (not found), 400 (validation), 429 (rate limit), 503 (reCAPTCHA)" />
+    </ideas>
+  </tests>
+</story-context>

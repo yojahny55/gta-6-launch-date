@@ -1,0 +1,115 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>7</storyId>
+    <title>Prediction Submission API Endpoint</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-7-prediction-submission-api-endpoint.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to submit my prediction via API</iWant>
+    <soThat>it's stored in the database and counted toward the community median</soThat>
+    <tasks>
+      - Task 1: Create prediction submission route (POST /api/predict)
+      - Task 2: Implement request processing pipeline (cookie, IP, validation, reCAPTCHA, rate limit)
+      - Task 3: Implement weight calculation (integrate Story 2.9)
+      - Task 4: Implement database insertion with transaction support
+      - Task 5: Implement response formatting (201 Created with prediction_id)
+      - Task 6: Implement error handling (400, 409, 429, 503, 500)
+      - Task 7: Write automated tests (90%+ coverage)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: POST /api/predict endpoint accepts predicted_date and recaptcha_token
+    AC2: Multi-layered processing: cookie extraction, IP hashing, input validation, reCAPTCHA verification, rate limiting, weight calculation
+    AC3: Database transaction ensures atomicity (BEGIN → INSERT → COMMIT or ROLLBACK)
+    AC4: IP UNIQUE constraint violation returns 409 Conflict
+    AC5: Success returns 201 Created with prediction_id, predicted_date, message
+    AC6: Comprehensive error handling (400 validation, 409 duplicate IP, 429 rate limit, 503 reCAPTCHA, 500 database)
+    AC7: Automated tests covering main functionality (90%+ coverage)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.7 Definition" snippet="POST /api/predict endpoint. Multi-layered validation. IP hashing and UNIQUE constraint check. Weight calculation. Database transaction. Return 201 Created." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC7: Prediction Submission API" snippet="POST /api/predict exists. Server validates inputs, verifies reCAPTCHA, checks rate limit. IP hashed and checked against UNIQUE constraint. Weight calculated. Database transaction ensures atomicity." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Prediction Submission Workflow" snippet="Complete 19-step workflow from user action to 201 response." />
+      <doc path="docs/architecture.md" title="System Architecture" section="API Contracts - POST /api/predict" snippet="Request format, success response (200), error responses." />
+      <doc path="docs/sprint-artifacts/stories/2-1-secure-cookie-id-generation.md" title="Story 2.1" section="Reference" snippet="Cookie ID extraction and validation patterns." />
+      <doc path="docs/sprint-artifacts/stories/2-2-ip-address-hashing-for-privacy-preserving-anti-spam.md" title="Story 2.2" section="Reference" snippet="IP hashing utility (hashIP function)." />
+      <doc path="docs/sprint-artifacts/stories/2-4-input-validation-and-xss-prevention.md" title="Story 2.4" section="Reference" snippet="Validation schemas and error handling." />
+      <doc path="docs/sprint-artifacts/stories/2-5-recaptcha-v3-integration-for-bot-protection.md" title="Story 2.5" section="Reference" snippet="reCAPTCHA verification function." />
+      <doc path="docs/sprint-artifacts/stories/2-6-rate-limiting-per-ip-address.md" title="Story 2.6" section="Reference" snippet="Rate limiting middleware (10/min for submissions)." />
+    </docs>
+    <code>
+      <file path="src/utils/cookie.ts" kind="utility" symbol="validateCookieId" lines="1-50" reason="Cookie ID extraction and validation" />
+      <file path="src/utils/ip-hash.ts" kind="utility" symbol="hashIP" lines="1-100" reason="IP address hashing for database storage" />
+      <file path="src/utils/validation.ts" kind="utility" symbol="PredictionRequestSchema" lines="1-200" reason="Input validation for prediction submission" />
+      <file path="src/utils/recaptcha.ts" kind="utility" symbol="verifyRecaptchaToken" lines="1-100" reason="reCAPTCHA token verification" />
+      <file path="src/middleware/rate-limiter.ts" kind="middleware" symbol="rateLimitMiddleware" lines="1-150" reason="Rate limiting (10/min for submissions)" />
+      <file path="src/utils/weighted-median.ts" kind="utility" symbol="calculateWeight" lines="1-100" reason="Weight calculation based on date reasonableness (Story 2.9)" />
+      <file path="src/index.ts" kind="main" symbol="Hono app" lines="1-100" reason="Register POST /api/predict route" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework for API routes" />
+        <package name="zod" version="^3.22.0" usage="Input validation schemas" />
+        <package name="dayjs" version="^1.11.19" usage="Date manipulation" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers integration tests" />
+      </node>
+      <cloudflare>
+        <service name="Cloudflare D1" binding="DB" usage="Prediction storage with transactions" />
+        <service name="Cloudflare Workers" usage="Runtime environment for API endpoint" />
+      </cloudflare>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - RESTful conventions: 201 Created for successful resource creation
+    - Database transactions MANDATORY: BEGIN → INSERT → COMMIT or ROLLBACK on error
+    - Multi-layered validation: Input → reCAPTCHA → Rate limit → Business logic
+    - IP UNIQUE constraint: Return 409 Conflict if IP already submitted
+    - Cookie collision handling: Regenerate cookie and retry once
+    - UTC conversion: Convert date to UTC before storage (FR73)
+    - Error responses: Standardized JSON format (success: false, error.code, error.message)
+    - Testing: 90%+ coverage for submission endpoint (ADR-011)
+    - Test location: src/routes/predict.test.ts
+    - Integration dependencies: Stories 2.1, 2.2, 2.4, 2.5, 2.6, 2.9, 1.4
+    - Log all submissions for debugging and analytics
+  </constraints>
+
+  <interfaces>
+    <interface name="POST /api/predict" kind="REST endpoint" signature="POST /api/predict {predicted_date, recaptcha_token} → 201 Created {prediction_id, predicted_date, message}" path="src/routes/predict.ts" />
+    <interface name="PredictionService.create" kind="Service method" signature="async create(cookieId: string, ipHash: string, predictedDate: string, weight: number): Promise&lt;number&gt;" path="src/services/predictions.service.ts" />
+    <interface name="D1.prepare/bind/run" kind="Database API" signature="await db.prepare(sql).bind(params).run()" path="Cloudflare D1 API" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: src/routes/predict.test.ts. Coverage target: 90%+. Integration tests with all validation layers. Mock external services (reCAPTCHA, KV). Test database transactions and rollback. Test UNIQUE constraint violations.
+    </standards>
+    <locations>
+      src/routes/predict.test.ts (integration tests for full submission workflow)
+      src/services/predictions.service.test.ts (unit tests for prediction service logic)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test POST /api/predict with valid predicted_date and recaptcha_token returns 201" />
+      <test ac="AC2" idea="Test cookie extraction from Cookie header" />
+      <test ac="AC2" idea="Test IP extraction from CF-Connecting-IP header and hashing" />
+      <test ac="AC2" idea="Test input validation rejection (invalid date format returns 400)" />
+      <test ac="AC2" idea="Test reCAPTCHA verification failure returns 503" />
+      <test ac="AC2" idea="Test rate limit exceeded returns 429" />
+      <test ac="AC3" idea="Test database transaction: successful INSERT commits" />
+      <test ac="AC3" idea="Test database transaction: error triggers ROLLBACK" />
+      <test ac="AC4" idea="Test IP UNIQUE constraint violation returns 409 Conflict" />
+      <test ac="AC5" idea="Test 201 response includes prediction_id, predicted_date, success message" />
+      <test ac="AC6" idea="Test error handling: 400 (validation), 409 (duplicate), 429 (rate limit), 503 (reCAPTCHA), 500 (database)" />
+    </ideas>
+  </tests>
+</story-context>

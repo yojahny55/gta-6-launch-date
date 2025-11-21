@@ -54,14 +54,14 @@ development_status:
   epic-2: contexted
   2-1-secure-cookie-id-generation: done
   2-2-ip-address-hashing-for-privacy-preserving-anti-spam: done
-  2-3-date-picker-with-validation: in-progress
-  2-4-input-validation-and-xss-prevention: backlog
-  2-5-recaptcha-v3-integration-for-bot-protection: backlog
-  2-6-rate-limiting-per-ip-address: backlog
-  2-7-prediction-submission-api-endpoint: backlog
-  2-8-prediction-update-api-endpoint: backlog
-  2-9-weighted-median-algorithm-implementation: backlog
-  2-10-statistics-calculation-and-caching: backlog
+  2-3-date-picker-with-validation: done
+  2-4-input-validation-and-xss-prevention: done
+  2-5-recaptcha-v3-integration-for-bot-protection: ready-for-dev
+  2-6-rate-limiting-per-ip-address: ready-for-dev
+  2-7-prediction-submission-api-endpoint: ready-for-dev
+  2-8-prediction-update-api-endpoint: ready-for-dev
+  2-9-weighted-median-algorithm-implementation: ready-for-dev
+  2-10-statistics-calculation-and-caching: ready-for-dev
   epic-2-retrospective: optional
 
   # Epic 3: Results Display & User Feedback

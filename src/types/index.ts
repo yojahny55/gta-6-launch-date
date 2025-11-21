@@ -46,8 +46,14 @@ export interface PredictionResponse {
 export interface ErrorResponse {
   success: false;
   error: {
-    code: 'VALIDATION_ERROR' | 'RATE_LIMIT_EXCEEDED' | 'NOT_FOUND' | 'SERVER_ERROR';
+    code:
+      | 'VALIDATION_ERROR'
+      | 'RATE_LIMIT_EXCEEDED'
+      | 'NOT_FOUND'
+      | 'SERVER_ERROR'
+      | 'BOT_DETECTED';
     message: string;
+    field?: string;
     details?: Record<string, unknown>;
   };
 }
@@ -59,6 +65,30 @@ export interface ErrorResponse {
 export interface DateValidationResult {
   valid: boolean;
   error?: string;
+}
+
+/**
+ * Generic validation result interface
+ * Used by validation utility functions (Story 2.4)
+ */
+export interface ValidationResult<T = unknown> {
+  success: boolean;
+  data?: T;
+  error?: {
+    code: string;
+    message: string;
+    field?: string;
+  };
+}
+
+/**
+ * User agent validation result interface
+ * Used by validateUserAgent function (Story 2.4)
+ */
+export interface UserAgentValidationResult {
+  valid: boolean;
+  error?: string;
+  sanitized?: string;
 }
 
 // Cloudflare Workers Environment

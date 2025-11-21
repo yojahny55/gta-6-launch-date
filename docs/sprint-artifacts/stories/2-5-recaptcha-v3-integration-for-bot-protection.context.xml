@@ -1,0 +1,111 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5</storyId>
+    <title>reCAPTCHA v3 Integration for Bot Protection</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-5-recaptcha-v3-integration-for-bot-protection.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to verify users are human using reCAPTCHA v3</iWant>
+    <soThat>bots cannot spam fake predictions</soThat>
+    <tasks>
+      - Task 1: Register with Google reCAPTCHA v3 (get Site Key and Secret Key)
+      - Task 2: Add reCAPTCHA script to frontend (public/index.html)
+      - Task 3: Integrate reCAPTCHA execution in form submission (grecaptcha.execute)
+      - Task 4: Implement backend verification (POST to Google API)
+      - Task 5: Add score evaluation logic (threshold >= 0.5)
+      - Task 6: Implement graceful degradation (fail open on network errors)
+      - Task 7: Configure environment variables (RECAPTCHA_SECRET_KEY)
+      - Task 8: Write automated tests (90%+ coverage)
+      - Task 9: Add reCAPTCHA monitoring (log scores, track success/failure rates)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Frontend executes grecaptcha.execute() on form submit (invisible, no user interaction)
+    AC2: Backend verifies token with Google API and handles network errors gracefully
+    AC3: Score evaluation: >= 0.5 passes, < 0.5 rejects with retry option
+    AC4: Network errors fail open (allow submission, don't block legitimate users)
+    AC5: reCAPTCHA badge visible in footer per Google ToS
+    AC6: Automated tests covering main functionality (90%+ coverage)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.5 Definition" snippet="Verify users are human using reCAPTCHA v3. Frontend executes grecaptcha.execute() on form submit. Backend verifies token with Google API. Score >= 0.5 passes, < 0.5 rejects. Network errors fail open." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC5: reCAPTCHA v3 Integration" snippet="Google reCAPTCHA v3 integrated (invisible, no user interaction). Backend verifies token with Google API. Score evaluation: >= 0.5 passes, < 0.5 rejects. Network errors fail open. reCAPTCHA badge visible in footer." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="reCAPTCHA Service" snippet="Bot detection and verification. Input: User action, token. Output: Score (0.0-1.0). Implements FR76 (reCAPTCHA v3 with retry)." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="External Services: Google reCAPTCHA v3" snippet="Site Key: Public (embedded in frontend). Secret Key: Environment variable RECAPTCHA_SECRET_KEY. API: https://www.google.com/recaptcha/api/siteverify. Free tier: Unlimited requests." />
+      <doc path="docs/architecture.md" title="System Architecture" section="Security Architecture - Bot Protection" snippet="reCAPTCHA v3 provides score (0.0-1.0) vs v2 binary pass/fail. Action name 'submit_prediction' helps Google learn patterns. Consider fallback if Google API is down (FR60)." />
+      <doc path="docs/sprint-artifacts/stories/2-4-input-validation-and-xss-prevention.md" title="Story 2.4: Input Validation" section="Learnings" snippet="Centralized utility modules with pure functions. Graceful error handling with user-friendly messages. Environment variable usage for secrets." />
+    </docs>
+    <code>
+      <file path="src/utils/validation.ts" kind="utility" symbol="validation schemas" lines="1-200" reason="Import recaptcha verification into validation flow" />
+      <file path="src/utils/error-handler.ts" kind="utility" symbol="formatErrorResponse" lines="1-50" reason="Use for reCAPTCHA error responses (503 Service Unavailable)" />
+      <file path="public/index.html" kind="frontend" symbol="HTML page" lines="1-100" reason="Add reCAPTCHA script tag and badge to footer" />
+      <file path="public/app.js" kind="frontend" symbol="form submission" lines="1-300" reason="Add grecaptcha.execute call before prediction submission" />
+      <file path="src/index.ts" kind="main" symbol="Hono app" lines="1-100" reason="Integrate reCAPTCHA verification in API endpoints" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework for API routes" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework for unit tests" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers integration tests" />
+      </node>
+      <external>
+        <service name="Google reCAPTCHA v3" url="https://www.google.com/recaptcha/api/siteverify" usage="Bot detection and verification" />
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Google reCAPTCHA v3 MUST be invisible (no user interaction required)
+    - Score threshold: >= 0.5 passes, < 0.5 rejects (configurable via environment)
+    - Fail open pattern MANDATORY: Allow submission if Google API unreachable (FR60)
+    - reCAPTCHA badge MUST be visible in footer per Google Terms of Service
+    - Action name: 'submit_prediction' for frontend grecaptcha.execute()
+    - Secret key stored in environment variable RECAPTCHA_SECRET_KEY
+    - Site key embedded in frontend (public)
+    - Network errors: Log event, allow submission (don't block legitimate users)
+    - Score logging MANDATORY: Track all scores for threshold tuning
+    - Testing: 90%+ coverage for recaptcha utilities (ADR-011)
+    - Test location: Co-located with source (src/utils/recaptcha.test.ts)
+    - Mock Google API for predictable testing
+  </constraints>
+
+  <interfaces>
+    <interface name="grecaptcha.execute" kind="Frontend API" signature="grecaptcha.execute(SITE_KEY, {action: 'submit_prediction'}): Promise&lt;string&gt;" path="public/app.js" />
+    <interface name="verifyRecaptchaToken" kind="Function" signature="async (token: string, secretKey: string): Promise&lt;{ success: boolean; score: number }&gt;" path="src/utils/recaptcha.ts" />
+    <interface name="RecaptchaVerificationResult" kind="TypeScript interface" signature="{ success: boolean; score: number; action?: string; challenge_ts?: string; hostname?: string }" path="src/types/index.ts" />
+    <interface name="Google reCAPTCHA API" kind="REST endpoint" signature="POST https://www.google.com/recaptcha/api/siteverify body: secret={key}&response={token}" path="External API" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: Co-located with source (src/utils/recaptcha.test.ts). Coverage target: 90%+ for recaptcha utilities (ADR-011). Mock Google reCAPTCHA API for predictable testing. Test patterns: Score threshold logic, network failure handling, graceful degradation. Integration tests: Full workflow (frontend execute → backend verify → score check).
+    </standards>
+    <locations>
+      src/utils/recaptcha.test.ts (unit tests for verification logic, score evaluation)
+      src/routes/predict.test.ts (integration tests for full reCAPTCHA workflow)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test grecaptcha.execute() returns valid token string" />
+      <test ac="AC2" idea="Test verifyRecaptchaToken() with valid token (mock Google API success response)" />
+      <test ac="AC2" idea="Test verifyRecaptchaToken() with invalid token (mock Google API failure response)" />
+      <test ac="AC2" idea="Test network error handling (mock fetch failure, timeout)" />
+      <test ac="AC3" idea="Test score evaluation: score 0.6 passes (>= 0.5)" />
+      <test ac="AC3" idea="Test score evaluation: score 0.4 rejects (< 0.5)" />
+      <test ac="AC3" idea="Test score evaluation: score exactly 0.5 passes (boundary condition)" />
+      <test ac="AC4" idea="Test fail open: network error allows submission (returns success: true)" />
+      <test ac="AC4" idea="Test fail open: Google API timeout allows submission" />
+      <test ac="AC5" idea="Visual test: reCAPTCHA badge visible in footer (manual browser test)" />
+      <test ac="AC6" idea="Integration test: Full submission workflow with valid reCAPTCHA token" />
+      <test ac="AC6" idea="Integration test: Submission rejected with low score (< 0.5)" />
+    </ideas>
+  </tests>
+</story-context>

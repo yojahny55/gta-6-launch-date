@@ -1,0 +1,116 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>10</storyId>
+    <title>Statistics Calculation and Caching</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-10-statistics-calculation-and-caching.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to calculate min/max/count/median statistics efficiently</iWant>
+    <soThat>the stats API can respond quickly (&lt;200ms)</soThat>
+    <tasks>
+      - Task 1: Create statistics service (calculateStatistics function)
+      - Task 2: Integrate with Cloudflare KV for caching (configure namespace, TTL 300 seconds)
+      - Task 3: Implement cache logic (cache get/set, cache hit/miss)
+      - Task 4: Implement cache invalidation (invalidate after submission, update, deletion)
+      - Task 5: Create stats API endpoint (GET /api/stats)
+      - Task 6: Optimize database queries (indexes on predicted_date, efficient queries)
+      - Task 7: Write automated tests (90%+ coverage)
+      - Task 8: Add performance monitoring (log cache hit/miss, track calculation time)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Calculate weighted median (use Story 2.9 algorithm)
+    AC2: Calculate min/max/count (database queries: MIN, MAX, COUNT)
+    AC3: Caching strategy (Cloudflare KV, key: stats:latest, TTL: 300 seconds)
+    AC4: Cache invalidation (invalidate on new submission, update, deletion)
+    AC5: GET /api/stats endpoint returns median, min, max, count, cached_at
+    AC6: Cache hit response time &lt; 50ms (FR12 target)
+    AC7: Cache miss response time &lt; 200ms (FR12 target)
+    AC8: Automated tests covering main functionality (90%+ coverage)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.10 Definition" snippet="Calculate min/max/count/median efficiently. Weighted median uses Story 2.9 algorithm. Cloudflare KV caching, 5-minute TTL. Cache invalidated on write operations. Cache hit < 50ms." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC10: Statistics Calculation & Caching" snippet="GET /api/stats returns median, min, max, count. Cloudflare KV, 5-minute TTL. Cache invalidated on new submission, update, deletion. Cache hit < 50ms." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Statistics Calculation Workflow" snippet="Complete workflow: GET request → rate limit → cache check → cache miss → DB query → calculate median → cache → return JSON." />
+      <doc path="docs/architecture.md" title="System Architecture" section="API Contracts - GET /api/stats" snippet="Request format, success response (200 OK), Cache-Control headers, rate limit 60/min." />
+      <doc path="docs/architecture.md" title="System Architecture" section="Performance Considerations: Caching" snippet="Cache strategy, TTL, invalidation patterns." />
+      <doc path="docs/sprint-artifacts/stories/2-9-weighted-median-algorithm-implementation.md" title="Story 2.9" section="Reference" snippet="Import calculateWeightedMedian() function. Pre-calculated weights stored in database." />
+      <doc path="docs/sprint-artifacts/stories/2-6-rate-limiting-per-ip-address.md" title="Story 2.6" section="Reference" snippet="Cloudflare KV usage patterns. Atomic operations. Rate limit middleware (60/min for stats endpoint)." />
+    </docs>
+    <code>
+      <file path="src/utils/weighted-median.ts" kind="utility" symbol="calculateWeightedMedian" lines="1-150" reason="Import for weighted median calculation in statistics" />
+      <file path="src/middleware/rate-limiter.ts" kind="middleware" symbol="rateLimitMiddleware" lines="1-150" reason="Rate limiting (60/min for stats endpoint)" />
+      <file path="src/index.ts" kind="main" symbol="Hono app" lines="1-100" reason="Register GET /api/stats route" />
+      <file path="src/routes/predict.ts" kind="route" symbol="POST/PUT handlers" lines="1-300" reason="Integrate cache invalidation after successful submission/update" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework for API routes" />
+        <package name="dayjs" version="^1.11.19" usage="Timestamp generation for cached_at field" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers integration tests" />
+      </node>
+      <cloudflare>
+        <service name="Cloudflare KV" namespace="gta6-stats-cache" usage="Statistics caching with 5-minute TTL" />
+        <service name="Cloudflare D1" binding="DB" usage="Query min/max/count/predictions for statistics" />
+      </cloudflare>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Cache key: stats:latest (single cache entry for all stats)
+    - Cache TTL: 300 seconds (5 minutes per FR12)
+    - Cache value: JSON string with median, min, max, count, cached_at
+    - Cache invalidation: Write-through pattern (invalidate on submission, update, deletion)
+    - Database queries: MIN(predicted_date), MAX(predicted_date), COUNT(*) in single query if possible
+    - Index required: predictions.predicted_date (for min/max performance)
+    - Weighted median: Import from Story 2.9, use pre-calculated weights
+    - Response format: JSON with median (weighted), min (unweighted), max (unweighted), count, cached_at timestamp
+    - Cache-Control header: public, max-age=300
+    - X-Cache header: HIT or MISS (for monitoring)
+    - Rate limit: 60/min per IP (generous, cached response)
+    - Testing: 90%+ coverage for statistics service (ADR-011)
+    - Test location: src/services/statistics.service.test.ts, src/routes/stats.test.ts
+    - Monitor cache hit ratio: Aim for >80%
+  </constraints>
+
+  <interfaces>
+    <interface name="GET /api/stats" kind="REST endpoint" signature="GET /api/stats → 200 OK {median, min, max, count, cached_at}" path="src/routes/stats.ts" />
+    <interface name="StatisticsService.calculate" kind="Service method" signature="async calculate(db: D1Database): Promise&lt;StatsResponse&gt;" path="src/services/statistics.service.ts" />
+    <interface name="StatsResponse" kind="TypeScript interface" signature="{ median: string; min: string; max: string; count: number; cached_at: string }" path="src/types/index.ts" />
+    <interface name="KV.get/put/delete" kind="Cloudflare KV API" signature="await kv.get('stats:latest'); await kv.put('stats:latest', json, {expirationTtl: 300}); await kv.delete('stats:latest')" path="Cloudflare KV API" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: src/services/statistics.service.test.ts, src/routes/stats.test.ts. Coverage target: 90%+. Mock Cloudflare KV and D1 for predictable testing. Test patterns: Cache hit/miss, cache invalidation, database queries, response format. Performance tests for response time targets.
+    </standards>
+    <locations>
+      src/services/statistics.service.test.ts (unit tests for statistics calculation logic)
+      src/routes/stats.test.ts (integration tests for GET /api/stats endpoint)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test weighted median calculation integration (use mock predictions with different weights)" />
+      <test ac="AC2" idea="Test min/max/count queries return correct values from database" />
+      <test ac="AC3" idea="Test cache miss: Statistics calculated, stored in KV with TTL 300s" />
+      <test ac="AC3" idea="Test cache hit: Cached stats returned immediately without DB query" />
+      <test ac="AC4" idea="Test cache invalidation: After submission, cache key deleted" />
+      <test ac="AC4" idea="Test cache invalidation: After update, cache key deleted" />
+      <test ac="AC5" idea="Test GET /api/stats response format includes all required fields (median, min, max, count, cached_at)" />
+      <test ac="AC6" idea="Performance test: Cache hit response time < 50ms" />
+      <test ac="AC7" idea="Performance test: Cache miss response time < 200ms (with 100 predictions)" />
+      <test ac="AC8" idea="Test X-Cache header: HIT on cache hit, MISS on cache miss" />
+      <test ac="AC8" idea="Test Cache-Control header: public, max-age=300" />
+      <test ac="AC8" idea="Test with empty database: Returns appropriate default values or error" />
+    </ideas>
+  </tests>
+</story-context>
