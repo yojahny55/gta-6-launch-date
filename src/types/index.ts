@@ -33,6 +33,18 @@ export interface Stats {
   total: number; // Total predictions count
 }
 
+/**
+ * Statistics API response interface
+ * Returned by GET /api/stats endpoint (Story 2.10)
+ */
+export interface StatsApiResponse {
+  median: string; // Weighted median date (ISO 8601: YYYY-MM-DD)
+  min: string; // Earliest prediction date
+  max: string; // Latest prediction date
+  count: number; // Total prediction count
+  cached_at: string; // ISO 8601 timestamp when stats were calculated
+}
+
 export interface PredictionResponse {
   success: true;
   data: {
@@ -151,4 +163,5 @@ export interface Env {
   TURNSTILE_SECRET_KEY: string; // Cloudflare Turnstile secret key (Story 2.5B)
   TURNSTILE_SITE_KEY?: string; // Cloudflare Turnstile site key (public, optional in backend)
   gta6_rate_limit?: KVNamespace; // Cloudflare KV for rate limiting (Story 2.6)
+  gta6_stats_cache?: KVNamespace; // Cloudflare KV for statistics caching (Story 2.10)
 }

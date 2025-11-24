@@ -29,6 +29,7 @@ import {
 import { hashRequestIP } from '../utils/ip-hash';
 import { verifyAndEvaluateTurnstile } from '../utils/turnstile';
 import { calculateWeight } from '../utils/weighted-median';
+import { invalidateStatsCache } from '../services/statistics.service';
 
 /**
  * Create prediction submission routes
@@ -159,6 +160,9 @@ export function createPredictRoutes() {
         // Get the inserted prediction_id
         const predictionId = insertResult.meta.last_row_id;
 
+        // Invalidate stats cache after successful submission (Story 2.10)
+        await invalidateStatsCache(c.env.gta6_stats_cache);
+
         // Set cookie in response if new
         if (isNewCookie) {
           const cookieOptions = getDefaultCookieOptions();
@@ -224,6 +228,9 @@ export function createPredictRoutes() {
 
             if (retryResult.success) {
               const predictionId = retryResult.meta.last_row_id;
+
+              // Invalidate stats cache after successful submission (Story 2.10)
+              await invalidateStatsCache(c.env.gta6_stats_cache);
 
               // Set new cookie in response
               const cookieOptions = getDefaultCookieOptions();
@@ -481,6 +488,9 @@ export function createPredictRoutes() {
           return c.json(errorResponse, 500);
         }
 
+        // Invalidate stats cache after successful update (Story 2.10)
+        await invalidateStatsCache(c.env.gta6_stats_cache);
+
         // Step 11: Log successful update
         console.log('Prediction updated', {
           cookie_id_prefix: cookieId.substring(0, 8),
@@ -525,6 +535,9 @@ export function createPredictRoutes() {
             .run();
 
           if (retryResult.success && retryResult.meta.changes > 0) {
+            // Invalidate stats cache after successful update (Story 2.10)
+            await invalidateStatsCache(c.env.gta6_stats_cache);
+
             console.log('Prediction updated (IP conflict resolved - kept original IP)', {
               cookie_id_prefix: cookieId.substring(0, 8),
               predicted_date,

@@ -19,6 +19,12 @@ database_id = "150217ee-5408-406e-98be-37b15a8e5990"
 binding = "gta6_rate_limit"
 id = "c7c91030ebcc45038f17419f1e48de45"  # Replace after creating namespace
 
+# KV namespace for statistics caching (Story 2.10)
+# Note: KV namespace must be created via: wrangler kv namespace create "gta6-stats-cache"
+[[kv_namespaces]]
+binding = "gta6_stats_cache"
+id = "c93739a812ea477d8cbba96d4b23e469"  # Replace after creating namespace
+
 # Production environment configuration
 [env.production]
 name = "gta6-tracker"

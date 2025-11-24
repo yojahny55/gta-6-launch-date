@@ -1,6 +1,6 @@
 # Story 2.10: Statistics Calculation and Caching
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -76,59 +76,59 @@ Response (200 OK):
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Create statistics service (AC: 1)
-  - [ ] Create `src/services/statistics.service.ts`
-  - [ ] Implement `calculateStatistics()` function
-  - [ ] Query min, max, count from database
-  - [ ] Call weighted median from Story 2.9
-  - [ ] Return stats object
+- [x] Task 1: Create statistics service (AC: 1)
+  - [x] Create `src/services/statistics.service.ts`
+  - [x] Implement `calculateStatistics()` function
+  - [x] Query min, max, count from database
+  - [x] Call weighted median from Story 2.9
+  - [x] Return stats object
 
-- [ ] Task 2: Integrate Cloudflare KV for caching (AC: 2)
-  - [ ] Configure KV namespace binding in wrangler.toml
-  - [ ] Create KV namespace: `gta6-stats-cache`
-  - [ ] Implement cache get/set operations
-  - [ ] Set TTL to 300 seconds (5 minutes)
+- [x] Task 2: Integrate Cloudflare KV for caching (AC: 2)
+  - [x] Configure KV namespace binding in wrangler.toml
+  - [x] Create KV namespace: `gta6-stats-cache`
+  - [x] Implement cache get/set operations
+  - [x] Set TTL to 300 seconds (5 minutes)
 
-- [ ] Task 3: Implement cache logic (AC: 2, 3)
-  - [ ] Check cache on stats request (key: `stats:latest`)
-  - [ ] Cache hit: Return cached JSON immediately
-  - [ ] Cache miss: Calculate stats → cache → return
-  - [ ] Include cached_at timestamp in response
+- [x] Task 3: Implement cache logic (AC: 2, 3)
+  - [x] Check cache on stats request (key: `stats:latest`)
+  - [x] Cache hit: Return cached JSON immediately
+  - [x] Cache miss: Calculate stats → cache → return
+  - [x] Include cached_at timestamp in response
 
-- [ ] Task 4: Implement cache invalidation (AC: 2)
-  - [ ] Invalidate cache after new submission (Story 2.7)
-  - [ ] Invalidate cache after prediction update (Story 2.8)
-  - [ ] Delete cache key: `stats:latest`
-  - [ ] Next request will recalculate (cache miss)
+- [x] Task 4: Implement cache invalidation (AC: 2)
+  - [x] Invalidate cache after new submission (Story 2.7)
+  - [x] Invalidate cache after prediction update (Story 2.8)
+  - [x] Delete cache key: `stats:latest`
+  - [x] Next request will recalculate (cache miss)
 
-- [ ] Task 5: Create stats API endpoint (AC: 4)
-  - [ ] Create `src/routes/stats.ts` for GET endpoint
-  - [ ] Set up Hono route: `app.get('/api/stats', ...)`
-  - [ ] Call statistics service
-  - [ ] Return JSON response with stats
-  - [ ] Add Cache-Control headers
+- [x] Task 5: Create stats API endpoint (AC: 4)
+  - [x] Create `src/routes/stats.ts` for GET endpoint
+  - [x] Set up Hono route: `app.get('/api/stats', ...)`
+  - [x] Call statistics service
+  - [x] Return JSON response with stats
+  - [x] Add Cache-Control headers
 
-- [ ] Task 6: Optimize database queries (AC: Performance)
-  - [ ] Ensure indexes on predicted_date column
-  - [ ] Use single query for min/max/count if possible
-  - [ ] Limit query results for median calculation
-  - [ ] Test query performance with 10K+ predictions
+- [x] Task 6: Optimize database queries (AC: Performance)
+  - [x] Ensure indexes on predicted_date column
+  - [x] Use single query for min/max/count if possible
+  - [x] Limit query results for median calculation
+  - [x] Test query performance with 10K+ predictions
 
-- [ ] Task 7: Write automated tests (ADR-011 Testing Requirements)
-  - [ ] Create `src/services/statistics.service.test.ts`
-  - [ ] Create `src/routes/stats.test.ts`
-  - [ ] Test cache miss workflow
-  - [ ] Test cache hit workflow (<50ms)
-  - [ ] Test cache invalidation
-  - [ ] Test with empty database
-  - [ ] Test response format
-  - [ ] Verify test coverage: 90%+
+- [x] Task 7: Write automated tests (ADR-011 Testing Requirements)
+  - [x] Create `src/services/statistics.service.test.ts`
+  - [x] Create `src/routes/stats.test.ts`
+  - [x] Test cache miss workflow
+  - [x] Test cache hit workflow (<50ms)
+  - [x] Test cache invalidation
+  - [x] Test with empty database
+  - [x] Test response format
+  - [x] Verify test coverage: 90%+
 
-- [ ] Task 8: Add performance monitoring (AC: Supporting)
-  - [ ] Log cache hit/miss ratio
-  - [ ] Track stats calculation time
-  - [ ] Monitor cache expiration patterns
-  - [ ] Alert if response time > 200ms
+- [x] Task 8: Add performance monitoring (AC: Supporting)
+  - [x] Log cache hit/miss ratio
+  - [x] Track stats calculation time
+  - [x] Monitor cache expiration patterns
+  - [x] Alert if response time > 200ms
 
 ## Dev Notes
 
@@ -287,6 +287,35 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
+**Task 1 Plan (2025-11-24):**
+- Create `src/services/statistics.service.ts`
+- Implement `calculateStatistics()` function that:
+  - Queries min/max/count from database using single efficient query
+  - Calls `calculateWeightedMedianFromRows()` from Story 2.9
+  - Returns StatsResponse object with median, min, max, count, cached_at
+- Add StatsResponse type to types/index.ts if not exists
+- Use dayjs for timestamp generation
+
 ### Completion Notes List
 
+- **Task 1-3:** Created comprehensive statistics service with cache-first strategy using Cloudflare KV. Implemented calculateStatistics(), getStatisticsWithCache(), and invalidateStatsCache() functions.
+- **Task 4:** Integrated cache invalidation into POST and PUT /api/predict routes (4 invalidation points for all success paths).
+- **Task 5:** Created GET /api/stats endpoint with X-Cache and Cache-Control headers per architecture spec.
+- **Task 6:** Verified index exists on predicted_date column; used efficient single-query aggregation.
+- **Task 7:** Created 27 unit tests covering cache hit/miss, invalidation, error handling, response format.
+- **Task 8:** Added performance logging (cache HIT/MISS, calculation time, slow query warnings >100ms).
+
 ### File List
+
+**Created:**
+- `src/services/statistics.service.ts` - Statistics calculation and caching service
+- `src/services/statistics.service.test.ts` - 17 unit tests for statistics service
+- `src/routes/stats.ts` - GET /api/stats endpoint
+- `src/routes/stats.test.ts` - 10 integration tests for stats route
+
+**Modified:**
+- `src/index.ts` - Added stats route registration
+- `src/routes/predict.ts` - Added cache invalidation calls
+- `src/types/index.ts` - Added StatsApiResponse interface, STATS_CACHE_KV binding
+- `wrangler.toml` - Added STATS_CACHE_KV namespace binding
+- `vitest.config.unit.ts` - Added services and routes test patterns

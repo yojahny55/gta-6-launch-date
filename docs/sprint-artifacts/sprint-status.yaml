@@ -62,7 +62,7 @@ development_status:
   2-7-prediction-submission-api-endpoint: done  # Review completed 2025-11-24 (APPROVED)
   2-8-prediction-update-api-endpoint: done  # Review completed 2025-11-24 (APPROVED)
   2-9-weighted-median-algorithm-implementation: done  # Review completed 2025-11-24 (APPROVED)
-  2-10-statistics-calculation-and-caching: ready-for-dev
+  2-10-statistics-calculation-and-caching: review
   epic-2-retrospective: optional
 
   # Epic 3: Results Display & User Feedback
