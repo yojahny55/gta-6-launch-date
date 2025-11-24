@@ -1,7 +1,11 @@
 import { Hono } from 'hono';
 import type { Env } from './types';
+import { rateLimitMiddleware } from './middleware/rate-limiter';
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Apply rate limiting middleware to all API routes
+app.use('/api/*', rateLimitMiddleware);
 
 app.get('/', (c) => {
   return c.text('GTA 6 Launch Date Prediction Tracker - API');

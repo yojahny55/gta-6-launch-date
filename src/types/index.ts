@@ -119,6 +119,28 @@ export interface TurnstileVerificationResult {
   'error-codes'?: string[]; // Cloudflare API error codes
 }
 
+/**
+ * Rate limit check result interface
+ * Used by rate limiter middleware (Story 2.6)
+ */
+export interface RateLimitResult {
+  allowed: boolean; // true = request allowed, false = rate limit exceeded
+  remaining: number; // requests remaining in current window
+  resetAt: number; // Unix timestamp when limit resets
+  limit: number; // maximum requests per window
+  error?: string; // error message if KV operation failed (fail-open)
+}
+
+/**
+ * Rate limit configuration per endpoint
+ * Used by rate limiter middleware (Story 2.6)
+ */
+export interface RateLimitConfig {
+  limit: number; // max requests per window
+  windowSeconds: number; // window size in seconds (typically 60)
+  endpoint: string; // endpoint identifier (e.g., 'submit', 'update', 'stats')
+}
+
 // Cloudflare Workers Environment
 export interface Env {
   DB: D1Database; // D1 database binding (Story 1.2)
@@ -128,4 +150,5 @@ export interface Env {
   RECAPTCHA_SITE_KEY?: string; // DEPRECATED: reCAPTCHA v3 site key (Story 2.5)
   TURNSTILE_SECRET_KEY: string; // Cloudflare Turnstile secret key (Story 2.5B)
   TURNSTILE_SITE_KEY?: string; // Cloudflare Turnstile site key (public, optional in backend)
+  gta6_rate_limit?: KVNamespace; // Cloudflare KV for rate limiting (Story 2.6)
 }

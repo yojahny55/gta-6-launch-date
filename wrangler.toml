@@ -13,6 +13,12 @@ binding = "DB"
 database_name = "gta6-predictions"
 database_id = "150217ee-5408-406e-98be-37b15a8e5990"
 
+# KV namespace for rate limiting (Story 2.6)
+# Note: KV namespace must be created via: wrangler kv namespace create "gta6-rate-limit"
+[[kv_namespaces]]
+binding = "gta6_rate_limit"
+id = "c7c91030ebcc45038f17419f1e48de45"  # Replace after creating namespace
+
 # Production environment configuration
 [env.production]
 name = "gta6-tracker"
