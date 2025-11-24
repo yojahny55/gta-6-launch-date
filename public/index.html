@@ -6,6 +6,10 @@
   <title>GTA 6 Launch Date Prediction Tracker</title>
   <meta name="description" content="Community-driven predictions for GTA 6 launch date. Submit your prediction and see what others think!">
   <link rel="stylesheet" href="/styles.css">
+
+  <!-- Cloudflare Turnstile (Story 2.5B) -->
+  <!-- Load asynchronously to avoid blocking page load -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
   <div id="app" class="container mx-auto px-4 py-8">
@@ -34,6 +38,9 @@
 
       <div id="validation-message" class="hidden" role="alert" aria-live="polite"></div>
 
+      <!-- Turnstile widget container (invisible managed mode) -->
+      <div id="turnstile-container"></div>
+
       <button
         type="submit"
         class="btn btn-primary w-full"
@@ -47,6 +54,14 @@
       <!-- Statistics will be displayed here -->
     </div>
   </div>
+
+  <!-- Cloudflare Turnstile Badge (Required by Cloudflare ToS) -->
+  <!-- Badge appears in bottom-right corner (AC: visible but non-intrusive) -->
+  <footer class="fixed bottom-0 right-0 text-xs text-gray-500 p-2">
+    This site is protected by Cloudflare Turnstile.
+    <a href="https://www.cloudflare.com/privacypolicy/" class="underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+  </footer>
+
   <script src="/app.js"></script>
 </body>
 </html>

@@ -331,15 +331,15 @@ describe('PredictionRequestSchema - Valid Requests', () => {
   it('should accept valid prediction request', () => {
     const request = {
       predicted_date: '2026-11-19',
-      recaptcha_token: '03AGdBq25...',
+      turnstile_token: '0x1aBcDeFg...',
     };
     expect(() => PredictionRequestSchema.parse(request)).not.toThrow();
   });
 
-  it('should accept request with long reCAPTCHA token', () => {
+  it('should accept request with long Turnstile token', () => {
     const request = {
       predicted_date: '2026-11-19',
-      recaptcha_token: 'x'.repeat(1000),
+      turnstile_token: 'x'.repeat(1000),
     };
     expect(() => PredictionRequestSchema.parse(request)).not.toThrow();
   });
@@ -347,7 +347,7 @@ describe('PredictionRequestSchema - Valid Requests', () => {
   it('should accept request with min date', () => {
     const request = {
       predicted_date: '2025-01-01',
-      recaptcha_token: 'token123',
+      turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).not.toThrow();
   });
@@ -355,7 +355,7 @@ describe('PredictionRequestSchema - Valid Requests', () => {
   it('should accept request with max date', () => {
     const request = {
       predicted_date: '2125-12-31',
-      recaptcha_token: 'token123',
+      turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).not.toThrow();
   });
@@ -365,7 +365,7 @@ describe('PredictionRequestSchema - Invalid Requests', () => {
   it('should reject request with invalid date format', () => {
     const request = {
       predicted_date: '11/19/2026',
-      recaptcha_token: 'token123',
+      turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).toThrow();
   });
@@ -373,7 +373,7 @@ describe('PredictionRequestSchema - Invalid Requests', () => {
   it('should reject request with date before min', () => {
     const request = {
       predicted_date: '2024-12-31',
-      recaptcha_token: 'token123',
+      turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).toThrow();
   });
@@ -381,27 +381,27 @@ describe('PredictionRequestSchema - Invalid Requests', () => {
   it('should reject request with date after max', () => {
     const request = {
       predicted_date: '2126-01-01',
-      recaptcha_token: 'token123',
+      turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).toThrow();
   });
 
-  it('should reject request with empty reCAPTCHA token', () => {
+  it('should reject request with empty Turnstile token', () => {
     const request = {
       predicted_date: '2026-11-19',
-      recaptcha_token: '',
+      turnstile_token: '',
     };
     expect(() => PredictionRequestSchema.parse(request)).toThrow();
   });
 
   it('should reject request with missing predicted_date', () => {
     const request = {
-      recaptcha_token: 'token123',
+      turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).toThrow();
   });
 
-  it('should reject request with missing recaptcha_token', () => {
+  it('should reject request with missing turnstile_token', () => {
     const request = {
       predicted_date: '2026-11-19',
     };

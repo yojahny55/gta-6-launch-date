@@ -91,9 +91,41 @@ export interface UserAgentValidationResult {
   sanitized?: string;
 }
 
+/**
+ * reCAPTCHA verification result interface
+ * Used by reCAPTCHA utility functions (Story 2.5)
+ * DEPRECATED: Replaced by TurnstileVerificationResult (Story 2.5B)
+ */
+export interface RecaptchaVerificationResult {
+  success: boolean;
+  score: number; // 0.0 (bot) to 1.0 (human)
+  action?: string; // Action name from frontend (e.g., 'submit_prediction')
+  challenge_ts?: string; // ISO 8601 timestamp of challenge
+  hostname?: string; // Hostname where reCAPTCHA was executed
+  'error-codes'?: string[]; // Google API error codes
+}
+
+/**
+ * Cloudflare Turnstile verification result interface
+ * Used by Turnstile utility functions (Story 2.5B)
+ *
+ * Simpler than reCAPTCHA: Boolean success (no score threshold)
+ * Replaces RecaptchaVerificationResult per ADR-013
+ */
+export interface TurnstileVerificationResult {
+  success: boolean; // Challenge-based: true = passed, false = failed
+  challenge_ts?: string; // ISO 8601 timestamp of challenge completion
+  hostname?: string; // Hostname where Turnstile was executed
+  'error-codes'?: string[]; // Cloudflare API error codes
+}
+
 // Cloudflare Workers Environment
 export interface Env {
   DB: D1Database; // D1 database binding (Story 1.2)
   IP_HASH_SALT: string; // Legacy salt (deprecated - use SALT_V1)
   SALT_V1: string; // Versioned salt for IP hashing (Story 2.2, FR79)
+  RECAPTCHA_SECRET_KEY?: string; // DEPRECATED: reCAPTCHA v3 secret key (Story 2.5) - kept for backward compatibility
+  RECAPTCHA_SITE_KEY?: string; // DEPRECATED: reCAPTCHA v3 site key (Story 2.5)
+  TURNSTILE_SECRET_KEY: string; // Cloudflare Turnstile secret key (Story 2.5B)
+  TURNSTILE_SITE_KEY?: string; // Cloudflare Turnstile site key (public, optional in backend)
 }

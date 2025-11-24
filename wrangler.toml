@@ -3,6 +3,10 @@ main = "src/index.ts"
 compatibility_date = "2025-11-09"
 compatibility_flags = ["nodejs_compat"]
 
+# Global environment variables (apply to all environments)
+[vars]
+TURNSTILE_SITE_KEY = "0x4AAAAAACCQiDtgUQCqo0gC"  # Public - safe to commit
+
 # D1 Database binding
 [[d1_databases]]
 binding = "DB"

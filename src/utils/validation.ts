@@ -127,16 +127,17 @@ export const UserAgentSchema = z
  * Zod schema for prediction submission request
  *
  * Used by POST /api/predict and PUT /api/predict endpoints
+ * Updated to use Cloudflare Turnstile (Story 2.5B)
  *
  * @example
  * PredictionRequestSchema.parse({
  *   predicted_date: '2026-11-19',
- *   recaptcha_token: '03AGdBq25...'
+ *   turnstile_token: '0x1aBcDeFg...'
  * }) // OK
  */
 export const PredictionRequestSchema = z.object({
   predicted_date: DateSchema,
-  recaptcha_token: z.string().min(1, 'reCAPTCHA token is required'),
+  turnstile_token: z.string().min(1, 'Turnstile token is required'),
 });
 
 /**

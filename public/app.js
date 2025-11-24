@@ -268,14 +268,93 @@ function showValidationMessage(message, type = 'error') {
 }
 
 /**
- * Handle form submission with validation (Story 2.3, Task 3)
+ * Cloudflare Turnstile Configuration (Story 2.5B)
+ * IMPORTANT: Replace with actual site key from Cloudflare Turnstile Dashboard
+ */
+const TURNSTILE_SITE_KEY = '0x4AAAAAACCQiDtgUQCqo0gC'; // TODO: Set from environment variable or build config
+
+/**
+ * Track if Turnstile widget has been rendered
+ * Prevents multiple render calls on the same container
+ */
+let turnstileWidgetId = null;
+
+/**
+ * Execute Cloudflare Turnstile and get token
+ * Implements AC1 (Frontend Turnstile execution)
+ *
+ * Uses managed mode (invisible) - no user interaction required for most users
+ * Widget renders in background and completes challenge automatically
+ *
+ * @returns {Promise<string>} Turnstile token
+ * @throws {Error} If turnstile not loaded or execution fails
+ */
+function executeTurnstile() {
+  return new Promise((resolve, reject) => {
+    // Check if turnstile is loaded
+    if (typeof turnstile === 'undefined' || !turnstile.render) {
+      console.warn('Turnstile not loaded. Allowing submission without verification (degraded mode).');
+      // Return empty token - backend will handle gracefully (fail open)
+      resolve('');
+      return;
+    }
+
+    try {
+      // Remove previous widget if exists
+      if (turnstileWidgetId !== null) {
+        try {
+          turnstile.remove(turnstileWidgetId);
+          turnstileWidgetId = null;
+        } catch (removeError) {
+          console.warn('Could not remove previous Turnstile widget:', removeError);
+        }
+      }
+
+      // Render Turnstile widget (managed mode - invisible to most users)
+      // AC1: Execute Turnstile on form submit
+      turnstileWidgetId = turnstile.render('#turnstile-container', {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: function(token) {
+          // Challenge completed successfully
+          console.log('Turnstile token generated successfully');
+          resolve(token);
+        },
+        'error-callback': function() {
+          // Challenge failed or error occurred
+          console.warn('Turnstile challenge failed. Allowing submission (degraded mode).');
+          // Return empty token - backend will handle gracefully (fail open)
+          resolve('');
+        },
+        'timeout-callback': function() {
+          // Challenge timed out
+          console.warn('Turnstile challenge timed out. Allowing submission (degraded mode).');
+          // Return empty token - backend will handle gracefully (fail open)
+          resolve('');
+        }
+      });
+    } catch (error) {
+      console.error('Turnstile execution failed:', error);
+      // Return empty token - backend will handle gracefully (fail open)
+      resolve('');
+    }
+  });
+}
+
+/**
+ * Handle form submission with validation and Turnstile (Story 2.3, Story 2.5B)
+ * Updated workflow:
+ * 1. Validate date (Story 2.3)
+ * 2. Execute Cloudflare Turnstile (Story 2.5B)
+ * 3. Send to API endpoint with token (Story 2.7 - future)
+ *
  * @param {Event} event - Form submit event
  */
-function handleFormSubmit(event) {
+async function handleFormSubmit(event) {
   event.preventDefault();
 
   const dateInput = document.getElementById('predicted-date');
   const dateValue = dateInput.value;
+  const submitButton = event.target.querySelector('button[type="submit"]');
 
   // Clear previous validation messages
   showValidationMessage(null);
@@ -289,9 +368,37 @@ function handleFormSubmit(event) {
     return;
   }
 
-  // TODO (Story 2.7): Send to API endpoint
-  console.log('Date validated successfully:', dateValue);
-  showValidationMessage('Prediction validated! (API integration pending)', 'success');
+  // Disable submit button to prevent double submission
+  submitButton.disabled = true;
+  submitButton.textContent = 'Verifying...';
+
+  try {
+    // Execute Cloudflare Turnstile (AC1: Frontend execution)
+    const turnstileToken = await executeTurnstile();
+
+    if (!turnstileToken) {
+      console.warn('Turnstile token is empty. Proceeding anyway (degraded mode).');
+    }
+
+    // TODO (Story 2.7): Send to API endpoint
+    console.log('Date validated successfully:', dateValue);
+    console.log('Turnstile token:', turnstileToken ? 'Generated' : 'Empty (degraded mode)');
+
+    showValidationMessage(
+      'Prediction validated! Turnstile executed. (API integration pending)',
+      'success'
+    );
+  } catch (error) {
+    console.error('Form submission error:', error);
+    showValidationMessage(
+      'An unexpected error occurred. Please try again.',
+      'error'
+    );
+  } finally {
+    // Re-enable submit button
+    submitButton.disabled = false;
+    submitButton.textContent = 'Submit Prediction';
+  }
 }
 
 /**
