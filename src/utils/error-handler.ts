@@ -18,6 +18,16 @@
  * }
  */
 
+import type { ZodError } from 'zod';
+
+/**
+ * Extended Error constructor interface for V8 engines that support captureStackTrace
+ */
+interface ErrorConstructorWithCaptureStackTrace extends ErrorConstructor {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  captureStackTrace?(targetObject: object, constructorOpt?: new (...args: any[]) => any): void;
+}
+
 /**
  * Error codes for standardized API responses
  */
@@ -60,8 +70,9 @@ export class ValidationError extends Error {
     this.field = field;
 
     // Maintain proper stack trace (only in V8 engines like Node.js)
-    if (typeof (Error as any).captureStackTrace === 'function') {
-      (Error as any).captureStackTrace(this, ValidationError);
+    const ErrorWithCapture = Error as ErrorConstructorWithCaptureStackTrace;
+    if (typeof ErrorWithCapture.captureStackTrace === 'function') {
+      ErrorWithCapture.captureStackTrace(this, ValidationError);
     }
   }
 }
@@ -79,8 +90,9 @@ export class RateLimitError extends Error {
     super(message);
     this.name = 'RateLimitError';
 
-    if (typeof (Error as any).captureStackTrace === 'function') {
-      (Error as any).captureStackTrace(this, RateLimitError);
+    const ErrorWithCapture = Error as ErrorConstructorWithCaptureStackTrace;
+    if (typeof ErrorWithCapture.captureStackTrace === 'function') {
+      ErrorWithCapture.captureStackTrace(this, RateLimitError);
     }
   }
 }
@@ -98,8 +110,9 @@ export class NotFoundError extends Error {
     super(message);
     this.name = 'NotFoundError';
 
-    if (typeof (Error as any).captureStackTrace === 'function') {
-      (Error as any).captureStackTrace(this, NotFoundError);
+    const ErrorWithCapture = Error as ErrorConstructorWithCaptureStackTrace;
+    if (typeof ErrorWithCapture.captureStackTrace === 'function') {
+      ErrorWithCapture.captureStackTrace(this, NotFoundError);
     }
   }
 }
@@ -186,7 +199,7 @@ export function formatErrorResponse(
  * //   }
  * // }
  */
-export function formatZodError(zodError: any): ErrorResponse {
+export function formatZodError(zodError: ZodError): ErrorResponse {
   const firstError = zodError.errors?.[0];
 
   if (!firstError) {

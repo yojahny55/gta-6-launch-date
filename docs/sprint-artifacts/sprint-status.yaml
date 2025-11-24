@@ -59,7 +59,7 @@ development_status:
   2-5-recaptcha-v3-integration-for-bot-protection: deprecated  # Replaced by 2-5b (Google Cloud cost constraint)
   2-5b-cloudflare-turnstile-integration: done  # Replaces 2-5 (zero-cost alternative) - Review completed 2025-11-21 (APPROVED)
   2-6-rate-limiting-per-ip-address: done  # Review completed 2025-11-24 (APPROVED)
-  2-7-prediction-submission-api-endpoint: ready-for-dev
+  2-7-prediction-submission-api-endpoint: review
   2-8-prediction-update-api-endpoint: ready-for-dev
   2-9-weighted-median-algorithm-implementation: ready-for-dev
   2-10-statistics-calculation-and-caching: ready-for-dev
