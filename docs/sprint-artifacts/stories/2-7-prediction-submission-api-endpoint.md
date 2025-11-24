@@ -1,6 +1,6 @@
 # Story 2.7: Prediction Submission API Endpoint
 
-Status: review
+Status: done
 
 ## Story
 
