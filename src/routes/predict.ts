@@ -28,50 +28,7 @@ import {
 } from '../utils/cookie';
 import { hashRequestIP } from '../utils/ip-hash';
 import { verifyAndEvaluateTurnstile } from '../utils/turnstile';
-
-/**
- * Calculate weight based on date reasonableness (Story 2.9)
- *
- * Weight formula: Predictions closer to reasonable dates get higher weight
- * - Reasonable range: 2026-01-01 to 2028-12-31 (high probability window)
- * - Outside this range: weight decreases
- *
- * Per tech spec, this is a placeholder until Story 2.9 implements full algorithm
- *
- * @param predictedDate - ISO 8601 date string (YYYY-MM-DD)
- * @returns Weight value between 0.1 and 1.0
- */
-function calculateWeight(predictedDate: string): number {
-  const date = new Date(predictedDate);
-  const now = new Date();
-
-  // Reasonable window: 2026-01-01 to 2028-12-31
-  const windowStart = new Date('2026-01-01');
-  const windowEnd = new Date('2028-12-31');
-
-  // Base weight
-  let weight = 1.0;
-
-  // If date is in the past relative to current date, reduce weight
-  if (date < now) {
-    weight = 0.1;
-  }
-  // If date is within reasonable window, full weight
-  else if (date >= windowStart && date <= windowEnd) {
-    weight = 1.0;
-  }
-  // If before reasonable window (2025), slightly reduce
-  else if (date < windowStart) {
-    weight = 0.8;
-  }
-  // If after reasonable window, reduce weight based on distance
-  else {
-    const yearsAfter = (date.getTime() - windowEnd.getTime()) / (365.25 * 24 * 60 * 60 * 1000);
-    weight = Math.max(0.1, 1.0 - yearsAfter * 0.1);
-  }
-
-  return weight;
-}
+import { calculateWeight } from '../utils/weighted-median';
 
 /**
  * Create prediction submission routes
