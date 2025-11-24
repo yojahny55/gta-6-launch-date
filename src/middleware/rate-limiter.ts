@@ -249,7 +249,9 @@ export async function rateLimitMiddleware(c: Context<{ Bindings: Env }>, next: N
 
   // Log rate limit violations for monitoring
   if (!result.allowed) {
-    console.warn(`Rate limit exceeded: IP=${ipHash.substring(0, 8)}... endpoint=${config.endpoint}`);
+    console.warn(
+      `Rate limit exceeded: IP=${ipHash.substring(0, 8)}... endpoint=${config.endpoint}`
+    );
   }
 
   // Add rate limit headers to response
@@ -335,7 +337,11 @@ export class RateLimiter {
    * @param limit - Maximum requests per window
    * @returns Rate limit result
    */
-  async checkLimitByHash(ipHash: string, endpoint: string, limit: number): Promise<RateLimitResult> {
+  async checkLimitByHash(
+    ipHash: string,
+    endpoint: string,
+    limit: number
+  ): Promise<RateLimitResult> {
     return checkRateLimit(this.kv, ipHash, endpoint, limit);
   }
 }

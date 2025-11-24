@@ -13,7 +13,14 @@ import { env } from 'cloudflare:test';
 import { Hono } from 'hono';
 import type { Env } from '../types';
 import { PredictionRequestSchema } from '../utils/validation';
-import { getCookie, validateCookieID, generateCookieID, setCookie, COOKIE_NAME, getDefaultCookieOptions } from '../utils/cookie';
+import {
+  getCookie,
+  validateCookieID,
+  generateCookieID,
+  setCookie,
+  COOKIE_NAME,
+  getDefaultCookieOptions,
+} from '../utils/cookie';
 import { hashRequestIP } from '../utils/ip-hash';
 
 // Variable to control Turnstile mock behavior
@@ -58,14 +65,17 @@ function createTestApp() {
 
       if (!validationResult.success) {
         const firstError = validationResult.error.errors[0];
-        return c.json({
-          success: false,
-          error: {
-            code: 'VALIDATION_ERROR',
-            message: firstError.message,
-            field: firstError.path.join('.'),
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'VALIDATION_ERROR',
+              message: firstError.message,
+              field: firstError.path.join('.'),
+            },
           },
-        }, 400);
+          400
+        );
       }
 
       const { predicted_date, turnstile_token } = validationResult.data;
@@ -80,26 +90,35 @@ function createTestApp() {
       }
 
       try {
-        ipHash = await hashRequestIP(c.req.raw, c.env.SALT_V1 || c.env.IP_HASH_SALT || 'test-salt-for-unit-tests');
+        ipHash = await hashRequestIP(
+          c.req.raw,
+          c.env.SALT_V1 || c.env.IP_HASH_SALT || 'test-salt-for-unit-tests'
+        );
       } catch (error) {
-        return c.json({
-          success: false,
-          error: {
-            code: 'SERVER_ERROR',
-            message: 'Unable to process request. Please try again.',
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'SERVER_ERROR',
+              message: 'Unable to process request. Please try again.',
+            },
           },
-        }, 500);
+          500
+        );
       }
 
       // Mock Turnstile verification
       if (!turnstileShouldPass) {
-        return c.json({
-          success: false,
-          error: {
-            code: 'BOT_DETECTED',
-            message: 'Verification failed. Please complete the challenge and try again.',
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'BOT_DETECTED',
+              message: 'Verification failed. Please complete the challenge and try again.',
+            },
           },
-        }, 503);
+          503
+        );
       }
 
       const weight = calculateWeight(predicted_date);
@@ -125,26 +144,35 @@ function createTestApp() {
           c.header('Set-Cookie', setCookie(COOKIE_NAME, cookieId, cookieOptions));
         }
 
-        return c.json({
-          success: true,
-          prediction_id: predictionId,
-          predicted_date,
-          message: 'Your prediction has been recorded!',
-        }, 201);
+        return c.json(
+          {
+            success: true,
+            prediction_id: predictionId,
+            predicted_date,
+            message: 'Your prediction has been recorded!',
+          },
+          201
+        );
       } catch (dbError) {
         const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown error';
 
         if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('ip_hash')) {
-          return c.json({
-            success: false,
-            error: {
-              code: 'VALIDATION_ERROR',
-              message: "You've already submitted a prediction. Use update instead.",
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: 'VALIDATION_ERROR',
+                message: "You've already submitted a prediction. Use update instead.",
+              },
             },
-          }, 409);
+            409
+          );
         }
 
-        if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('cookie_id')) {
+        if (
+          errorMessage.includes('UNIQUE constraint failed') &&
+          errorMessage.includes('cookie_id')
+        ) {
           if (!isNewCookie) {
             cookieId = generateCookieID();
             isNewCookie = true;
@@ -160,40 +188,52 @@ function createTestApp() {
               const predictionId = retryResult.meta.last_row_id;
               const cookieOptions = getDefaultCookieOptions();
               c.header('Set-Cookie', setCookie(COOKIE_NAME, cookieId, cookieOptions));
-              return c.json({
-                success: true,
-                prediction_id: predictionId,
-                predicted_date,
-                message: 'Your prediction has been recorded!',
-              }, 201);
+              return c.json(
+                {
+                  success: true,
+                  prediction_id: predictionId,
+                  predicted_date,
+                  message: 'Your prediction has been recorded!',
+                },
+                201
+              );
             }
           }
 
-          return c.json({
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: 'SERVER_ERROR',
+                message: 'Unable to process request. Please try again.',
+              },
+            },
+            500
+          );
+        }
+
+        return c.json(
+          {
             success: false,
             error: {
               code: 'SERVER_ERROR',
-              message: 'Unable to process request. Please try again.',
+              message: 'An error occurred while saving your prediction. Please try again.',
             },
-          }, 500);
-        }
-
-        return c.json({
+          },
+          500
+        );
+      }
+    } catch (error) {
+      return c.json(
+        {
           success: false,
           error: {
             code: 'SERVER_ERROR',
-            message: 'An error occurred while saving your prediction. Please try again.',
+            message: 'An unexpected error occurred. Please try again.',
           },
-        }, 500);
-      }
-    } catch (error) {
-      return c.json({
-        success: false,
-        error: {
-          code: 'SERVER_ERROR',
-          message: 'An unexpected error occurred. Please try again.',
         },
-      }, 500);
+        500
+      );
     }
   });
 
@@ -229,11 +269,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
   describe('Successful Submission (201 Created)', () => {
     it('should return 201 Created with prediction_id for valid submission', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const data = await response.json();
@@ -245,11 +289,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should store prediction in database with correct fields', async () => {
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT * FROM predictions LIMIT 1').first();
 
@@ -268,11 +316,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
         'CF-Connecting-IP': '203.0.113.2',
       };
 
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: headersNoCookie,
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: headersNoCookie,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const setCookieHeader = response.headers.get('Set-Cookie');
@@ -282,11 +334,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
     it('should calculate weight based on predicted date', async () => {
       // Date within reasonable window (2026-2028) should have weight 1.0
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ ...validRequest, predicted_date: '2027-06-15' }),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ ...validRequest, predicted_date: '2027-06-15' }),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT weight FROM predictions LIMIT 1').first();
       expect(result?.weight).toBe(1.0);
@@ -294,30 +350,42 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
     it('should accept dates at boundary values (MIN_DATE and MAX_DATE)', async () => {
       // Test MIN_DATE
-      const responseMin = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.10' },
-        body: JSON.stringify({ ...validRequest, predicted_date: '2025-01-01' }),
-      }, env);
+      const responseMin = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.10' },
+          body: JSON.stringify({ ...validRequest, predicted_date: '2025-01-01' }),
+        },
+        env
+      );
       expect(responseMin.status).toBe(201);
 
       // Test MAX_DATE
-      const responseMax = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.11' },
-        body: JSON.stringify({ ...validRequest, predicted_date: '2125-12-31' }),
-      }, env);
+      const responseMax = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.11' },
+          body: JSON.stringify({ ...validRequest, predicted_date: '2125-12-31' }),
+        },
+        env
+      );
       expect(responseMax.status).toBe(201);
     });
   });
 
   describe('Input Validation (400 Bad Request)', () => {
     it('should return 400 for missing predicted_date', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ turnstile_token: 'test-token' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ turnstile_token: 'test-token' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -326,11 +394,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should return 400 for missing turnstile_token', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ predicted_date: '2026-11-19' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ predicted_date: '2026-11-19' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -339,11 +411,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should return 400 for invalid date format (MM/DD/YYYY)', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ predicted_date: '11/19/2026', turnstile_token: 'test' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ predicted_date: '11/19/2026', turnstile_token: 'test' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -352,11 +428,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should return 400 for date before MIN_DATE (2025-01-01)', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ predicted_date: '2024-12-31', turnstile_token: 'test' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ predicted_date: '2024-12-31', turnstile_token: 'test' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -365,11 +445,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should return 400 for date after MAX_DATE (2125-12-31)', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ predicted_date: '2126-01-01', turnstile_token: 'test' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ predicted_date: '2126-01-01', turnstile_token: 'test' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -378,11 +462,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should return 400 for invalid calendar date (Feb 30)', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ predicted_date: '2026-02-30', turnstile_token: 'test' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ predicted_date: '2026-02-30', turnstile_token: 'test' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -391,21 +479,29 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should return 400 for malformed JSON', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: '{invalid-json}',
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: '{invalid-json}',
+        },
+        env
+      );
 
       expect(response.status).toBe(500);
     });
 
     it('should return 400 for empty request body', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({}),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({}),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -416,22 +512,30 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
   describe('IP UNIQUE Constraint (409 Conflict)', () => {
     it('should return 409 for duplicate IP submission', async () => {
       // First submission - should succeed
-      const response1 = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response1 = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
       expect(response1.status).toBe(201);
 
       // Second submission from same IP - should fail with 409
-      const response2 = await app.request('/api/predict', {
-        method: 'POST',
-        headers: {
-          ...testHeaders,
-          Cookie: 'gta6_user_id=660e8400-e29b-41d4-a716-446655440001', // Different cookie
+      const response2 = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: {
+            ...testHeaders,
+            Cookie: 'gta6_user_id=660e8400-e29b-41d4-a716-446655440001', // Different cookie
+          },
+          body: JSON.stringify({ ...validRequest, predicted_date: '2027-03-15' }),
         },
-        body: JSON.stringify({ ...validRequest, predicted_date: '2027-03-15' }),
-      }, env);
+        env
+      );
 
       expect(response2.status).toBe(409);
       const data = await response2.json();
@@ -442,23 +546,31 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
     it('should allow different IPs to submit', async () => {
       // First submission
-      const response1 = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.100' },
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response1 = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.100' },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
       expect(response1.status).toBe(201);
 
       // Second submission from different IP
-      const response2 = await app.request('/api/predict', {
-        method: 'POST',
-        headers: {
-          ...testHeaders,
-          'CF-Connecting-IP': '203.0.113.200',
-          Cookie: 'gta6_user_id=770e8400-e29b-41d4-a716-446655440002',
+      const response2 = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: {
+            ...testHeaders,
+            'CF-Connecting-IP': '203.0.113.200',
+            Cookie: 'gta6_user_id=770e8400-e29b-41d4-a716-446655440002',
+          },
+          body: JSON.stringify(validRequest),
         },
-        body: JSON.stringify(validRequest),
-      }, env);
+        env
+      );
       expect(response2.status).toBe(201);
 
       // Verify both records exist
@@ -472,11 +584,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
       // Set Turnstile to fail
       turnstileShouldPass = false;
 
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       expect(response.status).toBe(503);
       const data = await response.json();
@@ -487,11 +603,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     it('should pass when Turnstile verification succeeds', async () => {
       // Ensure Turnstile passes (already default)
       turnstileShouldPass = true;
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
     });
@@ -501,22 +621,34 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     it('should use cookie_id from Cookie header', async () => {
       const specificCookie = '550e8400-e29b-41d4-a716-446655440000';
 
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, Cookie: `gta6_user_id=${specificCookie}` },
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, Cookie: `gta6_user_id=${specificCookie}` },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT cookie_id FROM predictions LIMIT 1').first();
       expect(result?.cookie_id).toBe(specificCookie);
     });
 
     it('should generate new cookie_id if invalid format', async () => {
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '192.168.1.50', Cookie: 'gta6_user_id=invalid-format' },
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: {
+            ...testHeaders,
+            'CF-Connecting-IP': '192.168.1.50',
+            Cookie: 'gta6_user_id=invalid-format',
+          },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT cookie_id FROM predictions WHERE ip_hash LIKE ?')
         .bind('%')
@@ -529,14 +661,18 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     });
 
     it('should set Set-Cookie header for new cookies', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'CF-Connecting-IP': '10.0.0.1',
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'CF-Connecting-IP': '10.0.0.1',
+          },
+          body: JSON.stringify(validRequest),
         },
-        body: JSON.stringify(validRequest),
-      }, env);
+        env
+      );
 
       const setCookieHeader = response.headers.get('Set-Cookie');
       expect(setCookieHeader).toBeDefined();
@@ -548,11 +684,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
   describe('IP Hash Extraction', () => {
     it('should extract IP from CF-Connecting-IP header', async () => {
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '198.51.100.1' },
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '198.51.100.1' },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT ip_hash FROM predictions LIMIT 1').first();
       expect(result?.ip_hash).toBeDefined();
@@ -566,11 +706,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
         Cookie: testHeaders.Cookie,
       };
 
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: headersWithXFF,
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: headersWithXFF,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
     });
@@ -578,22 +722,30 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
   describe('Weight Calculation', () => {
     it('should assign weight 1.0 for dates in reasonable window (2026-2028)', async () => {
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '172.16.0.1' },
-        body: JSON.stringify({ ...validRequest, predicted_date: '2027-06-15' }),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '172.16.0.1' },
+          body: JSON.stringify({ ...validRequest, predicted_date: '2027-06-15' }),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT weight FROM predictions LIMIT 1').first();
       expect(result?.weight).toBe(1.0);
     });
 
     it('should assign lower weight for dates far in the future', async () => {
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '172.16.0.2' },
-        body: JSON.stringify({ ...validRequest, predicted_date: '2100-01-01' }),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '172.16.0.2' },
+          body: JSON.stringify({ ...validRequest, predicted_date: '2100-01-01' }),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT weight FROM predictions LIMIT 1').first();
       expect(result?.weight).toBeLessThan(1.0);
@@ -602,11 +754,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
     it('should assign weight 0.8 for dates before reasonable window but still in future', async () => {
       // Use a date in 2025 that is still in the future (from Nov 24, 2025)
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '172.16.0.3' },
-        body: JSON.stringify({ ...validRequest, predicted_date: '2025-12-25' }),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '172.16.0.3' },
+          body: JSON.stringify({ ...validRequest, predicted_date: '2025-12-25' }),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT weight FROM predictions LIMIT 1').first();
       expect(result?.weight).toBe(0.8);
@@ -615,11 +771,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
   describe('Response Format', () => {
     it('should include all required fields in success response', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '10.10.10.1' },
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '10.10.10.1' },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       expect(response.status).toBe(201);
       const data = await response.json();
@@ -632,11 +792,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
     it('should include error details in error response', async () => {
       // Use a properly formatted JSON with an invalid date (out of range)
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify({ predicted_date: '2024-01-01', turnstile_token: 'test' }),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify({ predicted_date: '2024-01-01', turnstile_token: 'test' }),
+        },
+        env
+      );
 
       expect(response.status).toBe(400);
       const data = await response.json();
@@ -651,21 +815,29 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
   describe('Database Transaction Handling', () => {
     it('should not leave partial records on error', async () => {
       // First submission succeeds
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: testHeaders,
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: testHeaders,
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       // Second submission with same IP should fail (409)
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: {
-          ...testHeaders,
-          Cookie: 'gta6_user_id=880e8400-e29b-41d4-a716-446655440003',
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: {
+            ...testHeaders,
+            Cookie: 'gta6_user_id=880e8400-e29b-41d4-a716-446655440003',
+          },
+          body: JSON.stringify(validRequest),
         },
-        body: JSON.stringify(validRequest),
-      }, env);
+        env
+      );
 
       // Only one record should exist
       const count = await env.DB.prepare('SELECT COUNT(*) as count FROM predictions').first();
@@ -675,11 +847,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     it('should store submitted_at timestamp', async () => {
       const beforeSubmit = new Date().toISOString();
 
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '10.20.30.40' },
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '10.20.30.40' },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT submitted_at FROM predictions LIMIT 1').first();
       expect(result?.submitted_at).toBeDefined();
@@ -691,11 +867,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
     it('should store user_agent when provided', async () => {
       const userAgent = 'Mozilla/5.0 (Test Browser)';
 
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '10.20.30.50', 'User-Agent': userAgent },
-        body: JSON.stringify(validRequest),
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '10.20.30.50', 'User-Agent': userAgent },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       const result = await env.DB.prepare('SELECT user_agent FROM predictions LIMIT 1').first();
       expect(result?.user_agent).toBe(userAgent);
@@ -704,11 +884,15 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
 
   describe('Rate Limiting Integration', () => {
     it('should include rate limit headers in response', async () => {
-      const response = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { ...testHeaders, 'CF-Connecting-IP': '10.30.30.1' },
-        body: JSON.stringify(validRequest),
-      }, env);
+      const response = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { ...testHeaders, 'CF-Connecting-IP': '10.30.30.1' },
+          body: JSON.stringify(validRequest),
+        },
+        env
+      );
 
       // Rate limit headers should be present (added by middleware)
       // Note: In test environment without KV, headers may not be present
@@ -726,67 +910,83 @@ describe('POST /api/predict - Edge Cases', () => {
   });
 
   it('should handle IPv6 addresses', async () => {
-    const response = await app.request('/api/predict', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'CF-Connecting-IP': '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
-        Cookie: 'gta6_user_id=990e8400-e29b-41d4-a716-446655440004',
+    const response = await app.request(
+      '/api/predict',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CF-Connecting-IP': '2001:0db8:85a3:0000:0000:8a2e:0370:7334',
+          Cookie: 'gta6_user_id=990e8400-e29b-41d4-a716-446655440004',
+        },
+        body: JSON.stringify({
+          predicted_date: '2026-11-19',
+          turnstile_token: 'test-token',
+        }),
       },
-      body: JSON.stringify({
-        predicted_date: '2026-11-19',
-        turnstile_token: 'test-token',
-      }),
-    }, env);
+      env
+    );
 
     expect(response.status).toBe(201);
   });
 
   it('should handle leap year dates correctly', async () => {
-    const response = await app.request('/api/predict', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'CF-Connecting-IP': '192.168.100.1',
-        Cookie: 'gta6_user_id=aa0e8400-e29b-41d4-a716-446655440005',
+    const response = await app.request(
+      '/api/predict',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CF-Connecting-IP': '192.168.100.1',
+          Cookie: 'gta6_user_id=aa0e8400-e29b-41d4-a716-446655440005',
+        },
+        body: JSON.stringify({
+          predicted_date: '2028-02-29', // 2028 is a leap year
+          turnstile_token: 'test-token',
+        }),
       },
-      body: JSON.stringify({
-        predicted_date: '2028-02-29', // 2028 is a leap year
-        turnstile_token: 'test-token',
-      }),
-    }, env);
+      env
+    );
 
     expect(response.status).toBe(201);
   });
 
   it('should reject Feb 29 on non-leap years', async () => {
-    const response = await app.request('/api/predict', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'CF-Connecting-IP': '192.168.100.2',
+    const response = await app.request(
+      '/api/predict',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CF-Connecting-IP': '192.168.100.2',
+        },
+        body: JSON.stringify({
+          predicted_date: '2027-02-29', // 2027 is NOT a leap year
+          turnstile_token: 'test-token',
+        }),
       },
-      body: JSON.stringify({
-        predicted_date: '2027-02-29', // 2027 is NOT a leap year
-        turnstile_token: 'test-token',
-      }),
-    }, env);
+      env
+    );
 
     expect(response.status).toBe(400);
   });
 
   it('should handle empty turnstile_token gracefully', async () => {
-    const response = await app.request('/api/predict', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'CF-Connecting-IP': '192.168.100.3',
+    const response = await app.request(
+      '/api/predict',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CF-Connecting-IP': '192.168.100.3',
+        },
+        body: JSON.stringify({
+          predicted_date: '2026-11-19',
+          turnstile_token: '',
+        }),
       },
-      body: JSON.stringify({
-        predicted_date: '2026-11-19',
-        turnstile_token: '',
-      }),
-    }, env);
+      env
+    );
 
     expect(response.status).toBe(400);
     const data = await response.json();
@@ -796,19 +996,23 @@ describe('POST /api/predict - Edge Cases', () => {
   it('should handle very long user agent strings', async () => {
     const longUserAgent = 'Mozilla/5.0 ' + 'x'.repeat(500);
 
-    const response = await app.request('/api/predict', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'CF-Connecting-IP': '192.168.100.4',
-        'User-Agent': longUserAgent,
-        Cookie: 'gta6_user_id=bb0e8400-e29b-41d4-a716-446655440006',
+    const response = await app.request(
+      '/api/predict',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'CF-Connecting-IP': '192.168.100.4',
+          'User-Agent': longUserAgent,
+          Cookie: 'gta6_user_id=bb0e8400-e29b-41d4-a716-446655440006',
+        },
+        body: JSON.stringify({
+          predicted_date: '2026-11-19',
+          turnstile_token: 'test-token',
+        }),
       },
-      body: JSON.stringify({
-        predicted_date: '2026-11-19',
-        turnstile_token: 'test-token',
-      }),
-    }, env);
+      env
+    );
 
     // Should still succeed - user agent truncation is handled elsewhere
     expect(response.status).toBe(201);

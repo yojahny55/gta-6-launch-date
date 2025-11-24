@@ -17,7 +17,14 @@
 import { Hono } from 'hono';
 import type { Env, ErrorResponse } from '../types';
 import { PredictionRequestSchema } from '../utils/validation';
-import { getCookie, validateCookieID, generateCookieID, setCookie, COOKIE_NAME, getDefaultCookieOptions } from '../utils/cookie';
+import {
+  getCookie,
+  validateCookieID,
+  generateCookieID,
+  setCookie,
+  COOKIE_NAME,
+  getDefaultCookieOptions,
+} from '../utils/cookie';
 import { hashRequestIP } from '../utils/ip-hash';
 import { verifyAndEvaluateTurnstile } from '../utils/turnstile';
 
@@ -239,7 +246,10 @@ export function createPredictRoutes() {
         }
 
         // Check for UNIQUE constraint violation on cookie_id
-        if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('cookie_id')) {
+        if (
+          errorMessage.includes('UNIQUE constraint failed') &&
+          errorMessage.includes('cookie_id')
+        ) {
           // Cookie collision - regenerate and retry once
           if (!isNewCookie) {
             // Only retry if we haven't already generated a new cookie

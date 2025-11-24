@@ -60,7 +60,10 @@ function createMockKV() {
     clear(): void {
       store.clear();
     },
-  } as unknown as KVNamespace & { store: Map<string, { value: string; expireAt?: number }>; clear: () => void };
+  } as unknown as KVNamespace & {
+    store: Map<string, { value: string; expireAt?: number }>;
+    clear: () => void;
+  };
 }
 
 /**
@@ -466,10 +469,14 @@ describe('Rate Limiter Module', () => {
         SALT_V1: TEST_SALT,
       } as unknown as Env;
 
-      const res = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { 'CF-Connecting-IP': '192.168.1.1' },
-      }, env);
+      const res = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '192.168.1.1' },
+        },
+        env
+      );
 
       expect(res.status).toBe(200);
       expect(res.headers.get('X-RateLimit-Limit')).toBe('10');
@@ -485,22 +492,33 @@ describe('Rate Limiter Module', () => {
 
       // Make 10 requests
       for (let i = 0; i < 10; i++) {
-        await app.request('/api/predict', {
-          method: 'POST',
-          headers: { 'CF-Connecting-IP': '192.168.1.1' },
-        }, env);
+        await app.request(
+          '/api/predict',
+          {
+            method: 'POST',
+            headers: { 'CF-Connecting-IP': '192.168.1.1' },
+          },
+          env
+        );
       }
 
       // 11th request should be denied
-      const res = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { 'CF-Connecting-IP': '192.168.1.1' },
-      }, env);
+      const res = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '192.168.1.1' },
+        },
+        env
+      );
 
       expect(res.status).toBe(429);
       expect(res.headers.get('Retry-After')).toBeTruthy();
 
-      const body = await res.json() as { success: boolean; error: { code: string; message: string } };
+      const body = (await res.json()) as {
+        success: boolean;
+        error: { code: string; message: string };
+      };
       expect(body.success).toBe(false);
       expect(body.error.code).toBe('RATE_LIMIT_EXCEEDED');
       expect(body.error.message).toContain('submitting too quickly');
@@ -525,10 +543,14 @@ describe('Rate Limiter Module', () => {
         SALT_V1: TEST_SALT,
       } as unknown as Env;
 
-      const res = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { 'CF-Connecting-IP': '192.168.1.1' },
-      }, env);
+      const res = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '192.168.1.1' },
+        },
+        env
+      );
 
       // Should still succeed (fail-open)
       expect(res.status).toBe(200);
@@ -541,24 +563,36 @@ describe('Rate Limiter Module', () => {
       } as unknown as Env;
 
       // POST /api/predict should have limit of 10
-      const postRes = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { 'CF-Connecting-IP': '192.168.1.1' },
-      }, env);
+      const postRes = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '192.168.1.1' },
+        },
+        env
+      );
       expect(postRes.headers.get('X-RateLimit-Limit')).toBe('10');
 
       // PUT /api/predict should have limit of 30
-      const putRes = await app.request('/api/predict', {
-        method: 'PUT',
-        headers: { 'CF-Connecting-IP': '192.168.1.2' },
-      }, env);
+      const putRes = await app.request(
+        '/api/predict',
+        {
+          method: 'PUT',
+          headers: { 'CF-Connecting-IP': '192.168.1.2' },
+        },
+        env
+      );
       expect(putRes.headers.get('X-RateLimit-Limit')).toBe('30');
 
       // GET /api/stats should have limit of 60
-      const getRes = await app.request('/api/stats', {
-        method: 'GET',
-        headers: { 'CF-Connecting-IP': '192.168.1.3' },
-      }, env);
+      const getRes = await app.request(
+        '/api/stats',
+        {
+          method: 'GET',
+          headers: { 'CF-Connecting-IP': '192.168.1.3' },
+        },
+        env
+      );
       expect(getRes.headers.get('X-RateLimit-Limit')).toBe('60');
     });
 
@@ -569,16 +603,24 @@ describe('Rate Limiter Module', () => {
       } as unknown as Env;
 
       // User A makes a request
-      await app.request('/api/predict', {
-        method: 'POST',
-        headers: { 'CF-Connecting-IP': '192.168.1.1' },
-      }, env);
+      await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '192.168.1.1' },
+        },
+        env
+      );
 
       // User B should have full limit
-      const userBRes = await app.request('/api/predict', {
-        method: 'POST',
-        headers: { 'CF-Connecting-IP': '192.168.1.2' },
-      }, env);
+      const userBRes = await app.request(
+        '/api/predict',
+        {
+          method: 'POST',
+          headers: { 'CF-Connecting-IP': '192.168.1.2' },
+        },
+        env
+      );
 
       expect(userBRes.headers.get('X-RateLimit-Remaining')).toBe('9');
     });
@@ -601,9 +643,9 @@ describe('Rate Limiter Module', () => {
       // Simulate 5 concurrent requests from same IP
       // Note: In production, Cloudflare KV handles atomicity
       // Our mock KV doesn't have true atomic operations, so we test the behavior
-      const promises = Array(5).fill(null).map(() =>
-        checkRateLimit(mockKV, 'concurrent_hash_2', 'submit', 10)
-      );
+      const promises = Array(5)
+        .fill(null)
+        .map(() => checkRateLimit(mockKV, 'concurrent_hash_2', 'submit', 10));
 
       const results = await Promise.all(promises);
 

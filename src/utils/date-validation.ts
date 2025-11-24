@@ -34,8 +34,7 @@ export const MAX_DATE = '2125-12-31';
  * Validates basic structure: year (any 4-digit), month (01-12), day (01-31)
  * Note: Range validation happens separately in validateDateRange()
  */
-export const DATE_REGEX =
-  /^(\d{4})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+export const DATE_REGEX = /^(\d{4})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
 
 /**
  * Validate if a given string matches ISO 8601 date format (YYYY-MM-DD)
@@ -180,9 +179,7 @@ export function convertToUTC(localDate: string): string {
  * validateDate('2126-01-01')
  * // { valid: false, error: 'Please select a date between Jan 1, 2025 and Dec 31, 2125' }
  */
-export function validateDate(
-  dateString: string
-): { valid: boolean; error?: string } {
+export function validateDate(dateString: string): { valid: boolean; error?: string } {
   // Check 1: Format validation
   if (!isValidDateFormat(dateString)) {
     return { valid: false, error: 'Please enter a valid date' };

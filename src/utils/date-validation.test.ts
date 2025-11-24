@@ -391,17 +391,13 @@ describe('validateDate (comprehensive)', () => {
     it('should return range error for 2126-01-01', () => {
       const result = validateDate('2126-01-01');
       expect(result.valid).toBe(false);
-      expect(result.error).toBe(
-        'Please select a date between Jan 1, 2025 and Dec 31, 2125'
-      );
+      expect(result.error).toBe('Please select a date between Jan 1, 2025 and Dec 31, 2125');
     });
 
     it('should return range error for 2999-12-31', () => {
       const result = validateDate('2999-12-31');
       expect(result.valid).toBe(false);
-      expect(result.error).toBe(
-        'Please select a date between Jan 1, 2025 and Dec 31, 2125'
-      );
+      expect(result.error).toBe('Please select a date between Jan 1, 2025 and Dec 31, 2125');
     });
   });
 

@@ -15,7 +15,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   verifyTurnstileToken,
   isChallengeSuccessful,
-  verifyAndEvaluateTurnstile
+  verifyAndEvaluateTurnstile,
 } from './turnstile';
 import type { TurnstileVerificationResult } from '../types';
 
@@ -41,12 +41,12 @@ describe('Turnstile Verification Module', () => {
       const mockResponse: TurnstileVerificationResult = {
         success: true,
         challenge_ts: '2025-11-21T14:30:00Z',
-        hostname: 'localhost'
+        hostname: 'localhost',
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('valid-token', 'secret-key');
@@ -61,8 +61,8 @@ describe('Turnstile Verification Module', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             secret: 'secret-key',
-            response: 'valid-token'
-          })
+            response: 'valid-token',
+          }),
         })
       );
       expect(console.log).toHaveBeenCalledWith(
@@ -76,12 +76,12 @@ describe('Turnstile Verification Module', () => {
         success: true,
         challenge_ts: '2025-11-21T14:30:00Z',
         hostname: 'gta6-tracker.pages.dev',
-        'error-codes': []
+        'error-codes': [],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('token-123', 'secret-456');
@@ -97,12 +97,12 @@ describe('Turnstile Verification Module', () => {
     it('should return failure when challenge fails (success: false) (AC3)', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['invalid-input-response']
+        'error-codes': ['invalid-input-response'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('invalid-token', 'secret-key');
@@ -112,7 +112,7 @@ describe('Turnstile Verification Module', () => {
       expect(console.warn).toHaveBeenCalledWith(
         'Turnstile challenge failed',
         expect.objectContaining({
-          'error-codes': ['invalid-input-response']
+          'error-codes': ['invalid-input-response'],
         })
       );
     });
@@ -120,12 +120,12 @@ describe('Turnstile Verification Module', () => {
     it('should handle multiple error codes from Cloudflare API', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['timeout-or-duplicate', 'invalid-input-response']
+        'error-codes': ['timeout-or-duplicate', 'invalid-input-response'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('bad-token', 'secret-key');
@@ -179,22 +179,20 @@ describe('Turnstile Verification Module', () => {
     it('should fail open when API returns HTTP 500 error', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
-        status: 500
+        status: 500,
       });
 
       const result = await verifyTurnstileToken('token', 'secret');
 
       expect(result.success).toBe(true); // Fail open
       expect(result['error-codes']).toContain('http-500');
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('HTTP 500')
-      );
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('HTTP 500'));
     });
 
     it('should fail open when API returns HTTP 503 Service Unavailable', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
-        status: 503
+        status: 503,
       });
 
       const result = await verifyTurnstileToken('token', 'secret');
@@ -240,7 +238,7 @@ describe('Turnstile Verification Module', () => {
         ok: true,
         json: async () => {
           throw new SyntaxError('Unexpected token');
-        }
+        },
       });
 
       const result = await verifyTurnstileToken('token', 'secret');
@@ -250,7 +248,7 @@ describe('Turnstile Verification Module', () => {
       expect(console.error).toHaveBeenCalledWith(
         expect.stringContaining('network error'),
         expect.objectContaining({
-          fail_open: true
+          fail_open: true,
         })
       );
     });
@@ -269,33 +267,31 @@ describe('Turnstile Verification Module', () => {
     it('should return true when success is true', () => {
       const result: TurnstileVerificationResult = {
         success: true,
-        challenge_ts: '2025-11-21T14:30:00Z'
+        challenge_ts: '2025-11-21T14:30:00Z',
       };
 
       expect(isChallengeSuccessful(result)).toBe(true);
-      expect(console.log).toHaveBeenCalledWith(
-        'Turnstile challenge evaluation: PASSED'
-      );
+      expect(console.log).toHaveBeenCalledWith('Turnstile challenge evaluation: PASSED');
     });
 
     it('should return false when success is false (AC3)', () => {
       const result: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['invalid-input-response']
+        'error-codes': ['invalid-input-response'],
       };
 
       expect(isChallengeSuccessful(result)).toBe(false);
       expect(console.warn).toHaveBeenCalledWith(
         'Turnstile challenge evaluation: FAILED',
         expect.objectContaining({
-          'error-codes': ['invalid-input-response']
+          'error-codes': ['invalid-input-response'],
         })
       );
     });
 
     it('should handle result with no error codes', () => {
       const result: TurnstileVerificationResult = {
-        success: false
+        success: false,
       };
 
       expect(isChallengeSuccessful(result)).toBe(false);
@@ -304,7 +300,7 @@ describe('Turnstile Verification Module', () => {
     it('should return true for fail-open scenarios (network errors)', () => {
       const result: TurnstileVerificationResult = {
         success: true, // Fail open sets success: true
-        'error-codes': ['network-error']
+        'error-codes': ['network-error'],
       };
 
       expect(isChallengeSuccessful(result)).toBe(true);
@@ -315,12 +311,12 @@ describe('Turnstile Verification Module', () => {
     it('should combine verification and evaluation for passed challenge', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: true,
-        challenge_ts: '2025-11-21T14:30:00Z'
+        challenge_ts: '2025-11-21T14:30:00Z',
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const { passed, result } = await verifyAndEvaluateTurnstile('token', 'secret');
@@ -333,12 +329,12 @@ describe('Turnstile Verification Module', () => {
     it('should combine verification and evaluation for failed challenge', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['invalid-input-response']
+        'error-codes': ['invalid-input-response'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const { passed, result } = await verifyAndEvaluateTurnstile('token', 'secret');
@@ -363,12 +359,12 @@ describe('Turnstile Verification Module', () => {
     it('should handle expired token (timeout-or-duplicate error)', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['timeout-or-duplicate']
+        'error-codes': ['timeout-or-duplicate'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('expired-token', 'secret');
@@ -380,12 +376,12 @@ describe('Turnstile Verification Module', () => {
     it('should handle token already used (replay attack)', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['timeout-or-duplicate']
+        'error-codes': ['timeout-or-duplicate'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('used-token', 'secret');
@@ -397,12 +393,12 @@ describe('Turnstile Verification Module', () => {
     it('should handle invalid secret key from Cloudflare', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['invalid-input-secret']
+        'error-codes': ['invalid-input-secret'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('token', 'wrong-secret');
@@ -414,12 +410,12 @@ describe('Turnstile Verification Module', () => {
     it('should handle very long token string (edge case)', async () => {
       const longToken = 'a'.repeat(10000);
       const mockResponse: TurnstileVerificationResult = {
-        success: true
+        success: true,
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken(longToken, 'secret');
@@ -434,12 +430,12 @@ describe('Turnstile Verification Module', () => {
         challenge_ts: '2025-11-21T14:30:00Z',
         hostname: 'localhost',
         unexpected_field: 'should be ignored',
-        another_field: 123
+        another_field: 123,
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       const result = await verifyTurnstileToken('token', 'secret');
@@ -454,44 +450,38 @@ describe('Turnstile Verification Module', () => {
       const mockResponse: TurnstileVerificationResult = {
         success: true,
         challenge_ts: '2025-11-21T14:30:00Z',
-        hostname: 'localhost'
+        hostname: 'localhost',
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       await verifyTurnstileToken('token', 'secret');
 
-      expect(console.log).toHaveBeenCalledWith(
-        'Turnstile verification successful',
-        {
-          challenge_ts: '2025-11-21T14:30:00Z',
-          hostname: 'localhost'
-        }
-      );
+      expect(console.log).toHaveBeenCalledWith('Turnstile verification successful', {
+        challenge_ts: '2025-11-21T14:30:00Z',
+        hostname: 'localhost',
+      });
     });
 
     it('should log failed verification with error codes (Task 9)', async () => {
       const mockResponse: TurnstileVerificationResult = {
         success: false,
-        'error-codes': ['invalid-input-response', 'bad-request']
+        'error-codes': ['invalid-input-response', 'bad-request'],
       };
 
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResponse
+        json: async () => mockResponse,
       });
 
       await verifyTurnstileToken('token', 'secret');
 
-      expect(console.warn).toHaveBeenCalledWith(
-        'Turnstile challenge failed',
-        {
-          'error-codes': ['invalid-input-response', 'bad-request']
-        }
-      );
+      expect(console.warn).toHaveBeenCalledWith('Turnstile challenge failed', {
+        'error-codes': ['invalid-input-response', 'bad-request'],
+      });
     });
 
     it('should log fail-open events with context (Task 9)', async () => {
@@ -503,7 +493,7 @@ describe('Turnstile Verification Module', () => {
         expect.stringContaining('network error'),
         expect.objectContaining({
           fail_open: true,
-          error: 'Connection refused'
+          error: 'Connection refused',
         })
       );
     });

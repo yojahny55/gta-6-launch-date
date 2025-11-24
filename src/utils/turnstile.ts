@@ -56,7 +56,7 @@ export async function verifyTurnstileToken(
     console.warn('Turnstile token is missing or invalid. Failing open.');
     return {
       success: true, // Fail open: allow submission
-      'error-codes': ['missing-input-response']
+      'error-codes': ['missing-input-response'],
     };
   }
 
@@ -64,7 +64,7 @@ export async function verifyTurnstileToken(
     console.error('Turnstile secret key is missing. Failing open.');
     return {
       success: true, // Fail open: allow submission
-      'error-codes': ['missing-input-secret']
+      'error-codes': ['missing-input-secret'],
     };
   }
 
@@ -77,13 +77,13 @@ export async function verifyTurnstileToken(
     const response = await fetch(TURNSTILE_API_URL, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         secret: secretKey,
-        response: token
+        response: token,
       }),
-      signal: controller.signal
+      signal: controller.signal,
     });
 
     // Clear timeout
@@ -94,7 +94,7 @@ export async function verifyTurnstileToken(
       console.error(`Turnstile API returned HTTP ${response.status}. Failing open.`);
       return {
         success: true, // Fail open: don't block users for API errors
-        'error-codes': [`http-${response.status}`]
+        'error-codes': [`http-${response.status}`],
       };
     }
 
@@ -105,39 +105,38 @@ export async function verifyTurnstileToken(
     if (data.success) {
       console.log('Turnstile verification successful', {
         challenge_ts: data.challenge_ts,
-        hostname: data.hostname
+        hostname: data.hostname,
       });
     } else {
       console.warn('Turnstile challenge failed', {
-        'error-codes': data['error-codes'] || []
+        'error-codes': data['error-codes'] || [],
       });
     }
 
     return data;
-
   } catch (error) {
     // Network errors, timeouts, or API failures (AC6: Fail open)
     if (error instanceof Error) {
       if (error.name === 'AbortError') {
         console.warn('Turnstile verification timed out after 3s. Failing open.', {
-          fail_open: true
+          fail_open: true,
         });
       } else {
         console.error('Turnstile verification network error. Failing open.', {
           error: error.message,
-          fail_open: true
+          fail_open: true,
         });
       }
     } else {
       console.error('Turnstile verification unknown error. Failing open.', {
-        fail_open: true
+        fail_open: true,
       });
     }
 
     // Fail open: Allow submission (FR60 graceful degradation)
     return {
       success: true, // Don't block legitimate users for network issues
-      'error-codes': ['network-error']
+      'error-codes': ['network-error'],
     };
   }
 }
@@ -170,7 +169,7 @@ export function isChallengeSuccessful(result: TurnstileVerificationResult): bool
     console.log('Turnstile challenge evaluation: PASSED');
   } else {
     console.warn('Turnstile challenge evaluation: FAILED', {
-      'error-codes': result['error-codes'] || []
+      'error-codes': result['error-codes'] || [],
     });
   }
 
