@@ -1,0 +1,147 @@
+<story-context id="3-2-social-comparison-messaging" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>2</storyId>
+    <title>Social Comparison Messaging</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-2-social-comparison-messaging.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to know how my prediction compares to the community</iWant>
+    <soThat>I feel validated or intrigued by the difference</soThat>
+    <tasks>
+      <task id="1">Create comparison calculation module with getComparisonMessage(userDate, medianDate)</task>
+      <task id="2">Implement personality messaging based on magnitude thresholds (0, 1-30, 31-90, 91-180, 181+)</task>
+      <task id="3">Implement delta quantification - exact days for less than 60, months for 60+</task>
+      <task id="4">Create comparison display UI with emoji indicators and styling</task>
+      <task id="5">Integrate with submission flow - extract median from API response</task>
+      <task id="6">Write automated tests for all comparison scenarios</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Comparison message shown immediately after successful submission</criterion>
+    <criterion id="AC2">Days difference calculated correctly (positive = later than median = pessimistic)</criterion>
+    <criterion id="AC3">Direction indicated with emojis: optimistic (pointing-right), pessimistic (grimacing), aligned (direct-hit)</criterion>
+    <criterion id="AC4">Personality messages: 0 days = "Great minds think alike!", 1-30 = "Pretty close to the crowd", 31-90 = "You have a different perspective", 91-180 = "Bold prediction!", 181+ = "Wow, you're way outside the consensus!"</criterion>
+    <criterion id="AC5">Large differences (greater than 60 days) displayed in months format</criterion>
+    <criterion id="AC6">Both user date and median date shown for clarity</criterion>
+    <criterion id="AC7">Positioned above share buttons area for sharing motivation</criterion>
+    <criterion id="AC8">100% test coverage for comparison logic</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models - Social Comparison Data</section>
+        <snippet>ComparisonResult interface with daysDiff, direction ('optimistic'|'pessimistic'|'aligned'), message, personality. COMPARISON_THRESHOLDS: ALIGNED=0, CLOSE=30, DIFFERENT=90, BOLD=180</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Social Comparison Flow</section>
+        <snippet>1. Receive submission response, 2. Extract user date and median, 3. Calculate days diff, 4. Determine direction, 5. Select personality message, 6. Display with emoji</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>API Contracts: POST /api/predict</section>
+        <snippet>Success response includes delta_days and comparison field ('optimistic'|'pessimistic'|'aligned')</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>POST /api/predict response</symbol>
+        <lines>181-190</lines>
+        <reason>Returns prediction_id, predicted_date - needs enhancement to return stats.median and delta_days</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/statistics.service.ts</path>
+        <kind>service</kind>
+        <symbol>StatsResponse</symbol>
+        <lines>25-31</lines>
+        <reason>Stats response includes median date needed for comparison calculation</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>handleFormSubmit</symbol>
+        <lines>352-402</lines>
+        <reason>Form submission handler - integrate comparison display after API success</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="dayjs" version="^1.11.19">Date difference calculations</package>
+        <package name="vitest" version="^3.2.4">Testing framework for unit tests</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture ADR-002">Vanilla JavaScript only - no framework dependencies</constraint>
+    <constraint source="Tech Spec">Comparison uses median from submission response - no additional API call</constraint>
+    <constraint source="Tech Spec FR18">Must quantify delta (exact days or months)</constraint>
+    <constraint source="Architecture ADR-011">100% test coverage required for comparison logic</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>getComparisonMessage</name>
+      <kind>function</kind>
+      <signature>getComparisonMessage(userDate: Date, medianDate: Date): ComparisonResult</signature>
+      <path>public/js/comparison.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>getPersonalityMessage</name>
+      <kind>function</kind>
+      <signature>getPersonalityMessage(daysDiff: number): string</signature>
+      <path>public/js/comparison.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>formatDelta</name>
+      <kind>function</kind>
+      <signature>formatDelta(daysDiff: number): string - "29 days later" or "3 months earlier"</signature>
+      <path>public/js/comparison.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>ComparisonResult</name>
+      <kind>interface</kind>
+      <signature>{daysDiff: number, direction: 'optimistic'|'pessimistic'|'aligned', message: string, personality: string}</signature>
+      <path>public/js/comparison.js (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest unit tests. 100% coverage for comparison logic. Test all boundary conditions at thresholds (0, 30, 60, 90, 180 days). Both positive and negative directions.</standards>
+    <locations>
+      <location>public/js/comparison.test.js (NEW)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC2">Test 0 days difference returns 'aligned' direction</idea>
+      <idea acId="AC2">Test positive daysDiff (user later than median) returns 'pessimistic'</idea>
+      <idea acId="AC2">Test negative daysDiff (user earlier than median) returns 'optimistic'</idea>
+      <idea acId="AC4">Test exactly 0 days returns "Great minds think alike!"</idea>
+      <idea acId="AC4">Test 1 day difference returns "Pretty close to the crowd"</idea>
+      <idea acId="AC4">Test 30 days (boundary) returns "Pretty close to the crowd"</idea>
+      <idea acId="AC4">Test 31 days returns "You have a different perspective"</idea>
+      <idea acId="AC4">Test 90 days (boundary) returns "You have a different perspective"</idea>
+      <idea acId="AC4">Test 91 days returns "Bold prediction!"</idea>
+      <idea acId="AC4">Test 180 days (boundary) returns "Bold prediction!"</idea>
+      <idea acId="AC4">Test 181 days returns "Wow, you're way outside the consensus!"</idea>
+      <idea acId="AC5">Test 59 days shows "59 days"</idea>
+      <idea acId="AC5">Test 60 days shows "2 months"</idea>
+      <idea acId="AC5">Test 120 days shows "4 months"</idea>
+    </ideas>
+  </tests>
+</story-context>

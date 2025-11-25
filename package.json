@@ -4,8 +4,10 @@
   "description": "GTA 6 Launch Date Prediction Tracker - Community-driven prediction platform",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "build": "vite build && tsc",
+    "dev": "npm run css:build && wrangler dev",
+    "css:build": "npx @tailwindcss/cli@latest -i ./public/styles.css -o ./public/styles.built.css --minify",
+    "css:watch": "npx @tailwindcss/cli@latest -i ./public/styles.css -o ./public/styles.built.css --watch",
+    "build": "npm run css:build && vite build && tsc",
     "test": "npm run test:unit && npm run test:workers",
     "test:unit": "vitest --config vitest.config.unit.ts",
     "test:workers": "vitest --config vitest.config.ts",
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.10.7",
     "@cloudflare/workers-types": "latest",
+    "@tailwindcss/cli": "^4.1.17",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "daisyui": "^5.5.5",

@@ -1,0 +1,164 @@
+<story-context id="3-1-landing-page-with-stats-display" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>1</storyId>
+    <title>Landing Page with Stats Display</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-1-landing-page-with-stats-display.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to see the community prediction data immediately upon landing</iWant>
+    <soThat>I understand what others think before I submit</soThat>
+    <tasks>
+      <task id="1">Create landing page HTML structure with H1 headline, subhead, stats container, and prediction form</task>
+      <task id="2">Implement stats display styling - median as largest element (text-4xl+), formatted count, min/max as tertiary</task>
+      <task id="3">Implement stats fetching logic - fetchStats(), formatStats(), renderStats() calling GET /api/stats</task>
+      <task id="4">Implement loading skeleton and error states with retry button</task>
+      <task id="5">Implement threshold logic - show placeholder if count less than 50 predictions</task>
+      <task id="6">Write automated tests for stats formatting, threshold logic, loading states</task>
+      <task id="7">Add ARIA labels and screen reader support for dynamic updates</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Page displays H1 "When Will GTA 6 Actually Launch?" with subhead about Rockstar's November 19, 2026 date</criterion>
+    <criterion id="AC2">Community median displayed as LARGEST element (2-3x normal text size), formatted for locale</criterion>
+    <criterion id="AC3">Total predictions formatted with commas (e.g., "10,234 predictions")</criterion>
+    <criterion id="AC4">Min/max range displayed as tertiary info</criterion>
+    <criterion id="AC5">Prediction form visible without scrolling (above-the-fold)</criterion>
+    <criterion id="AC6">Loading skeleton shown while fetching stats via GET /api/stats</criterion>
+    <criterion id="AC7">If count less than 50: Show "Need 50 predictions to show community median" with progress indicator</criterion>
+    <criterion id="AC8">Error state with retry button on API failure</criterion>
+    <criterion id="AC9">Mobile-responsive layout using Tailwind breakpoints</criterion>
+    <criterion id="AC10">Automated tests covering stats formatting, threshold logic, loading/error states</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>AC1: Landing Page with Stats Display</section>
+        <snippet>Defines StatsResponse interface {median, min, max, count, cached_at}, StatsDisplayState interface, landing page load workflow with async stats fetch</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>GTA 6 Launch Date Prediction Tracker - Architecture</title>
+        <section>API Contracts: GET /api/stats</section>
+        <snippet>Response format: {success: true, data: {median, min, max, total}}, Headers: Cache-Control: public, max-age=300, X-Cache: HIT | MISS</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Performance Considerations</section>
+        <snippet>Desktop load time: less than 2 seconds (3G), Mobile less than 3 seconds. Total JS ~20-30KB, Total CSS ~5-10KB (Tailwind tree-shaken)</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Visual Foundation - Typography System</section>
+        <snippet>Community Median: H1 (2.5rem), Bold, Monospace, Primary Purple. Stats Labels: Small (0.875rem), Uppercase</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/routes/stats.ts</path>
+        <kind>route</kind>
+        <symbol>createStatsRoutes</symbol>
+        <lines>30-96</lines>
+        <reason>Backend endpoint for GET /api/stats - returns cached statistics with X-Cache header</reason>
+      </artifact>
+      <artifact>
+        <path>src/services/statistics.service.ts</path>
+        <kind>service</kind>
+        <symbol>getStatisticsWithCache, calculateStatistics, StatsResponse</symbol>
+        <lines>1-237</lines>
+        <reason>Statistics calculation with KV caching - provides median, min, max, count, cached_at</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>types</kind>
+        <symbol>StatsApiResponse</symbol>
+        <lines>40-46</lines>
+        <reason>TypeScript interface for stats API response format</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>template</kind>
+        <symbol>stats-display container</symbol>
+        <lines>53-55</lines>
+        <reason>Empty stats-display div to be populated - needs expansion for full stats UI</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>DOMContentLoaded handler</symbol>
+        <lines>419-442</lines>
+        <reason>Application initialization - needs stats fetching integration</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="hono" version="^4.10.0">API framework for routes</package>
+        <package name="dayjs" version="^1.11.19">Date formatting for display</package>
+        <package name="tailwindcss" version="^4.0.0">Responsive styling utilities</package>
+        <package name="daisyui" version="^5.5.5">Component library for stats cards</package>
+        <package name="vitest" version="^3.2.4">Testing framework</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture ADR-002">Vanilla JavaScript only - no React/Vue/Svelte frameworks</constraint>
+    <constraint source="Architecture ADR-003">Tailwind CSS v4.0 for styling with tree-shaking</constraint>
+    <constraint source="Architecture NFR-P1">Desktop load time less than 2 seconds on 3G</constraint>
+    <constraint source="Tech Spec">Stats API call must use GET /api/stats from Story 2.10</constraint>
+    <constraint source="Tech Spec FR99">Show threshold message if prediction count less than 50</constraint>
+    <constraint source="Architecture ADR-011">All stories MUST include automated tests</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>GET /api/stats</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/stats -> {median: string, min: string, max: string, count: number, cached_at: string}</signature>
+      <path>src/routes/stats.ts</path>
+    </interface>
+    <interface>
+      <name>formatStats</name>
+      <kind>function</kind>
+      <signature>formatStats(stats: StatsResponse): {median: string, min: string, max: string, count: string}</signature>
+      <path>public/js/stats.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>renderStats</name>
+      <kind>function</kind>
+      <signature>renderStats(stats: FormattedStats): void - updates DOM with stats</signature>
+      <path>public/js/stats.js (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest with happy-dom for DOM testing. Tests co-located with source: public/js/stats.test.js. 90%+ coverage required per ADR-011. Use describe/it pattern with meaningful test names.</standards>
+    <locations>
+      <location>public/js/stats.test.js (NEW)</location>
+      <location>src/routes/stats.test.ts (existing backend tests)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC2">Test formatStats() formats dates correctly for different locales</idea>
+      <idea acId="AC3">Test count formatting with commas for thousands separator</idea>
+      <idea acId="AC6">Test loading state shows skeleton before data arrives</idea>
+      <idea acId="AC7">Test threshold logic shows placeholder when count less than 50</idea>
+      <idea acId="AC7">Test progress indicator shows "X / 50 predictions submitted"</idea>
+      <idea acId="AC8">Test error state displays with retry button on fetch failure</idea>
+      <idea acId="AC8">Test retry button triggers new fetch attempt</idea>
+      <idea acId="AC9">Test responsive breakpoints for mobile/tablet/desktop</idea>
+    </ideas>
+  </tests>
+</story-context>

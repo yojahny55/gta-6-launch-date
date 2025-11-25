@@ -1,0 +1,162 @@
+<story-context id="3-6-race-condition-prevention-for-concurrent-submissions" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>6</storyId>
+    <title>Race Condition Prevention for Concurrent Submissions</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-6-race-condition-prevention-for-concurrent-submissions.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>system</asA>
+    <iWant>to prevent race conditions when multiple submissions arrive simultaneously</iWant>
+    <soThat>database integrity is maintained</soThat>
+    <tasks>
+      <task id="1">Implement frontend double-click prevention - disable submit button on click</task>
+      <task id="2">Verify D1 transaction configuration uses IMMEDIATE mode</task>
+      <task id="3">Implement cookie-first logic - check if cookie_id exists, route to UPDATE</task>
+      <task id="4">Enhance UNIQUE constraint violation handling with proper 409 response</task>
+      <task id="5">Implement deadlock retry logic with exponential backoff (100ms, 200ms, 400ms)</task>
+      <task id="6">Add transaction monitoring and constraint violation logging</task>
+      <task id="7">Write automated tests for concurrent submission scenarios</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Database transactions use SERIALIZABLE or IMMEDIATE isolation level</criterion>
+    <criterion id="AC2">Transaction scope covers from IP check to INSERT</criterion>
+    <criterion id="AC3">Lock timeout: 5 seconds</criterion>
+    <criterion id="AC4">Same IP race: First transaction wins (inserts), second fails on UNIQUE(ip_hash) and returns 409</criterion>
+    <criterion id="AC5">Double-click (same cookie): Check if cookie_id exists, treat as UPDATE instead of INSERT</criterion>
+    <criterion id="AC6">Deadlock detected: Automatic retry max 3 attempts with 100ms, 200ms, 400ms delays</criterion>
+    <criterion id="AC7">If all retries fail: Return 503 Service Unavailable</criterion>
+    <criterion id="AC8">Frontend: Submit button disabled immediately on click</criterion>
+    <criterion id="AC9">Frontend: Button shows "Submitting..." loading state</criterion>
+    <criterion id="AC10">Frontend: Re-enable button only after response or 10s timeout</criterion>
+    <criterion id="AC11">All constraint violations logged with details</criterion>
+    <criterion id="AC12">Alert if deadlock rate exceeds 1%</criterion>
+    <criterion id="AC13">90%+ test coverage for transaction logic</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Race Condition Prevention Flow</section>
+        <snippet>Tab 1: BEGIN IMMEDIATE, check ip_hash, INSERT, COMMIT. Tab 2: BEGIN IMMEDIATE, WAIT (lock), proceed, check ip_hash exists, ROLLBACK, return 409</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Database Transactions (Epic 1, Story 1.4)</section>
+        <snippet>D1/SQLite supports IMMEDIATE transactions. UNIQUE constraints as last line of defense. Retry logic for transient failures.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>POST /api/predict transaction handling</symbol>
+        <lines>147-281</lines>
+        <reason>Existing INSERT with UNIQUE constraint handling - enhance for race conditions</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>409 Conflict response</symbol>
+        <lines>196-208</lines>
+        <reason>Existing UNIQUE constraint violation handling for ip_hash</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>Cookie collision retry</symbol>
+        <lines>211-266</lines>
+        <reason>Existing retry pattern for cookie_id collisions</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>handleFormSubmit button disable</symbol>
+        <lines>371-373, 398-400</lines>
+        <reason>Existing button disable/enable - verify double-click prevention</reason>
+      </artifact>
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>schema</kind>
+        <symbol>UNIQUE constraints</symbol>
+        <reason>ip_hash and cookie_id UNIQUE constraints on predictions table</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="hono" version="^4.10.0">API framework</package>
+        <package name="vitest" version="^3.2.4">Testing framework</package>
+        <package name="@cloudflare/workers-types" version="latest">D1 database types</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">D1/SQLite IMMEDIATE transaction mode required</constraint>
+    <constraint source="Tech Spec">Lock timeout must be 5 seconds</constraint>
+    <constraint source="Tech Spec">Deadlock retry backoff: 100ms, 200ms, 400ms</constraint>
+    <constraint source="Story 1.4">Leverage existing transaction utilities from Epic 1</constraint>
+    <constraint source="Architecture ADR-011">90%+ test coverage for transaction logic</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>D1 batch transaction</name>
+      <kind>database</kind>
+      <signature>c.env.DB.batch([prepare1.bind(...), prepare2.bind(...)]): Promise&lt;D1Result[]&gt;</signature>
+      <path>src/routes/predict.ts</path>
+    </interface>
+    <interface>
+      <name>disableSubmitButton</name>
+      <kind>function</kind>
+      <signature>disableSubmitButton(): void - sets disabled=true, textContent="Submitting..."</signature>
+      <path>public/js/submission.js</path>
+    </interface>
+    <interface>
+      <name>enableSubmitButton</name>
+      <kind>function</kind>
+      <signature>enableSubmitButton(): void - sets disabled=false, restores original text</signature>
+      <path>public/js/submission.js</path>
+    </interface>
+    <interface>
+      <name>retryWithBackoff</name>
+      <kind>function</kind>
+      <signature>retryWithBackoff(fn: () => Promise&lt;T&gt;, delays: number[]): Promise&lt;T&gt;</signature>
+      <path>src/utils/transaction.ts (NEW - optional)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest for unit tests. Integration tests should simulate concurrent requests. Mock D1 for controlled race condition testing. 90%+ coverage.</standards>
+    <locations>
+      <location>src/routes/predict.test.ts (MODIFY)</location>
+      <location>public/js/submission.test.js (MODIFY)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC4">Test two simultaneous requests with same IP - first succeeds, second gets 409</idea>
+      <idea acId="AC5">Test request with existing cookie_id routes to UPDATE path</idea>
+      <idea acId="AC5">Test UPDATE returns success with "updated" message</idea>
+      <idea acId="AC6">Test BUSY error triggers retry after 100ms</idea>
+      <idea acId="AC6">Test second retry waits 200ms</idea>
+      <idea acId="AC6">Test third retry waits 400ms</idea>
+      <idea acId="AC7">Test 503 returned after 3 failed retries</idea>
+      <idea acId="AC8">Test submit button disabled attribute set on click</idea>
+      <idea acId="AC9">Test button text changes to "Submitting..."</idea>
+      <idea acId="AC10">Test button re-enabled after successful response</idea>
+      <idea acId="AC10">Test button re-enabled after error response</idea>
+      <idea acId="AC10">Test button re-enabled after 10s timeout</idea>
+      <idea acId="AC11">Test constraint violation logged with ip_hash prefix</idea>
+    </ideas>
+  </tests>
+</story-context>

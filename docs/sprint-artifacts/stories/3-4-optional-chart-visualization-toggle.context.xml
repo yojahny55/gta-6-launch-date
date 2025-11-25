@@ -1,0 +1,154 @@
+<story-context id="3-4-optional-chart-visualization-toggle" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>4</storyId>
+    <title>Optional Chart Visualization Toggle</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-4-optional-chart-visualization-toggle.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>to optionally see a chart of prediction distribution</iWant>
+    <soThat>I can understand the full spectrum of community opinions</soThat>
+    <tasks>
+      <task id="1">Create chart container and toggle button UI (collapsed by default)</task>
+      <task id="2">Implement toggle behavior with smooth expand/collapse animation</task>
+      <task id="3">Implement lazy loading for Chart.js - only load on first toggle click</task>
+      <task id="4">Implement histogram data preparation with 30-day buckets</task>
+      <task id="5">Render Chart.js histogram with median line and user prediction highlight</task>
+      <task id="6">Implement responsive behavior for mobile</task>
+      <task id="7">Add accessibility features - alt text, data table, keyboard navigation</task>
+      <task id="8">Write automated tests for toggle, lazy loading, bucket calculation</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Chart hidden by default per FR19</criterion>
+    <criterion id="AC2">Toggle button visible: "Show Prediction Distribution"</criterion>
+    <criterion id="AC3">On click: Chart expands with smooth CSS animation</criterion>
+    <criterion id="AC4">Button text changes to "Hide Chart" when expanded</criterion>
+    <criterion id="AC5">Histogram with 30-day buckets from min to max date</criterion>
+    <criterion id="AC6">X-axis: Date range labels, Y-axis: Prediction counts</criterion>
+    <criterion id="AC7">Median date marked with vertical line</criterion>
+    <criterion id="AC8">User's prediction highlighted in different color</criterion>
+    <criterion id="AC9">Chart.js loaded lazily on first toggle (less than 50KB)</criterion>
+    <criterion id="AC10">Responsive on mobile with touch-friendly interactions</criterion>
+    <criterion id="AC11">Accessible: Alt text, hidden data table, keyboard navigable toggle</criterion>
+    <criterion id="AC12">Can be disabled during graceful degradation (Story 3.7)</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models - Chart Configuration</section>
+        <snippet>HistogramBucket: {startDate, endDate, count}, ChartConfig: {buckets: HistogramBucket[], medianDate, userPrediction?, theme}</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-005: Defer Chart to Post-MVP</section>
+        <snippet>Chart visualization originally deferred, now implemented as optional feature with lazy loading. Focus on lightweight implementation.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/routes/stats.ts</path>
+        <kind>route</kind>
+        <symbol>GET /api/stats</symbol>
+        <lines>51-91</lines>
+        <reason>Returns min, max, count - needed for calculating histogram range</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>template</kind>
+        <symbol>stats-display container</symbol>
+        <lines>53-55</lines>
+        <reason>Chart toggle and container should be added below stats display</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>window.userCookieID</symbol>
+        <lines>430</lines>
+        <reason>User's prediction can be retrieved to highlight on chart</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="chart.js" version="^4.4.0">Histogram rendering - lazy loaded, less than 50KB</package>
+        <package name="tailwindcss" version="^4.0.0">Responsive styling and animations</package>
+        <package name="vitest" version="^3.2.4">Testing framework</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture ADR-002">Vanilla JavaScript - Chart.js via dynamic import()</constraint>
+    <constraint source="Tech Spec FR19">Chart hidden by default</constraint>
+    <constraint source="Architecture">Lazy loading required - less than 50KB impact when not toggled</constraint>
+    <constraint source="Architecture NFR-P1">Must not impact initial page load time</constraint>
+    <constraint source="WCAG 2.1">Accessible: Alt text, data table alternative, keyboard navigation</constraint>
+    <constraint source="Story 3.7">Must be disableable during graceful degradation</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>toggleChart</name>
+      <kind>function</kind>
+      <signature>toggleChart(): Promise&lt;void&gt; - toggles chart visibility, lazy loads on first call</signature>
+      <path>public/js/chart.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>prepareHistogramData</name>
+      <kind>function</kind>
+      <signature>prepareHistogramData(stats: {min, max}, bucketDays: number = 30): HistogramBucket[]</signature>
+      <path>public/js/chart.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>renderChart</name>
+      <kind>function</kind>
+      <signature>renderChart(data: ChartConfig): void - renders Chart.js histogram</signature>
+      <path>public/js/chart.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>HistogramBucket</name>
+      <kind>interface</kind>
+      <signature>{startDate: string, endDate: string, count: number}</signature>
+      <path>public/js/chart.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>ChartConfig</name>
+      <kind>interface</kind>
+      <signature>{buckets: HistogramBucket[], medianDate: string, userPrediction?: string, theme: 'light'|'dark'}</signature>
+      <path>public/js/chart.js (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest with mocked dynamic imports for Chart.js. Test bucket calculation independently. 90%+ coverage for chart logic.</standards>
+    <locations>
+      <location>public/js/chart.test.js (NEW)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test chart container has 'hidden' class by default</idea>
+      <idea acId="AC2">Test toggle button text is "Show Prediction Distribution" initially</idea>
+      <idea acId="AC3">Test clicking toggle removes 'hidden' class from container</idea>
+      <idea acId="AC4">Test button text changes to "Hide Chart" after toggle</idea>
+      <idea acId="AC5">Test prepareHistogramData creates 30-day buckets correctly</idea>
+      <idea acId="AC5">Test bucket boundaries align to full 30-day periods</idea>
+      <idea acId="AC9">Test Chart.js is not loaded until toggle is clicked</idea>
+      <idea acId="AC9">Test dynamic import() is called on first toggle</idea>
+      <idea acId="AC9">Test second toggle does not trigger new import</idea>
+      <idea acId="AC11">Test chart has aria-label describing distribution</idea>
+      <idea acId="AC11">Test hidden data table contains bucket data</idea>
+      <idea acId="AC11">Test toggle button is focusable via keyboard</idea>
+    </ideas>
+  </tests>
+</story-context>

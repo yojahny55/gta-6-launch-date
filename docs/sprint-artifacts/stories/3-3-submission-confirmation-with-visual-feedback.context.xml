@@ -1,0 +1,157 @@
+<story-context id="3-3-submission-confirmation-with-visual-feedback" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>3</storyId>
+    <title>Submission Confirmation with Visual Feedback</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-3-submission-confirmation-with-visual-feedback.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>immediate confirmation that my prediction was recorded</iWant>
+    <soThat>I feel confident it worked and see my ranking</soThat>
+    <tasks>
+      <task id="1">Create confirmation UI component with success icon, messages, ranking</task>
+      <task id="2">Implement optimistic UI pattern - show confirmation before API confirms</task>
+      <task id="3">Implement rollback on failure - restore previous count, show error</task>
+      <task id="4">Implement success animation (pulse/scale, optional confetti)</task>
+      <task id="5">Implement screen reader support with ARIA live region</task>
+      <task id="6">Integrate with submission flow and Story 3.2 comparison display</task>
+      <task id="7">Write automated tests for optimistic UI, rollback, accessibility</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Success icon (green checkmark) displayed on API success (201)</criterion>
+    <criterion id="AC2">Primary message: "Your prediction has been recorded!"</criterion>
+    <criterion id="AC3">Prediction echo: "You predicted: [formatted date]"</criterion>
+    <criterion id="AC4">Ranking displayed: "You're prediction #[count]!"</criterion>
+    <criterion id="AC5">Social comparison from Story 3.2 displayed in confirmation</criterion>
+    <criterion id="AC6">Optimistic UI: Count increments immediately (+1) before API confirms</criterion>
+    <criterion id="AC7">If API fails: Roll back optimistic UI (restore count), show error state</criterion>
+    <criterion id="AC8">Micro-animation on success (subtle pulse or scale effect)</criterion>
+    <criterion id="AC9">Screen reader announcement via ARIA live region with full message</criterion>
+    <criterion id="AC10">Respect prefers-reduced-motion for animations</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models - Confirmation UI Data</section>
+        <snippet>ConfirmationData interface: {success: boolean, predictedDate: string, ranking: number, comparison: ComparisonResult, showAnimation: boolean}</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Prediction Submission Workflow</section>
+        <snippet>1. User clicks submit, 2. Show optimistic UI, 3. POST /api/predict, 4. On success: update with actual data, 5. On failure: trigger rollback</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>API Contracts: POST /api/predict</section>
+        <snippet>Success (201): returns prediction_id (ranking number), predicted_date, message. Can be used for "You're prediction #X!"</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>POST /api/predict</symbol>
+        <lines>66-297</lines>
+        <reason>Returns prediction_id (for ranking), predicted_date on success</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>handleFormSubmit</symbol>
+        <lines>352-402</lines>
+        <reason>Current form submission - needs optimistic UI integration</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>showValidationMessage</symbol>
+        <lines>225-268</lines>
+        <reason>Message display pattern - can be adapted for confirmation messages</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>template</kind>
+        <symbol>validation-message div</symbol>
+        <lines>39</lines>
+        <reason>Existing message container - add confirmation container nearby</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="tailwindcss" version="^4.0.0">Styling for confirmation UI</package>
+        <package name="daisyui" version="^5.5.5">Alert and badge components</package>
+        <package name="vitest" version="^3.2.4">Testing framework</package>
+        <package name="happy-dom" version="^20.0.10">DOM testing for ARIA</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture ADR-002">Vanilla JavaScript only - no framework state management</constraint>
+    <constraint source="Tech Spec FR70">Screen reader announcement required via ARIA live region</constraint>
+    <constraint source="WCAG 2.1">Respect prefers-reduced-motion for animations</constraint>
+    <constraint source="Architecture ADR-011">90%+ test coverage for submission logic</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>showOptimisticConfirmation</name>
+      <kind>function</kind>
+      <signature>showOptimisticConfirmation(date: string): void - immediately shows confirmation UI</signature>
+      <path>public/js/submission.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>updateConfirmationWithActual</name>
+      <kind>function</kind>
+      <signature>updateConfirmationWithActual(apiResponse: {prediction_id, stats}): void</signature>
+      <path>public/js/submission.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>rollbackOptimisticUI</name>
+      <kind>function</kind>
+      <signature>rollbackOptimisticUI(): void - restores previous count, hides confirmation</signature>
+      <path>public/js/submission.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>announceToScreenReader</name>
+      <kind>function</kind>
+      <signature>announceToScreenReader(message: string): void - injects into ARIA live region</signature>
+      <path>public/js/submission.js (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest with happy-dom for DOM and ARIA testing. 90%+ coverage. Test optimistic UI timing and rollback edge cases.</standards>
+    <locations>
+      <location>public/js/submission.test.js (NEW)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test success icon element is created and visible on success</idea>
+      <idea acId="AC2">Test primary message text content matches expected</idea>
+      <idea acId="AC4">Test ranking displays prediction_id from API response</idea>
+      <idea acId="AC6">Test count display increments immediately on submit</idea>
+      <idea acId="AC6">Test count increments BEFORE API response arrives</idea>
+      <idea acId="AC7">Test rollback restores original count on API failure</idea>
+      <idea acId="AC7">Test rollback hides confirmation UI</idea>
+      <idea acId="AC7">Test rollback shows error state</idea>
+      <idea acId="AC8">Test animation class is applied on success</idea>
+      <idea acId="AC9">Test ARIA live region contains full announcement message</idea>
+      <idea acId="AC9">Test aria-live attribute is set to 'polite' or 'assertive'</idea>
+      <idea acId="AC10">Test animation is skipped when prefers-reduced-motion is set</idea>
+    </ideas>
+  </tests>
+</story-context>

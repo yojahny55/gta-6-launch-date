@@ -3,6 +3,12 @@ main = "src/index.ts"
 compatibility_date = "2025-11-09"
 compatibility_flags = ["nodejs_compat"]
 
+# Static assets configuration for Workers
+# Use Assets binding (requires Wrangler 3.22.0+)
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
 # Global environment variables (apply to all environments)
 [vars]
 TURNSTILE_SITE_KEY = "0x4AAAAAACCQiDtgUQCqo0gC"  # Public - safe to commit

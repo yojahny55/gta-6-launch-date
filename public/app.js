@@ -1,5 +1,6 @@
 // GTA 6 Tracker - Frontend JavaScript
 // Cookie Management and User Tracking (Story 2.1)
+// Stats Display (Story 3.1)
 
 /**
  * Cookie Configuration Constants
@@ -412,9 +413,289 @@ function handleEscapeKey(event) {
   }
 }
 
+// ============================================================================
+// STATS DISPLAY MODULE (Story 3.1)
+// ============================================================================
+
+/**
+ * Stats Display Configuration
+ * AC: Stats from GET /api/stats (Story 2.10)
+ */
+const STATS_API_URL = '/api/stats';
+const STATS_THRESHOLD = 50; // FR99: Minimum predictions to show median
+const STATS_RETRY_DELAY = 3000; // 3 seconds
+const STATS_MAX_RETRIES = 3;
+
+/**
+ * Stats Display DOM Elements (cached on init)
+ */
+let statsElements = null;
+
+/**
+ * Initialize stats DOM element references
+ * Caches DOM lookups for performance
+ */
+function initStatsElements() {
+  statsElements = {
+    loading: document.getElementById('stats-loading'),
+    content: document.getElementById('stats-content'),
+    threshold: document.getElementById('stats-threshold'),
+    error: document.getElementById('stats-error'),
+    median: document.getElementById('stats-median'),
+    count: document.getElementById('stats-count-value'),
+    min: document.getElementById('stats-min'),
+    max: document.getElementById('stats-max'),
+    errorMessage: document.getElementById('stats-error-message'),
+    retryBtn: document.getElementById('stats-retry-btn'),
+    thresholdCount: document.getElementById('stats-threshold-count'),
+  };
+}
+
+/**
+ * Format a date string for locale-aware display
+ * Converts ISO 8601 date to user-friendly format (e.g., "Feb 14, 2027")
+ *
+ * @param {string} dateString - ISO 8601 date string (YYYY-MM-DD)
+ * @returns {string} Formatted date string for locale
+ */
+function formatDateForDisplay(dateString) {
+  if (!dateString) return '--';
+
+  try {
+    const date = new Date(dateString + 'T00:00:00'); // Force UTC interpretation
+    return date.toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  } catch (error) {
+    console.error('Error formatting date:', dateString, error);
+    return dateString;
+  }
+}
+
+/**
+ * Format a number with locale-specific thousand separators
+ * AC2: Total predictions formatted with commas (e.g., "10,234")
+ *
+ * @param {number} num - Number to format
+ * @returns {string} Formatted number string
+ */
+function formatNumber(num) {
+  if (typeof num !== 'number' || isNaN(num)) return '--';
+  return num.toLocaleString();
+}
+
+/**
+ * Format stats response for display
+ * AC2: Locale-aware formatting for dates and numbers
+ *
+ * @param {object} stats - Raw stats from API { median, min, max, count, cached_at }
+ * @returns {object} Formatted stats { median, min, max, count }
+ */
+function formatStats(stats) {
+  return {
+    median: formatDateForDisplay(stats.median),
+    min: formatDateForDisplay(stats.min),
+    max: formatDateForDisplay(stats.max),
+    count: formatNumber(stats.count),
+    rawCount: stats.count,
+  };
+}
+
+/**
+ * Show specific stats display state (loading, content, threshold, error)
+ * Hides all states except the specified one
+ *
+ * @param {'loading' | 'content' | 'threshold' | 'error'} state - State to show
+ */
+function showStatsState(state) {
+  if (!statsElements) return;
+
+  const states = ['loading', 'content', 'threshold', 'error'];
+
+  states.forEach((s) => {
+    if (statsElements[s]) {
+      if (s === state) {
+        statsElements[s].classList.remove('hidden');
+      } else {
+        statsElements[s].classList.add('hidden');
+      }
+    }
+  });
+}
+
+/**
+ * Announce message to screen readers via ARIA live region
+ * FR71: Screen reader announcements for dynamic updates
+ *
+ * @param {string} message - Message to announce
+ */
+function announceToScreenReader(message) {
+  // Use the stats-display section's aria-live region
+  const statsSection = document.getElementById('stats-display');
+  if (statsSection) {
+    // Temporarily update sr-only heading to force announcement
+    const heading = document.getElementById('stats-heading');
+    if (heading) {
+      heading.textContent = message;
+      // Reset after announcement
+      setTimeout(() => {
+        heading.textContent = 'Community Prediction Statistics';
+      }, 1000);
+    }
+  }
+}
+
+/**
+ * Render stats data to the DOM
+ * AC2: Display median, count, min/max
+ * AC: FR99: Show threshold message if count < 50
+ *
+ * @param {object} stats - Raw stats from API
+ */
+function renderStats(stats) {
+  if (!statsElements) return;
+
+  const formatted = formatStats(stats);
+
+  // FR99: Check threshold (< 50 predictions)
+  if (formatted.rawCount < STATS_THRESHOLD) {
+    // Show threshold message
+    if (statsElements.thresholdCount) {
+      statsElements.thresholdCount.textContent = formatted.rawCount.toString();
+    }
+    showStatsState('threshold');
+    announceToScreenReader(`${formatted.rawCount} of 50 predictions submitted. Need more predictions to show community median.`);
+    return;
+  }
+
+  // Update DOM elements with formatted stats
+  if (statsElements.median) {
+    statsElements.median.textContent = formatted.median;
+  }
+  if (statsElements.count) {
+    statsElements.count.textContent = formatted.count;
+  }
+  if (statsElements.min) {
+    statsElements.min.textContent = formatted.min;
+  }
+  if (statsElements.max) {
+    statsElements.max.textContent = formatted.max;
+  }
+
+  showStatsState('content');
+
+  // Announce stats loaded to screen readers
+  announceToScreenReader(`Statistics loaded. Community median prediction: ${formatted.median}. ${formatted.count} predictions submitted.`);
+}
+
+/**
+ * Show error state with message and retry button
+ * AC: FR59 - User-friendly error messages
+ *
+ * @param {string} message - Error message to display
+ */
+function showStatsError(message) {
+  if (!statsElements) return;
+
+  if (statsElements.errorMessage) {
+    statsElements.errorMessage.textContent = message || 'Unable to load statistics';
+  }
+
+  showStatsState('error');
+}
+
+/**
+ * Fetch statistics from API with retry logic
+ * AC: Async data loading with error handling
+ *
+ * @param {number} retryCount - Current retry attempt (0-indexed)
+ * @returns {Promise<object>} Stats data or throws error
+ */
+async function fetchStats(retryCount = 0) {
+  try {
+    const response = await fetch(STATS_API_URL, {
+      method: 'GET',
+      headers: {
+        Accept: 'application/json',
+      },
+    });
+
+    // Handle HTTP errors
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Log cache status for debugging
+    const cacheStatus = response.headers.get('X-Cache');
+    console.log('Stats fetched:', { cacheStatus, count: data.count });
+
+    return data;
+  } catch (error) {
+    console.error('Stats fetch error:', error.message, { retryCount });
+
+    // Retry logic
+    if (retryCount < STATS_MAX_RETRIES - 1) {
+      console.log(`Retrying stats fetch in ${STATS_RETRY_DELAY}ms... (attempt ${retryCount + 2}/${STATS_MAX_RETRIES})`);
+      await new Promise((resolve) => setTimeout(resolve, STATS_RETRY_DELAY));
+      return fetchStats(retryCount + 1);
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Load and display statistics
+ * Main entry point for stats display functionality
+ * Shows loading state, fetches data, renders or shows error
+ */
+async function loadStats() {
+  // Show loading state
+  showStatsState('loading');
+
+  try {
+    const stats = await fetchStats();
+    renderStats(stats);
+  } catch (error) {
+    console.error('Failed to load stats after retries:', error.message);
+    showStatsError('Unable to load statistics. Please try again.');
+  }
+}
+
+/**
+ * Handle retry button click
+ * AC: FR59 - Retry mechanism for error recovery
+ */
+function handleStatsRetry() {
+  console.log('Retrying stats load...');
+  loadStats();
+}
+
+/**
+ * Initialize stats display module
+ * Sets up DOM references, event listeners, and triggers initial load
+ */
+function initStatsDisplay() {
+  // Cache DOM elements
+  initStatsElements();
+
+  // Set up retry button handler
+  if (statsElements && statsElements.retryBtn) {
+    statsElements.retryBtn.addEventListener('click', handleStatsRetry);
+  }
+
+  // Initial stats load
+  loadStats();
+}
+
 /**
  * Application Initialization
- * Runs on page load to set up cookie tracking and form handling
+ * Runs on page load to set up cookie tracking, form handling, and stats display
  */
 document.addEventListener('DOMContentLoaded', function() {
   console.log('GTA 6 Tracker initialized');
@@ -438,17 +719,38 @@ document.addEventListener('DOMContentLoaded', function() {
   // Set up keyboard accessibility (Story 2.3, Task 5)
   document.addEventListener('keydown', handleEscapeKey);
 
+  // Initialize stats display (Story 3.1)
+  initStatsDisplay();
+
   console.log('Date picker initialized with validation');
+  console.log('Stats display initialized');
 });
 
 // Export functions for testing and future use
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
+    // Cookie management (Story 2.1)
     generateCookieID,
     validateCookieID,
     initializeCookieID,
     getCookieID,
     COOKIE_NAME,
-    COOKIE_MAX_AGE_DAYS
+    COOKIE_MAX_AGE_DAYS,
+    // Date validation (Story 2.3)
+    isValidDateFormat,
+    validateDateRange,
+    validateDate,
+    // Stats display (Story 3.1)
+    formatDateForDisplay,
+    formatNumber,
+    formatStats,
+    showStatsState,
+    renderStats,
+    showStatsError,
+    fetchStats,
+    loadStats,
+    initStatsDisplay,
+    announceToScreenReader,
+    STATS_THRESHOLD,
   };
 }

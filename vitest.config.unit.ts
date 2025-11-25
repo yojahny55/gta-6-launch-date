@@ -7,9 +7,13 @@ export default defineConfig({
       'tests/**/*.test.ts',
       'src/utils/**/*.test.ts',
       'src/services/**/*.test.ts', // Story 2.10: Statistics service tests
-      'src/routes/**/*.test.ts', // Story 2.10: Stats route tests
+      'src/routes/stats.test.ts', // Story 2.10: Stats route tests (unit testable)
     ],
-    exclude: ['src/index.test.ts', 'src/db/**/*.test.ts'], // Exclude Workers-specific tests
+    exclude: [
+      'src/index.test.ts',
+      'src/db/**/*.test.ts',
+      'src/routes/predict.test.ts', // Requires Workers runtime - run in test:workers
+    ], // Exclude Workers-specific tests
     globals: true,
     environment: 'happy-dom', // Use happy-dom for DOM tests
   },

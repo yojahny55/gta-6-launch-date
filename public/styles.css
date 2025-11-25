@@ -1,13 +1,89 @@
-/* Tailwind CSS output will go here */
-/* Build process: npx tailwindcss -i ./src/input.css -o ./public/styles.css */
+/* Tailwind CSS v4.0 - Imports */
+@import "tailwindcss";
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  margin: 0;
-  padding: 20px;
+/* DaisyUI Component Styles */
+@plugin "daisyui";
+
+/* Custom CSS Variables for theming */
+:root {
+  --gta6-purple: #6366f1;
+  --gta6-orange: #f97316;
 }
 
-#app {
-  max-width: 1200px;
-  margin: 0 auto;
+/* Base Styles */
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Stats Display - Median as largest element (AC4: 2-3x normal text) */
+#stats-median {
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+/* Loading skeleton animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Screen reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focus states for accessibility */
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--gta6-purple);
+  outline-offset: 2px;
+}
+
+/* Responsive font sizing for stats median */
+@media (max-width: 640px) {
+  #stats-median {
+    font-size: 2.5rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 768px) {
+  #stats-median {
+    font-size: 3rem;
+  }
+}
+
+@media (min-width: 769px) {
+  #stats-median {
+    font-size: 3.75rem;
+  }
+}
+
+/* Smooth transitions for state changes */
+#stats-loading,
+#stats-content,
+#stats-threshold,
+#stats-error {
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Tabular numbers for consistent date display */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
 }

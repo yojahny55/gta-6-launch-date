@@ -29,6 +29,12 @@ describe('Date Picker Form Submission Integration', () => {
   let document: Document;
   let window: Window & typeof globalThis;
 
+  // Helper function to wait for async form submission to complete
+  const waitForFormSubmission = async () => {
+    // Wait for all promises and microtasks to resolve
+    await new Promise(resolve => setTimeout(resolve, 0));
+  };
+
   beforeEach(async () => {
     // Use happy-dom environment for lightweight DOM testing
     const { Window } = await import('happy-dom');
@@ -63,7 +69,7 @@ describe('Date Picker Form Submission Integration', () => {
   });
 
   describe('Form Validation and Submission', () => {
-    test('should accept valid date within range', () => {
+    test('should accept valid date within range', async () => {
       const form = document.getElementById('prediction-form') as HTMLFormElement;
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
       const validationMessage = document.getElementById('validation-message');
@@ -73,6 +79,9 @@ describe('Date Picker Form Submission Integration', () => {
 
       // Submit the form
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+
+      // Wait for async form submission to complete
+      await waitForFormSubmission();
 
       // Validation message should show success
       expect(validationMessage?.classList.contains('hidden')).toBe(false);
@@ -111,7 +120,7 @@ describe('Date Picker Form Submission Integration', () => {
       expect(validationMessage?.textContent).toContain('between Jan 1, 2025 and Dec 31, 2125');
     });
 
-    test('should accept minimum boundary date', () => {
+    test('should accept minimum boundary date', async () => {
       const form = document.getElementById('prediction-form') as HTMLFormElement;
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
       const validationMessage = document.getElementById('validation-message');
@@ -122,12 +131,15 @@ describe('Date Picker Form Submission Integration', () => {
       // Submit the form
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
 
+      // Wait for async form submission to complete
+      await waitForFormSubmission();
+
       // Should succeed
       expect(validationMessage?.classList.contains('hidden')).toBe(false);
       expect(validationMessage?.textContent).toContain('Prediction validated');
     });
 
-    test('should accept maximum boundary date', () => {
+    test('should accept maximum boundary date', async () => {
       const form = document.getElementById('prediction-form') as HTMLFormElement;
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
       const validationMessage = document.getElementById('validation-message');
@@ -137,6 +149,9 @@ describe('Date Picker Form Submission Integration', () => {
 
       // Submit the form
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+
+      // Wait for async form submission to complete
+      await waitForFormSubmission();
 
       // Should succeed
       expect(validationMessage?.classList.contains('hidden')).toBe(false);
@@ -205,7 +220,7 @@ describe('Date Picker Form Submission Integration', () => {
       expect(validationMessage?.classList.contains('hidden')).toBe(false);
     });
 
-    test('should display success messages with proper styling', () => {
+    test('should display success messages with proper styling', async () => {
       const form = document.getElementById('prediction-form') as HTMLFormElement;
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
       const validationMessage = document.getElementById('validation-message');
@@ -216,12 +231,15 @@ describe('Date Picker Form Submission Integration', () => {
       // Submit form
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
 
+      // Wait for async form submission to complete
+      await waitForFormSubmission();
+
       // Check success styling is applied
       expect(validationMessage?.querySelector('.alert-success')).toBeTruthy();
       expect(validationMessage?.classList.contains('hidden')).toBe(false);
     });
 
-    test('should clear validation messages on subsequent submission', () => {
+    test('should clear validation messages on subsequent submission', async () => {
       const form = document.getElementById('prediction-form') as HTMLFormElement;
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
       const validationMessage = document.getElementById('validation-message');
@@ -234,6 +252,10 @@ describe('Date Picker Form Submission Integration', () => {
       // Second submission with valid date (should clear previous message)
       dateInput.value = '2026-11-19';
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
+
+      // Wait for async form submission to complete
+      await waitForFormSubmission();
+
       expect(validationMessage?.textContent).not.toContain("GTA 6 can't launch in the past!");
       expect(validationMessage?.textContent).toContain('Prediction validated');
     });

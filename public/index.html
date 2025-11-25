@@ -1,65 +1,135 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GTA 6 Launch Date Prediction Tracker</title>
   <meta name="description" content="Community-driven predictions for GTA 6 launch date. Submit your prediction and see what others think!">
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.built.css">
 
   <!-- Cloudflare Turnstile (Story 2.5B) -->
   <!-- Load asynchronously to avoid blocking page load -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
-<body>
-  <div id="app" class="container mx-auto px-4 py-8">
-    <h1 class="text-4xl font-bold text-center mb-8">GTA 6 Launch Date Prediction Tracker</h1>
+<body class="min-h-screen bg-base-200">
+  <div id="app" class="container mx-auto px-4 py-8 max-w-2xl">
+    <!-- Headline Section (AC1: Above-the-fold) -->
+    <header class="text-center mb-8">
+      <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-base-content mb-3">
+        When Will GTA 6 Actually Launch?
+      </h1>
+      <p class="text-base md:text-lg text-base-content/70">
+        Rockstar says <span class="font-semibold text-primary">November 19, 2026</span>. What does the community think?
+      </p>
+    </header>
 
-    <form id="prediction-form" class="max-w-md mx-auto space-y-6">
-      <div class="form-control w-full">
-        <label for="predicted-date" class="label">
-          <span class="label-text text-lg font-medium">When do you think GTA 6 will launch?</span>
-        </label>
-        <input
-          type="date"
-          id="predicted-date"
-          name="predicted-date"
-          class="input input-bordered w-full text-base"
-          min="2025-01-01"
-          max="2125-12-31"
-          required
-          aria-label="Predicted launch date for GTA 6"
-          aria-describedby="date-help"
-        />
-        <label class="label">
-          <span id="date-help" class="label-text-alt">Select a date between Jan 1, 2025 and Dec 31, 2125</span>
-        </label>
+    <!-- Stats Display Section (AC2: Community Statistics - largest element) -->
+    <section id="stats-display" class="mb-8" aria-labelledby="stats-heading" aria-live="polite">
+      <h2 id="stats-heading" class="sr-only">Community Prediction Statistics</h2>
+
+      <!-- Loading Skeleton State -->
+      <div id="stats-loading" class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center animate-pulse">
+          <div class="h-4 bg-base-300 rounded w-32 mb-4"></div>
+          <div class="h-16 bg-base-300 rounded w-48 mb-4"></div>
+          <div class="h-4 bg-base-300 rounded w-40 mb-2"></div>
+          <div class="h-3 bg-base-300 rounded w-56"></div>
+        </div>
       </div>
 
-      <div id="validation-message" class="hidden" role="alert" aria-live="polite"></div>
+      <!-- Stats Content (hidden until loaded) -->
+      <div id="stats-content" class="hidden card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+          <p class="text-sm uppercase tracking-wider text-base-content/60 mb-2">Community Median Prediction</p>
+          <!-- Median: LARGEST element (AC4: 2-3x normal text) -->
+          <p id="stats-median" class="text-4xl md:text-5xl lg:text-6xl font-bold text-primary font-mono tabular-nums" aria-label="Community median prediction date">
+            --
+          </p>
+          <!-- Total count with commas (AC2) -->
+          <p id="stats-count" class="text-lg text-base-content/80 mt-2">
+            <span id="stats-count-value" class="font-semibold">--</span> predictions
+          </p>
+          <!-- Min/Max range (AC4: tertiary information) -->
+          <p id="stats-range" class="text-sm text-base-content/50 mt-1">
+            Earliest: <span id="stats-min">--</span> | Latest: <span id="stats-max">--</span>
+          </p>
+        </div>
+      </div>
 
-      <!-- Turnstile widget container (invisible managed mode) -->
-      <div id="turnstile-container"></div>
+      <!-- Threshold Message (AC: FR99 - count < 50) -->
+      <div id="stats-threshold" class="hidden card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+          <p class="text-lg text-base-content/80 mb-2">
+            Need <span class="font-semibold">50 predictions</span> to show community median.
+          </p>
+          <p class="text-base-content/60">Be one of the first!</p>
+          <p id="stats-threshold-progress" class="text-sm text-primary font-semibold mt-2">
+            <span id="stats-threshold-count">--</span> / 50 predictions submitted
+          </p>
+        </div>
+      </div>
 
-      <button
-        type="submit"
-        class="btn btn-primary w-full"
-        aria-label="Submit your prediction"
-      >
-        Submit Prediction
-      </button>
-    </form>
+      <!-- Error State (AC: FR59 - graceful error handling) -->
+      <div id="stats-error" class="hidden card bg-error/10 shadow-xl border border-error/20">
+        <div class="card-body items-center text-center">
+          <svg class="w-12 h-12 text-error mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <p id="stats-error-message" class="text-error font-medium">Unable to load statistics</p>
+          <button id="stats-retry-btn" class="btn btn-outline btn-error btn-sm mt-3" aria-label="Retry loading statistics">
+            Try Again
+          </button>
+        </div>
+      </div>
+    </section>
 
-    <div id="stats-display" class="max-w-md mx-auto mt-8">
-      <!-- Statistics will be displayed here -->
-    </div>
+    <!-- Prediction Form Section (AC3: Primary CTA, visible above-the-fold) -->
+    <section class="mb-8" aria-labelledby="form-heading">
+      <h2 id="form-heading" class="sr-only">Submit Your Prediction</h2>
+
+      <form id="prediction-form" class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+          <div class="form-control w-full">
+            <label for="predicted-date" class="label">
+              <span class="label-text text-lg font-medium">When do you think GTA 6 will launch?</span>
+            </label>
+            <input
+              type="date"
+              id="predicted-date"
+              name="predicted-date"
+              class="input input-bordered w-full text-base"
+              min="2025-01-01"
+              max="2125-12-31"
+              required
+              aria-label="Predicted launch date for GTA 6"
+              aria-describedby="date-help"
+            />
+            <label class="label">
+              <span id="date-help" class="label-text-alt">Select a date between Jan 1, 2025 and Dec 31, 2125</span>
+            </label>
+          </div>
+
+          <div id="validation-message" class="hidden" role="alert" aria-live="polite"></div>
+
+          <!-- Turnstile widget container (invisible managed mode) -->
+          <div id="turnstile-container"></div>
+
+          <button
+            type="submit"
+            class="btn btn-primary w-full text-lg mt-4"
+            aria-label="Add my prediction to the community"
+          >
+            Add My Prediction
+          </button>
+        </div>
+      </form>
+    </section>
   </div>
 
   <!-- Cloudflare Turnstile Badge (Required by Cloudflare ToS) -->
   <!-- Badge appears in bottom-right corner (AC: visible but non-intrusive) -->
-  <footer class="fixed bottom-0 right-0 text-xs text-gray-500 p-2">
-    This site is protected by Cloudflare Turnstile.
-    <a href="https://www.cloudflare.com/privacypolicy/" class="underline" target="_blank" rel="noopener noreferrer">Privacy Policy</a>
+  <footer class="fixed bottom-0 right-0 text-xs text-base-content/50 p-2">
+    Protected by <a href="https://www.cloudflare.com/products/turnstile/" class="underline hover:text-primary" target="_blank" rel="noopener noreferrer">Cloudflare Turnstile</a>
   </footer>
 
   <script src="/app.js"></script>
