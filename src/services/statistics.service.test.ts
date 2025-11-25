@@ -19,18 +19,24 @@ import {
 
 // Mock the weighted median module
 vi.mock('../utils/weighted-median', () => ({
-  calculateWeightedMedianFromRows: vi.fn((rows: Array<{ predicted_date: string; weight: number }>) => {
-    if (rows.length === 0) return null;
-    // Simple implementation for testing: return middle element
-    const sorted = [...rows].sort((a, b) => a.predicted_date.localeCompare(b.predicted_date));
-    const midIndex = Math.floor((sorted.length - 1) / 2);
-    return sorted[midIndex].predicted_date;
-  }),
+  calculateWeightedMedianFromRows: vi.fn(
+    (rows: Array<{ predicted_date: string; weight: number }>) => {
+      if (rows.length === 0) return null;
+      // Simple implementation for testing: return middle element
+      const sorted = [...rows].sort((a, b) => a.predicted_date.localeCompare(b.predicted_date));
+      const midIndex = Math.floor((sorted.length - 1) / 2);
+      return sorted[midIndex].predicted_date;
+    }
+  ),
 }));
 
 // Mock D1Database interface
 function createMockDB(options: {
-  aggregationResult?: { min_date: string | null; max_date: string | null; total_count: number } | null;
+  aggregationResult?: {
+    min_date: string | null;
+    max_date: string | null;
+    total_count: number;
+  } | null;
   predictionsResult?: Array<{ predicted_date: string; weight: number }>;
   aggregationError?: Error;
   predictionsError?: Error;
@@ -234,11 +240,9 @@ describe('Statistics Service', () => {
       expect(result.stats.min).toBe('2025-06-15');
       expect(result.stats.max).toBe('2099-12-31');
       expect(result.stats.count).toBe(100);
-      expect(mockKV.put).toHaveBeenCalledWith(
-        STATS_CACHE_KEY,
-        expect.any(String),
-        { expirationTtl: STATS_CACHE_TTL }
-      );
+      expect(mockKV.put).toHaveBeenCalledWith(STATS_CACHE_KEY, expect.any(String), {
+        expirationTtl: STATS_CACHE_TTL,
+      });
     });
 
     it('should work without KV (direct database query)', async () => {

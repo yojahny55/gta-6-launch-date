@@ -190,9 +190,7 @@ describe('GET /api/stats', () => {
 
   describe('Error Handling', () => {
     it('should return 500 on service error', async () => {
-      vi.mocked(getStatisticsWithCache).mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      vi.mocked(getStatisticsWithCache).mockRejectedValue(new Error('Database connection failed'));
 
       const res = await app.request('/api/stats', {}, createMockEnv());
 

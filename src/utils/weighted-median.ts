@@ -119,9 +119,7 @@ export function calculateWeightedMedian(predictions: WeightedPrediction[]): stri
   }
 
   // Sort by date (ascending)
-  const sorted = [...predictions].sort(
-    (a, b) => dayjs(a.date).unix() - dayjs(b.date).unix()
-  );
+  const sorted = [...predictions].sort((a, b) => dayjs(a.date).unix() - dayjs(b.date).unix());
 
   // Calculate total weight
   const totalWeight = sorted.reduce((sum, p) => sum + p.weight, 0);
