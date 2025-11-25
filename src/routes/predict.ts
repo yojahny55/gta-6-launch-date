@@ -582,6 +582,7 @@ export function createPredictRoutes() {
           {
             success: true,
             data: {
+              prediction_id: existingPrediction.id,
               predicted_date,
               previous_date: previousDate,
               updated_at: now,
@@ -625,17 +626,47 @@ export function createPredictRoutes() {
             // Invalidate stats cache after successful update (Story 2.10)
             await invalidateStatsCache(c.env.gta6_stats_cache);
 
+            // Calculate fresh stats for comparison (Story 3.2)
+            const stats = await calculateStatistics(c.env.DB);
+
+            // Calculate delta_days for social comparison
+            const userDate = new Date(predicted_date);
+            const medianDate = new Date(stats.median);
+            const delta_days = Math.round(
+              (userDate.getTime() - medianDate.getTime()) / (24 * 60 * 60 * 1000)
+            );
+
+            // Determine comparison direction
+            let comparison: 'optimistic' | 'pessimistic' | 'aligned';
+            if (delta_days === 0) comparison = 'aligned';
+            else if (delta_days > 0) comparison = 'pessimistic';
+            else comparison = 'optimistic';
+
             console.log('Prediction updated (IP conflict resolved - kept original IP)', {
               cookie_id_prefix: cookieId.substring(0, 8),
               predicted_date,
               previous_date: previousDate,
+              delta_days,
+              comparison,
             });
 
             return c.json(
               {
                 success: true,
-                predicted_date,
-                previous_date: previousDate,
+                data: {
+                  prediction_id: existingPrediction.id,
+                  predicted_date,
+                  previous_date: previousDate,
+                  updated_at: now,
+                  stats: {
+                    median: stats.median,
+                    min: stats.min,
+                    max: stats.max,
+                    count: stats.count,
+                  },
+                  delta_days,
+                  comparison,
+                },
                 message: 'Your prediction has been updated!',
               },
               200

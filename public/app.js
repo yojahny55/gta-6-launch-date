@@ -358,12 +358,14 @@ function updateSubmitButtonText() {
 }
 
 /**
- * Handle form submission with validation and Turnstile (Story 2.3, 2.5B, 2.7, 2.8)
+ * Handle form submission with validation and Turnstile (Story 2.3, 2.5B, 2.7, 2.8, 3.3)
  * Updated workflow:
  * 1. Validate date (Story 2.3)
  * 2. Execute Cloudflare Turnstile (Story 2.5B)
- * 3. POST /api/predict (new) or PUT /api/predict (update) (Story 2.7, 2.8)
- * 4. Display comparison messaging (Story 3.2)
+ * 3. Show optimistic UI immediately (Story 3.3)
+ * 4. POST /api/predict (new) or PUT /api/predict (update) (Story 2.7, 2.8)
+ * 5. On success: Update with actual data, display confirmation and comparison (Story 3.3, 3.2)
+ * 6. On failure: Rollback optimistic UI (Story 3.3)
  *
  * @param {Event} event - Form submit event
  */
@@ -386,7 +388,7 @@ async function handleFormSubmit(event) {
     return;
   }
 
-  // Disable submit button to prevent double submission
+  // Disable submit button to prevent double submission (AC: Double-click prevention)
   submitButton.disabled = true;
   submitButton.textContent = 'Verifying...';
 
@@ -398,9 +400,16 @@ async function handleFormSubmit(event) {
       console.warn('Turnstile token is empty. Proceeding anyway (degraded mode).');
     }
 
-    // Submit prediction to API (Story 2.7 POST or Story 2.8 PUT)
+    // Story 3.3: Show optimistic UI immediately (AC6: Optimistic UI)
     submitButton.textContent = hasExistingPrediction ? 'Updating...' : 'Submitting...';
 
+    // Import submission module functions dynamically
+    const { showOptimisticConfirmation, updateConfirmationWithActual, rollbackOptimisticUI } =
+      await import('/js/submission.js');
+
+    showOptimisticConfirmation(dateValue);
+
+    // Submit prediction to API (Story 2.7 POST or Story 2.8 PUT)
     const response = await fetch('/api/predict', {
       method: hasExistingPrediction ? 'PUT' : 'POST',
       headers: {
@@ -415,6 +424,9 @@ async function handleFormSubmit(event) {
     const result = await response.json();
 
     if (!response.ok) {
+      // Story 3.3: Rollback optimistic UI on failure (AC7)
+      rollbackOptimisticUI();
+
       // Handle 409 Conflict - user already has a prediction
       if (response.status === 409) {
         hasExistingPrediction = true;
@@ -436,24 +448,35 @@ async function handleFormSubmit(event) {
     hasExistingPrediction = true;
     updateSubmitButtonText();
 
-    // Success! Display comparison (Story 3.2)
+    // Success! Update confirmation with actual data (Story 3.3, AC: Update with actual ranking)
     console.log('Prediction submitted/updated successfully:', result);
 
-    // Extract median from response (handle both POST and PUT response formats)
+    // Extract data from response (handle both POST and PUT response formats)
     const userDate = result.data?.predicted_date || result.predicted_date;
     const medianDate = result.data?.stats?.median;
+    const predictionId = result.data?.prediction_id;
+    const stats = result.data?.stats;
 
-    // Display social comparison (AC1: Immediately after submission)
+    // Story 3.3: Update confirmation with actual data from API
+    if (predictionId && stats) {
+      updateConfirmationWithActual({
+        prediction_id: predictionId,
+        predicted_date: userDate,
+        stats: stats
+      });
+    }
+
+    // Display social comparison (Story 3.2, AC1: Immediately after submission)
     // Only show if we have median data (POST response has it, PUT might not)
     if (medianDate) {
       displayComparison(userDate, medianDate);
     }
 
-    // Show success message
-    const successMessage = hasExistingPrediction
-      ? (result.message || 'Your prediction has been updated!')
-      : (result.message || 'Your prediction has been recorded!');
-    showValidationMessage(successMessage, 'success');
+    // Show success message (replaced by confirmation display in Story 3.3)
+    // const successMessage = hasExistingPrediction
+    //   ? (result.message || 'Your prediction has been updated!')
+    //   : (result.message || 'Your prediction has been recorded!');
+    // showValidationMessage(successMessage, 'success');
 
     // Refresh stats display to show updated count (bypass cache for fresh data)
     loadStats(true);
@@ -462,6 +485,15 @@ async function handleFormSubmit(event) {
     dateInput.value = '';
   } catch (error) {
     console.error('Form submission error:', error);
+
+    // Story 3.3: Rollback optimistic UI on exception (AC7)
+    try {
+      const { rollbackOptimisticUI } = await import('/js/submission.js');
+      rollbackOptimisticUI();
+    } catch (importError) {
+      console.error('Failed to import rollback function:', importError);
+    }
+
     showValidationMessage(
       'An unexpected error occurred. Please try again.',
       'error'

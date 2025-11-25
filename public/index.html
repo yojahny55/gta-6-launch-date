@@ -125,6 +125,40 @@
       </form>
     </section>
 
+    <!-- Submission Confirmation Section (Story 3.3: Submission Confirmation with Visual Feedback) -->
+    <section id="confirmation-display" class="hidden mb-8" role="status" aria-live="polite" aria-labelledby="confirmation-heading">
+      <h2 id="confirmation-heading" class="sr-only">Submission Confirmation</h2>
+
+      <div class="card bg-success/10 shadow-xl border border-success/20">
+        <div class="card-body items-center text-center">
+          <!-- Success Icon (AC1: Green checkmark or celebration animation) -->
+          <div id="confirmation-icon" class="mb-3" aria-hidden="true">
+            <svg class="w-16 h-16 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+
+          <!-- Primary Message (AC2) -->
+          <p id="confirmation-primary" class="text-xl md:text-2xl font-bold text-success mb-2">
+            Your prediction has been recorded!
+          </p>
+
+          <!-- Prediction Echo (AC3) -->
+          <p id="confirmation-echo" class="text-base md:text-lg text-base-content mb-2">
+            You predicted: <span id="confirmation-date" class="font-semibold">--</span>
+          </p>
+
+          <!-- Ranking Display (AC4) -->
+          <p id="confirmation-ranking" class="text-base md:text-lg text-primary font-semibold">
+            Your prediction #<span id="confirmation-rank">--</span>!
+          </p>
+        </div>
+      </div>
+
+      <!-- ARIA Live Region for Screen Reader Announcement (AC9: FR70) -->
+      <div id="confirmation-announcement" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
+    </section>
+
     <!-- Social Comparison Section (Story 3.2: Social Comparison Messaging) -->
     <!-- AC7: Positioned above share buttons (future) -->
     <section id="comparison-display" class="hidden mb-8" aria-labelledby="comparison-heading" aria-live="polite">
@@ -176,6 +210,7 @@
   </footer>
 
   <script src="/js/comparison.js"></script>
+  <script src="/js/submission.js" type="module"></script>
   <script src="/app.js"></script>
 </body>
 </html>
