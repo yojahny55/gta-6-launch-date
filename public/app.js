@@ -342,11 +342,28 @@ function executeTurnstile() {
 }
 
 /**
- * Handle form submission with validation and Turnstile (Story 2.3, Story 2.5B)
+ * Track if user has already submitted a prediction
+ * Used to switch between POST (create) and PUT (update) modes (Story 2.8)
+ */
+let hasExistingPrediction = false;
+
+/**
+ * Update the submit button text based on mode
+ */
+function updateSubmitButtonText() {
+  const submitButton = document.querySelector('#prediction-form button[type="submit"]');
+  if (submitButton) {
+    submitButton.textContent = hasExistingPrediction ? 'Update My Prediction' : 'Add My Prediction';
+  }
+}
+
+/**
+ * Handle form submission with validation and Turnstile (Story 2.3, 2.5B, 2.7, 2.8)
  * Updated workflow:
  * 1. Validate date (Story 2.3)
  * 2. Execute Cloudflare Turnstile (Story 2.5B)
- * 3. Send to API endpoint with token (Story 2.7 - future)
+ * 3. POST /api/predict (new) or PUT /api/predict (update) (Story 2.7, 2.8)
+ * 4. Display comparison messaging (Story 3.2)
  *
  * @param {Event} event - Form submit event
  */
@@ -381,14 +398,68 @@ async function handleFormSubmit(event) {
       console.warn('Turnstile token is empty. Proceeding anyway (degraded mode).');
     }
 
-    // TODO (Story 2.7): Send to API endpoint
-    console.log('Date validated successfully:', dateValue);
-    console.log('Turnstile token:', turnstileToken ? 'Generated' : 'Empty (degraded mode)');
+    // Submit prediction to API (Story 2.7 POST or Story 2.8 PUT)
+    submitButton.textContent = hasExistingPrediction ? 'Updating...' : 'Submitting...';
 
-    showValidationMessage(
-      'Prediction validated! Turnstile executed. (API integration pending)',
-      'success'
-    );
+    const response = await fetch('/api/predict', {
+      method: hasExistingPrediction ? 'PUT' : 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        predicted_date: dateValue,
+        turnstile_token: turnstileToken || '',
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      // Handle 409 Conflict - user already has a prediction
+      if (response.status === 409) {
+        hasExistingPrediction = true;
+        updateSubmitButtonText();
+        showValidationMessage(
+          'You already have a prediction. Click "Update My Prediction" to change it.',
+          'error'
+        );
+        return;
+      }
+
+      // Handle other API errors
+      const errorMessage = result.error?.message || 'Failed to submit prediction';
+      showValidationMessage(errorMessage, 'error');
+      return;
+    }
+
+    // Mark that user now has a prediction
+    hasExistingPrediction = true;
+    updateSubmitButtonText();
+
+    // Success! Display comparison (Story 3.2)
+    console.log('Prediction submitted/updated successfully:', result);
+
+    // Extract median from response (handle both POST and PUT response formats)
+    const userDate = result.data?.predicted_date || result.predicted_date;
+    const medianDate = result.data?.stats?.median;
+
+    // Display social comparison (AC1: Immediately after submission)
+    // Only show if we have median data (POST response has it, PUT might not)
+    if (medianDate) {
+      displayComparison(userDate, medianDate);
+    }
+
+    // Show success message
+    const successMessage = hasExistingPrediction
+      ? (result.message || 'Your prediction has been updated!')
+      : (result.message || 'Your prediction has been recorded!');
+    showValidationMessage(successMessage, 'success');
+
+    // Refresh stats display to show updated count (bypass cache for fresh data)
+    loadStats(true);
+
+    // Clear the form
+    dateInput.value = '';
   } catch (error) {
     console.error('Form submission error:', error);
     showValidationMessage(
@@ -398,7 +469,7 @@ async function handleFormSubmit(event) {
   } finally {
     // Re-enable submit button
     submitButton.disabled = false;
-    submitButton.textContent = 'Submit Prediction';
+    updateSubmitButtonText();
   }
 }
 
@@ -611,16 +682,24 @@ function showStatsError(message) {
  * AC: Async data loading with error handling
  *
  * @param {number} retryCount - Current retry attempt (0-indexed)
+ * @param {boolean} bypassCache - Force fresh fetch, bypassing browser cache
  * @returns {Promise<object>} Stats data or throws error
  */
-async function fetchStats(retryCount = 0) {
+async function fetchStats(retryCount = 0, bypassCache = false) {
   try {
-    const response = await fetch(STATS_API_URL, {
+    const fetchOptions = {
       method: 'GET',
       headers: {
         Accept: 'application/json',
       },
-    });
+    };
+
+    // Bypass browser cache if requested (e.g., after submission)
+    if (bypassCache) {
+      fetchOptions.cache = 'no-store';
+    }
+
+    const response = await fetch(STATS_API_URL, fetchOptions);
 
     // Handle HTTP errors
     if (!response.ok) {
@@ -653,13 +732,15 @@ async function fetchStats(retryCount = 0) {
  * Load and display statistics
  * Main entry point for stats display functionality
  * Shows loading state, fetches data, renders or shows error
+ *
+ * @param {boolean} bypassCache - Force fresh fetch, bypassing browser cache
  */
-async function loadStats() {
+async function loadStats(bypassCache = false) {
   // Show loading state
   showStatsState('loading');
 
   try {
-    const stats = await fetchStats();
+    const stats = await fetchStats(0, bypassCache);
     renderStats(stats);
   } catch (error) {
     console.error('Failed to load stats after retries:', error.message);
@@ -691,6 +772,107 @@ function initStatsDisplay() {
 
   // Initial stats load
   loadStats();
+}
+
+// ============================================================================
+// Social Comparison Display (Story 3.2)
+// ============================================================================
+
+/**
+ * DOM elements for comparison display
+ */
+let comparisonElements = null;
+
+/**
+ * Initialize and cache comparison display DOM elements
+ */
+function initComparisonElements() {
+  comparisonElements = {
+    container: document.getElementById('comparison-display'),
+    emoji: document.getElementById('comparison-emoji'),
+    message: document.getElementById('comparison-message'),
+    personality: document.getElementById('comparison-personality'),
+    delta: document.getElementById('comparison-delta'),
+    userDate: document.getElementById('comparison-user-date'),
+    medianDate: document.getElementById('comparison-median-date')
+  };
+}
+
+// Note: formatDateForDisplay() is defined earlier in the file (line 532)
+// and is reused here for consistency
+
+/**
+ * Display social comparison messaging
+ * AC1: Comparison message shown immediately after successful submission
+ *
+ * @param {string} userDate - User's predicted date (ISO format)
+ * @param {string} medianDate - Community median date (ISO format)
+ */
+function displayComparison(userDate, medianDate) {
+  if (!comparisonElements) {
+    initComparisonElements();
+  }
+
+  // Get comparison result using comparison.js module
+  const comparison = getComparisonMessage(userDate, medianDate);
+
+  // Update emoji (AC3: Direction emoji)
+  if (comparisonElements.emoji) {
+    comparisonElements.emoji.textContent = comparison.emoji;
+  }
+
+  // Update primary message (AC2: Days difference)
+  if (comparisonElements.message) {
+    comparisonElements.message.textContent = comparison.message;
+  }
+
+  // Update personality message (AC4: Personality thresholds)
+  if (comparisonElements.personality) {
+    comparisonElements.personality.textContent = comparison.personality;
+  }
+
+  // Update delta quantification (AC5: Large differences in months)
+  if (comparisonElements.delta) {
+    // Use DOM manipulation for XSS safety instead of innerHTML
+    comparisonElements.delta.textContent = ''; // Clear existing content
+    const deltaSpan = document.createElement('span');
+    deltaSpan.className = 'font-semibold';
+    deltaSpan.textContent = comparison.formattedDelta;
+    comparisonElements.delta.appendChild(deltaSpan);
+    comparisonElements.delta.appendChild(document.createTextNode(' difference'));
+  }
+
+  // Update dates for clarity (AC6: Both dates shown)
+  if (comparisonElements.userDate) {
+    comparisonElements.userDate.textContent = formatDateForDisplay(userDate);
+  }
+  if (comparisonElements.medianDate) {
+    comparisonElements.medianDate.textContent = formatDateForDisplay(medianDate);
+  }
+
+  // Show the comparison section with animation
+  if (comparisonElements.container) {
+    comparisonElements.container.classList.remove('hidden');
+    // Smooth scroll to comparison
+    setTimeout(() => {
+      comparisonElements.container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+  }
+
+  console.log('Comparison displayed:', comparison);
+}
+
+/**
+ * Hide comparison display
+ */
+function hideComparison() {
+  if (!comparisonElements) {
+    initComparisonElements();
+  }
+
+  if (comparisonElements.container) {
+    comparisonElements.container.classList.add('hidden');
+  }
 }
 
 /**

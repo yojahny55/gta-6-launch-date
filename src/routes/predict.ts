@@ -29,7 +29,7 @@ import {
 import { hashRequestIP } from '../utils/ip-hash';
 import { verifyAndEvaluateTurnstile } from '../utils/turnstile';
 import { calculateWeight } from '../utils/weighted-median';
-import { invalidateStatsCache } from '../services/statistics.service';
+import { invalidateStatsCache, calculateStatistics } from '../services/statistics.service';
 
 /**
  * Create prediction submission routes
@@ -163,6 +163,22 @@ export function createPredictRoutes() {
         // Invalidate stats cache after successful submission (Story 2.10)
         await invalidateStatsCache(c.env.gta6_stats_cache);
 
+        // Calculate fresh stats for comparison (Story 3.2)
+        const stats = await calculateStatistics(c.env.DB);
+
+        // Calculate delta_days for social comparison
+        const userDate = new Date(predicted_date);
+        const medianDate = new Date(stats.median);
+        const delta_days = Math.round(
+          (userDate.getTime() - medianDate.getTime()) / (24 * 60 * 60 * 1000)
+        );
+
+        // Determine comparison direction
+        let comparison: 'optimistic' | 'pessimistic' | 'aligned';
+        if (delta_days === 0) comparison = 'aligned';
+        else if (delta_days > 0) comparison = 'pessimistic';
+        else comparison = 'optimistic';
+
         // Set cookie in response if new
         if (isNewCookie) {
           const cookieOptions = getDefaultCookieOptions();
@@ -174,16 +190,29 @@ export function createPredictRoutes() {
           prediction_id: predictionId,
           predicted_date,
           weight,
+          delta_days,
+          comparison,
           ipHashPrefix: ipHash.substring(0, 8),
           duration_ms: Date.now() - startTime,
         });
 
-        // Return 201 Created response
+        // Return 201 Created response with stats for comparison (Story 3.2)
         return c.json(
           {
             success: true,
-            prediction_id: predictionId,
-            predicted_date,
+            data: {
+              prediction_id: predictionId,
+              predicted_date,
+              submitted_at: now,
+              stats: {
+                median: stats.median,
+                min: stats.min,
+                max: stats.max,
+                count: stats.count,
+              },
+              delta_days,
+              comparison,
+            },
             message: 'Your prediction has been recorded!',
           },
           201
@@ -232,6 +261,22 @@ export function createPredictRoutes() {
               // Invalidate stats cache after successful submission (Story 2.10)
               await invalidateStatsCache(c.env.gta6_stats_cache);
 
+              // Calculate fresh stats for comparison (Story 3.2)
+              const stats = await calculateStatistics(c.env.DB);
+
+              // Calculate delta_days for social comparison
+              const userDate = new Date(predicted_date);
+              const medianDate = new Date(stats.median);
+              const delta_days = Math.round(
+                (userDate.getTime() - medianDate.getTime()) / (24 * 60 * 60 * 1000)
+              );
+
+              // Determine comparison direction
+              let comparison: 'optimistic' | 'pessimistic' | 'aligned';
+              if (delta_days === 0) comparison = 'aligned';
+              else if (delta_days > 0) comparison = 'pessimistic';
+              else comparison = 'optimistic';
+
               // Set new cookie in response
               const cookieOptions = getDefaultCookieOptions();
               c.header('Set-Cookie', setCookie(COOKIE_NAME, cookieId, cookieOptions));
@@ -240,13 +285,26 @@ export function createPredictRoutes() {
                 prediction_id: predictionId,
                 predicted_date,
                 weight,
+                delta_days,
+                comparison,
               });
 
               return c.json(
                 {
                   success: true,
-                  prediction_id: predictionId,
-                  predicted_date,
+                  data: {
+                    prediction_id: predictionId,
+                    predicted_date,
+                    submitted_at: now,
+                    stats: {
+                      median: stats.median,
+                      min: stats.min,
+                      max: stats.max,
+                      count: stats.count,
+                    },
+                    delta_days,
+                    comparison,
+                  },
                   message: 'Your prediction has been recorded!',
                 },
                 201
@@ -491,22 +549,51 @@ export function createPredictRoutes() {
         // Invalidate stats cache after successful update (Story 2.10)
         await invalidateStatsCache(c.env.gta6_stats_cache);
 
+        // Calculate fresh stats for comparison (Story 3.2)
+        const stats = await calculateStatistics(c.env.DB);
+
+        // Calculate delta_days for social comparison
+        const userDate = new Date(predicted_date);
+        const medianDate = new Date(stats.median);
+        const delta_days = Math.round(
+          (userDate.getTime() - medianDate.getTime()) / (24 * 60 * 60 * 1000)
+        );
+
+        // Determine comparison direction
+        let comparison: 'optimistic' | 'pessimistic' | 'aligned';
+        if (delta_days === 0) comparison = 'aligned';
+        else if (delta_days > 0) comparison = 'pessimistic';
+        else comparison = 'optimistic';
+
         // Step 11: Log successful update
         console.log('Prediction updated', {
           cookie_id_prefix: cookieId.substring(0, 8),
           predicted_date,
           previous_date: previousDate,
           weight,
+          delta_days,
+          comparison,
           ip_changed: ipChanged,
           duration_ms: Date.now() - startTime,
         });
 
-        // Step 12: Return 200 OK with previous_date
+        // Step 12: Return 200 OK with stats for comparison (Story 3.2)
         return c.json(
           {
             success: true,
-            predicted_date,
-            previous_date: previousDate,
+            data: {
+              predicted_date,
+              previous_date: previousDate,
+              updated_at: now,
+              stats: {
+                median: stats.median,
+                min: stats.min,
+                max: stats.max,
+                count: stats.count,
+              },
+              delta_days,
+              comparison,
+            },
             message: 'Your prediction has been updated!',
           },
           200

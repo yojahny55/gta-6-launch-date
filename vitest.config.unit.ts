@@ -8,6 +8,7 @@ export default defineConfig({
       'src/utils/**/*.test.ts',
       'src/services/**/*.test.ts', // Story 2.10: Statistics service tests
       'src/routes/stats.test.ts', // Story 2.10: Stats route tests (unit testable)
+      'public/js/**/*.test.js', // Story 3.2: Frontend comparison tests
     ],
     exclude: [
       'src/index.test.ts',

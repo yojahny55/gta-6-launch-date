@@ -124,6 +124,49 @@
         </div>
       </form>
     </section>
+
+    <!-- Social Comparison Section (Story 3.2: Social Comparison Messaging) -->
+    <!-- AC7: Positioned above share buttons (future) -->
+    <section id="comparison-display" class="hidden mb-8" aria-labelledby="comparison-heading" aria-live="polite">
+      <h2 id="comparison-heading" class="sr-only">How Your Prediction Compares</h2>
+
+      <div class="card bg-gradient-to-br from-primary/5 to-secondary/5 shadow-xl border border-primary/10">
+        <div class="card-body items-center text-center">
+          <!-- Direction Emoji (AC3) -->
+          <div id="comparison-emoji" class="text-5xl mb-2" aria-hidden="true">
+            🎯
+          </div>
+
+          <!-- Primary Comparison Message (AC2) -->
+          <p id="comparison-message" class="text-xl md:text-2xl font-bold text-base-content mb-2">
+            You're exactly aligned with the community!
+          </p>
+
+          <!-- Personality Message (AC4) -->
+          <p id="comparison-personality" class="text-base md:text-lg text-primary font-medium mb-3">
+            Great minds think alike!
+          </p>
+
+          <!-- Quantified Delta (AC5, FR18) -->
+          <p id="comparison-delta" class="text-sm text-base-content/70 mb-3">
+            <span class="font-semibold">0 days</span> difference
+          </p>
+
+          <!-- Date Clarity (AC6: Both user date and median shown) -->
+          <div class="divider text-xs text-base-content/40 my-2">Details</div>
+          <div class="grid grid-cols-2 gap-4 w-full max-w-md text-sm">
+            <div class="text-right">
+              <p class="text-base-content/50 text-xs mb-1">Your Prediction</p>
+              <p id="comparison-user-date" class="font-semibold text-base-content font-mono">--</p>
+            </div>
+            <div class="text-left">
+              <p class="text-base-content/50 text-xs mb-1">Community Median</p>
+              <p id="comparison-median-date" class="font-semibold text-base-content font-mono">--</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Cloudflare Turnstile Badge (Required by Cloudflare ToS) -->
@@ -132,6 +175,7 @@
     Protected by <a href="https://www.cloudflare.com/products/turnstile/" class="underline hover:text-primary" target="_blank" rel="noopener noreferrer">Cloudflare Turnstile</a>
   </footer>
 
+  <script src="/js/comparison.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>
