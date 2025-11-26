@@ -1,11 +1,15 @@
 import { Hono } from 'hono';
 import type { Env } from './types';
 import { rateLimitMiddleware } from './middleware/rate-limiter';
+import { securityHeadersMiddleware } from './middleware/security-headers';
 import { createPredictRoutes } from './routes/predict';
 import { createStatsRoutes } from './routes/stats';
 import { createPredictionsRoutes } from './routes/predictions';
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Apply security headers middleware to all routes (Story 3.5 follow-up)
+app.use('*', securityHeadersMiddleware);
 
 // Apply rate limiting middleware to all API routes
 app.use('/api/*', rateLimitMiddleware);

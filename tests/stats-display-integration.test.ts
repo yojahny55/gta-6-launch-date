@@ -79,6 +79,9 @@ describe('Stats Display Integration', () => {
     fetchMock = vi.fn();
     window.fetch = fetchMock;
 
+    // Clear localStorage to prevent fallback cache from succeeding
+    window.localStorage.clear();
+
     // Set the HTML content
     document.documentElement.innerHTML = htmlContent;
 

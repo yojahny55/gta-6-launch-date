@@ -864,3 +864,24 @@ AT 100% CAPACITY (limit reached):
 - Critical paths: 100%
 - UI components: 90%+
 - Overall epic: 85%+
+
+---
+
+## Post-Review Follow-ups
+
+**From Story 3.5 (Error Handling with Retry Mechanisms) - Review Date: 2025-11-26**
+
+1. **[Low] Rate Limit Countdown Memory Leak**
+   - Store countdown interval ID and clear in hideError()
+   - File: public/js/errors.js:341-366
+   - Added to backlog: 2025-11-26
+
+2. **[Low] Production Error Tracking Integration**
+   - Implement Sentry/LogRocket integration for error logging
+   - File: public/js/errors.js:433-449
+   - Added to backlog: 2025-11-26
+
+3. **[Low] CSP Headers for XSS Protection**
+   - Add Content Security Policy headers for additional security hardening
+   - Recommended for production deployment
+   - Added to backlog: 2025-11-26

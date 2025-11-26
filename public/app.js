@@ -358,14 +358,14 @@ function updateSubmitButtonText() {
 }
 
 /**
- * Handle form submission with validation and Turnstile (Story 2.3, 2.5B, 2.7, 2.8, 3.3)
+ * Handle form submission with validation and Turnstile (Story 2.3, 2.5B, 2.7, 2.8, 3.3, 3.5)
  * Updated workflow:
  * 1. Validate date (Story 2.3)
  * 2. Execute Cloudflare Turnstile (Story 2.5B)
  * 3. Show optimistic UI immediately (Story 3.3)
- * 4. POST /api/predict (new) or PUT /api/predict (update) (Story 2.7, 2.8)
+ * 4. POST /api/predict (new) or PUT /api/predict (update) with retry (Story 2.7, 2.8, 3.5)
  * 5. On success: Update with actual data, display confirmation and comparison (Story 3.3, 3.2)
- * 6. On failure: Rollback optimistic UI (Story 3.3)
+ * 6. On failure: Rollback optimistic UI, show error with retry option (Story 3.3, 3.5)
  *
  * @param {Event} event - Form submit event
  */
@@ -376,8 +376,15 @@ async function handleFormSubmit(event) {
   const dateValue = dateInput.value;
   const submitButton = event.target.querySelector('button[type="submit"]');
 
-  // Clear previous validation messages
+  // Clear previous messages
   showValidationMessage(null);
+
+  // Import error handling functions (Story 3.5)
+  const { hideError, showError, classifyError, fetchWithRetry, saveSubmissionToLocalStorage, clearPendingSubmission, logError } =
+    await import('/js/errors.js');
+
+  // Hide any existing errors
+  hideError();
 
   // Validate date
   const validation = validateDate(dateValue);
@@ -409,16 +416,21 @@ async function handleFormSubmit(event) {
 
     showOptimisticConfirmation(dateValue);
 
-    // Submit prediction to API (Story 2.7 POST or Story 2.8 PUT)
-    const response = await fetch('/api/predict', {
+    // Story 3.5: Submit prediction to API with retry logic (AC1-AC2)
+    const submissionData = {
+      predicted_date: dateValue,
+      turnstile_token: turnstileToken || '',
+    };
+
+    // AC11: Save submission to localStorage for fallback retry
+    saveSubmissionToLocalStorage(submissionData);
+
+    const response = await fetchWithRetry('/api/predict', {
       method: hasExistingPrediction ? 'PUT' : 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        predicted_date: dateValue,
-        turnstile_token: turnstileToken || '',
-      }),
+      body: JSON.stringify(submissionData),
     });
 
     const result = await response.json();
@@ -427,22 +439,33 @@ async function handleFormSubmit(event) {
       // Story 3.3: Rollback optimistic UI on failure (AC7)
       rollbackOptimisticUI();
 
-      // Handle 409 Conflict - user already has a prediction
+      // Story 3.5: Classify error and show appropriate message (AC3-AC7)
+      const errorInfo = await classifyError(response);
+
+      // AC4: Handle 409 Conflict - user already has a prediction
       if (response.status === 409) {
         hasExistingPrediction = true;
         updateSubmitButtonText();
-        showValidationMessage(
-          'You already have a prediction. Click "Update My Prediction" to change it.',
-          'error'
-        );
-        return;
       }
 
-      // Handle other API errors
-      const errorMessage = result.error?.message || 'Failed to submit prediction';
-      showValidationMessage(errorMessage, 'error');
+      // Show error with retry callback for retryable errors
+      showError(errorInfo.code, {
+        ...errorInfo.details,
+        retryCallback: errorInfo.retryable ? () => handleFormSubmit(event) : null
+      });
+
+      // AC7: Log error for monitoring
+      logError('Form submission', response, {
+        status: response.status,
+        errorCode: errorInfo.code,
+        dateValue
+      });
+
       return;
     }
+
+    // Success! Clear pending submission from localStorage
+    clearPendingSubmission();
 
     // Mark that user now has a prediction
     hasExistingPrediction = true;
@@ -472,12 +495,6 @@ async function handleFormSubmit(event) {
       displayComparison(userDate, medianDate);
     }
 
-    // Show success message (replaced by confirmation display in Story 3.3)
-    // const successMessage = hasExistingPrediction
-    //   ? (result.message || 'Your prediction has been updated!')
-    //   : (result.message || 'Your prediction has been recorded!');
-    // showValidationMessage(successMessage, 'success');
-
     // Refresh stats display to show updated count (bypass cache for fresh data)
     loadStats(true);
 
@@ -494,10 +511,15 @@ async function handleFormSubmit(event) {
       console.error('Failed to import rollback function:', importError);
     }
 
-    showValidationMessage(
-      'An unexpected error occurred. Please try again.',
-      'error'
-    );
+    // Story 3.5: Classify and display error (AC1-AC8)
+    const errorInfo = await classifyError(error);
+    showError(errorInfo.code, {
+      ...errorInfo.details,
+      retryCallback: errorInfo.retryable ? () => handleFormSubmit(event) : null
+    });
+
+    // AC7: Log error for monitoring
+    logError('Form submission exception', error, { dateValue });
   } finally {
     // Re-enable submit button
     submitButton.disabled = false;
@@ -710,14 +732,17 @@ function showStatsError(message) {
 }
 
 /**
- * Fetch statistics from API with retry logic
+ * Fetch statistics from API with retry logic and fallback (Story 3.5)
  * AC: Async data loading with error handling
+ * AC10: Fallback to cached data if API fails
  *
  * @param {number} retryCount - Current retry attempt (0-indexed)
  * @param {boolean} bypassCache - Force fresh fetch, bypassing browser cache
  * @returns {Promise<object>} Stats data or throws error
  */
 async function fetchStats(retryCount = 0, bypassCache = false) {
+  const STATS_CACHE_KEY = 'gta6_stats_cache';
+
   try {
     const fetchOptions = {
       method: 'GET',
@@ -745,6 +770,16 @@ async function fetchStats(retryCount = 0, bypassCache = false) {
     const cacheStatus = response.headers.get('X-Cache');
     console.log('Stats fetched:', { cacheStatus, count: data.count });
 
+    // AC10: Save to localStorage as fallback cache
+    try {
+      localStorage.setItem(STATS_CACHE_KEY, JSON.stringify({
+        data,
+        timestamp: new Date().toISOString()
+      }));
+    } catch (storageError) {
+      console.warn('Failed to cache stats to localStorage:', storageError);
+    }
+
     return data;
   } catch (error) {
     console.error('Stats fetch error:', error.message, { retryCount });
@@ -753,7 +788,19 @@ async function fetchStats(retryCount = 0, bypassCache = false) {
     if (retryCount < STATS_MAX_RETRIES - 1) {
       console.log(`Retrying stats fetch in ${STATS_RETRY_DELAY}ms... (attempt ${retryCount + 2}/${STATS_MAX_RETRIES})`);
       await new Promise((resolve) => setTimeout(resolve, STATS_RETRY_DELAY));
-      return fetchStats(retryCount + 1);
+      return fetchStats(retryCount + 1, bypassCache);
+    }
+
+    // AC10: Fallback to cached stats from localStorage
+    try {
+      const cachedData = localStorage.getItem(STATS_CACHE_KEY);
+      if (cachedData) {
+        const parsed = JSON.parse(cachedData);
+        console.log('Using cached stats from localStorage (fallback)');
+        return parsed.data;
+      }
+    } catch (cacheError) {
+      console.warn('Failed to load cached stats:', cacheError);
     }
 
     throw error;
@@ -761,9 +808,10 @@ async function fetchStats(retryCount = 0, bypassCache = false) {
 }
 
 /**
- * Load and display statistics
+ * Load and display statistics (Story 3.1, 3.5)
  * Main entry point for stats display functionality
  * Shows loading state, fetches data, renders or shows error
+ * AC10: Falls back to cached data if API fails
  *
  * @param {boolean} bypassCache - Force fresh fetch, bypassing browser cache
  */
@@ -776,6 +824,7 @@ async function loadStats(bypassCache = false) {
     renderStats(stats);
   } catch (error) {
     console.error('Failed to load stats after retries:', error.message);
+    // AC10: If stats fetch fails completely, show placeholder
     showStatsError('Unable to load statistics. Please try again.');
   }
 }

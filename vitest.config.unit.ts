@@ -18,5 +18,18 @@ export default defineConfig({
     ], // Exclude Workers-specific tests
     globals: true,
     environment: 'happy-dom', // Use happy-dom for DOM tests
+    // Resource optimization (Test Performance Fix - Sprint Change 2025-11-26)
+    maxConcurrency: 3, // Limit concurrent test execution to prevent RAM exhaustion
+    pool: 'threads',
+    poolOptions: {
+      threads: {
+        maxThreads: 4, // Max 4 threads to prevent 32GB+ RAM consumption
+        minThreads: 1,
+      },
+    },
+    // Run heavy tests sequentially (DOM manipulation + fake timers)
+    sequence: {
+      concurrent: false, // Sequential execution for Stories 3.4 & 3.5 tests
+    },
   },
 });

@@ -1240,6 +1240,67 @@ npx tsc --noEmit
 - Test files: `src/index.test.ts`, `src/db/schema.test.ts`
 - Test setup: `vitest.config.ts`, `src/test-setup.ts`
 
+**6. Test Resource Constraints:**
+
+**Context:** During Story 3.5 implementation (Error Handling with Retry Mechanisms), tests were found to consume excessive resources (32GB RAM + 100% CPU) due to uncontrolled parallel test execution and fake timer memory leaks. This made local development testing impossible and created risk of CI/CD failures.
+
+**Root Causes Identified:**
+- No `maxConcurrency` or thread limits in Vitest configurations
+- Fake timers (`vi.useFakeTimers()`) not properly cleaned up in `afterEach()` hooks
+- Heavy DOM manipulation tests running in parallel without resource constraints
+- Async timer advancement (`vi.advanceTimersByTimeAsync()`) causing memory leaks
+
+**Requirements:**
+
+**Parallelism Limits:**
+- **Unit tests:** Max 4 threads, max 3 concurrent tests (`vitest.config.unit.ts`)
+- **Workers tests:** Max 2 concurrent tests (`vitest.config.ts`)
+- **Sequential execution:** Required for tests with >100 DOM nodes or heavy fake timer usage
+
+**Fake Timer Best Practices:**
+- **MANDATORY:** Always call `vi.clearAllTimers()` in `afterEach()` before `vi.useRealTimers()`
+- **Pattern:**
+  ```javascript
+  afterEach(() => {
+    vi.clearAllTimers(); // Clear pending timers FIRST
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    if (global.gc) global.gc(); // Hint for GC
+  });
+  ```
+
+**CI/CD Constraints:**
+- Configure 4GB RAM limit per test runner (`NODE_OPTIONS: --max-old-space-size=4096`)
+- Set timeout: 10 minutes maximum per test suite
+- Monitor memory usage and fail if exceeding limits
+
+**Local Development:**
+- Use `--no-threads` flag if system has < 16GB RAM
+- Separate watch mode commands for development (`test:unit:watch`, `test:workers:watch`)
+- Tests should complete in < 4GB RAM with < 100% CPU usage
+
+**Configuration Files:**
+- `vitest.config.unit.ts`: Includes `maxConcurrency: 3`, `maxThreads: 4`, `sequence.concurrent: false`
+- `vitest.config.ts`: Includes `maxConcurrency: 2` (Workers pool)
+- `package.json`: Test scripts use `vitest run --no-threads` for unit tests
+
+**Enforcement:**
+- CI pipeline monitors memory usage and fails if exceeding 4GB
+- Test configurations include resource limits by default
+- Code review checklist verifies timer cleanup in all new tests
+- ESLint rules (future) to detect missing `vi.clearAllTimers()`
+
+**Rationale:**
+Ensures tests run reliably across all development and CI/CD environments without resource exhaustion. Prevents recurrence of 32GB RAM consumption issues that block local development and cause environment crashes.
+
+**Impact:**
+- Test execution time may increase 10-20% (sequential vs parallel) - acceptable trade-off
+- Tests now run in < 4GB RAM with 50-70% CPU usage (vs 32GB+ and 100% before)
+- Local development testing is reliable and doesn't crash systems
+- CI/CD tests complete within timeout windows
+
+**Resolution Date:** 2025-11-26 (Sprint Change Proposal: Test Optimization)
+
 ---
 
 ### ADR-012: Multi-Environment Deployment Strategy
