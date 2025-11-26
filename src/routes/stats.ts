@@ -19,7 +19,6 @@ import type { Env } from '../types';
 import {
   getStatisticsWithCache,
   STATS_CACHE_KEY,
-  STATS_CACHE_TTL,
 } from '../services/statistics.service';
 import { getCapacityLevel } from '../services/capacity.service';
 import { getStatsCacheTTL } from '../utils/degradation';
