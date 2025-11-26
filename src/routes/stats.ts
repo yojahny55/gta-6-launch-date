@@ -16,10 +16,7 @@
 
 import { Hono } from 'hono';
 import type { Env } from '../types';
-import {
-  getStatisticsWithCache,
-  STATS_CACHE_KEY,
-} from '../services/statistics.service';
+import { getStatisticsWithCache, STATS_CACHE_KEY } from '../services/statistics.service';
 import { getCapacityLevel } from '../services/capacity.service';
 import { getStatsCacheTTL } from '../utils/degradation';
 
