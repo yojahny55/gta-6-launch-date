@@ -195,7 +195,7 @@ So that I can understand the full spectrum of community opinions.
 - Data table alternative available
 - Keyboard navigable (tab to toggle button)
 
-**Prerequisites:** Story 2.10 (stats API returns data for charting)
+**Prerequisites:** Story 2.10 (stats API returns data for charting), Story 3.4b (predictions data API)
 
 **Technical Notes:**
 - Implements FR19 (optional chart visualization)
@@ -203,6 +203,69 @@ So that I can understand the full spectrum of community opinions.
 - Lazy loading prevents blocking main content
 - Histogram provides visual understanding of distribution
 - Marking user's prediction creates personal connection
+- **Note:** Currently displays empty buckets until Story 3.4b implements `/api/predictions` endpoint
+
+---
+
+## Story 3.4b: Prediction Data API Endpoint
+
+As a user,
+I want the chart to display real prediction distribution data,
+So that I can understand the actual spread of community opinions.
+
+**Acceptance Criteria:**
+
+**Given** predictions exist in the database
+**When** the chart visualization loads (Story 3.4)
+**Then** prediction data is available via API:
+
+**API Endpoint:**
+```typescript
+GET /api/predictions
+Response (200 OK):
+{
+  "data": [
+    { "predicted_date": "2026-11-19", "count": 1247 },
+    { "predicted_date": "2027-02-14", "count": 823 }
+  ],
+  "total_predictions": 10234,
+  "cached_at": "2025-11-26T14:30:00Z"
+}
+```
+
+**And** data is aggregated by date (privacy-preserving):
+- Groups predictions by predicted_date
+- Returns count per date
+- No cookie_id, ip_hash, or weight exposed
+- Sorted by date ascending
+
+**And** respects 50-prediction minimum (FR99):
+- If total_predictions < 50: Return empty data array
+- Include total_predictions in response
+
+**And** caching strategy (matches Story 2.10):
+- Cache key: `predictions:aggregated`
+- TTL: 5 minutes (300 seconds)
+- Invalidate on submission/update
+- Cache hit: <50ms, Cache miss: <300ms
+
+**And** integrates with Story 3.4:
+- Chart fetches from `/api/predictions` on toggle
+- Replaces empty array with real data
+- Chart displays populated histogram buckets
+- Shows actual community prediction distribution
+
+**Prerequisites:** Story 2.7 (submission), Story 2.8 (update), Story 2.10 (caching pattern), Story 3.4 (chart consumer)
+
+**Technical Notes:**
+- Created via correct-course workflow (2025-11-26)
+- Addresses gap identified in Story 3.4 code review
+- Story 3.4 currently shows empty chart buckets
+- This story completes the chart visualization feature
+- SQL aggregation: `SELECT predicted_date, COUNT(*) GROUP BY predicted_date`
+- Privacy-preserving: only aggregated counts, no individual data
+- Follows same caching pattern as `/api/stats` for consistency
+- Enables future analytics and widget features (Story 6)
 
 ---
 

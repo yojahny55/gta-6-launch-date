@@ -3,6 +3,7 @@ import type { Env } from './types';
 import { rateLimitMiddleware } from './middleware/rate-limiter';
 import { createPredictRoutes } from './routes/predict';
 import { createStatsRoutes } from './routes/stats';
+import { createPredictionsRoutes } from './routes/predictions';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -14,6 +15,9 @@ app.route('/', createPredictRoutes());
 
 // Register statistics routes (Story 2.10)
 app.route('/', createStatsRoutes());
+
+// Register predictions data routes (Story 3.4b)
+app.route('/', createPredictionsRoutes());
 
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() });

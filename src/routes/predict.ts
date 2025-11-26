@@ -29,7 +29,8 @@ import {
 import { hashRequestIP } from '../utils/ip-hash';
 import { verifyAndEvaluateTurnstile } from '../utils/turnstile';
 import { calculateWeight } from '../utils/weighted-median';
-import { invalidateStatsCache, calculateStatistics } from '../services/statistics.service';
+import { calculateStatistics } from '../services/statistics.service';
+import { invalidateAllCaches } from '../services/predictions-aggregation.service';
 
 /**
  * Create prediction submission routes
@@ -160,8 +161,8 @@ export function createPredictRoutes() {
         // Get the inserted prediction_id
         const predictionId = insertResult.meta.last_row_id;
 
-        // Invalidate stats cache after successful submission (Story 2.10)
-        await invalidateStatsCache(c.env.gta6_stats_cache);
+        // Invalidate both stats and predictions caches after successful submission (Story 2.10, 3.4b)
+        await invalidateAllCaches(c.env.gta6_stats_cache);
 
         // Calculate fresh stats for comparison (Story 3.2)
         const stats = await calculateStatistics(c.env.DB);
@@ -258,8 +259,8 @@ export function createPredictRoutes() {
             if (retryResult.success) {
               const predictionId = retryResult.meta.last_row_id;
 
-              // Invalidate stats cache after successful submission (Story 2.10)
-              await invalidateStatsCache(c.env.gta6_stats_cache);
+              // Invalidate both stats and predictions caches after successful submission (Story 2.10, 3.4b)
+              await invalidateAllCaches(c.env.gta6_stats_cache);
 
               // Calculate fresh stats for comparison (Story 3.2)
               const stats = await calculateStatistics(c.env.DB);
@@ -546,8 +547,8 @@ export function createPredictRoutes() {
           return c.json(errorResponse, 500);
         }
 
-        // Invalidate stats cache after successful update (Story 2.10)
-        await invalidateStatsCache(c.env.gta6_stats_cache);
+        // Invalidate both stats and predictions caches after successful update (Story 2.10, 3.4b)
+        await invalidateAllCaches(c.env.gta6_stats_cache);
 
         // Calculate fresh stats for comparison (Story 3.2)
         const stats = await calculateStatistics(c.env.DB);

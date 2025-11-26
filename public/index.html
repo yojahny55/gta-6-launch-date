@@ -83,6 +83,51 @@
       </div>
     </section>
 
+    <!-- Chart Visualization Section (Story 3.4: Optional Chart Visualization Toggle) -->
+    <!-- AC: Hidden by default (FR19), toggle button visible -->
+    <!-- POSITIONING: Above prediction form as specified in Task 1d -->
+    <section id="chart-section" class="mb-8" aria-labelledby="chart-heading">
+      <h2 id="chart-heading" class="sr-only">Prediction Distribution Chart</h2>
+
+      <!-- Toggle Button (AC: Visible, triggers chart display) -->
+      <div class="text-center mb-4">
+        <button
+          id="chart-toggle-btn"
+          type="button"
+          class="btn btn-outline btn-primary"
+          aria-expanded="false"
+          aria-controls="chart-container"
+          aria-label="Show prediction distribution chart"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+          </svg>
+          <span id="chart-toggle-text">Show Prediction Distribution</span>
+        </button>
+      </div>
+
+      <!-- Chart Container (AC: Collapsed by default, expands on toggle) -->
+      <div id="chart-container" class="hidden" role="region" aria-live="polite" aria-label="Prediction distribution histogram">
+        <div class="card bg-base-100 shadow-xl">
+          <div class="card-body">
+            <!-- Loading Indicator (AC: Shown while Chart.js loads) -->
+            <div id="chart-loading" class="text-center py-8">
+              <div class="loading loading-spinner loading-lg text-primary"></div>
+              <p class="text-sm text-base-content/60 mt-2">Loading chart...</p>
+            </div>
+
+            <!-- Chart Canvas (AC: Rendered by Chart.js) -->
+            <canvas id="prediction-chart" class="hidden" aria-label="Histogram showing distribution of community predictions over time"></canvas>
+
+            <!-- Accessible Data Table (AC: Alternative for screen readers) -->
+            <div id="chart-data-table" class="sr-only" role="table" aria-label="Prediction distribution data table">
+              <!-- Table will be populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Prediction Form Section (AC3: Primary CTA, visible above-the-fold) -->
     <section class="mb-8" aria-labelledby="form-heading">
       <h2 id="form-heading" class="sr-only">Submit Your Prediction</h2>
@@ -211,6 +256,7 @@
 
   <script src="/js/comparison.js"></script>
   <script src="/js/submission.js" type="module"></script>
+  <script src="/js/chart.js" type="module"></script>
   <script src="/app.js"></script>
 </body>
 </html>
