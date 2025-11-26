@@ -78,9 +78,7 @@ export const MINIMUM_PREDICTION_THRESHOLD = 50;
  * //   cached_at: "2025-11-26T14:30:00Z"
  * // }
  */
-export async function getAggregatedPredictions(
-  db: D1Database
-): Promise<PredictionsResponse> {
+export async function getAggregatedPredictions(db: D1Database): Promise<PredictionsResponse> {
   const startTime = Date.now();
 
   // Query 1: Get total prediction count for threshold check
@@ -253,19 +251,14 @@ export async function invalidatePredictionsCache(
  * // After successful prediction submission
  * await invalidateAllCaches(c.env.gta6_stats_cache);
  */
-export async function invalidateAllCaches(
-  kv: KVNamespace | undefined
-): Promise<void> {
+export async function invalidateAllCaches(kv: KVNamespace | undefined): Promise<void> {
   if (!kv) {
     return;
   }
 
   try {
     // Invalidate both caches in parallel
-    await Promise.all([
-      kv.delete('stats:latest'),
-      kv.delete('predictions:aggregated'),
-    ]);
+    await Promise.all([kv.delete('stats:latest'), kv.delete('predictions:aggregated')]);
     console.log('All caches invalidated', {
       keys: ['stats:latest', 'predictions:aggregated'],
     });

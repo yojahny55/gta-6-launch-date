@@ -235,7 +235,14 @@ function showValidationMessage(message, type = 'error') {
 
   // Show message with appropriate styling
   messageDiv.classList.remove('hidden');
-  const alertClass = type === 'error' ? 'alert-error' : 'alert-success';
+  let alertClass;
+  if (type === 'error') {
+    alertClass = 'alert-error';
+  } else if (type === 'info') {
+    alertClass = 'alert-info';
+  } else {
+    alertClass = 'alert-success';
+  }
 
   // Create alert div (avoid innerHTML to prevent XSS)
   const alertDiv = document.createElement('div');
@@ -443,12 +450,26 @@ async function handleFormSubmit(event) {
       const errorInfo = await classifyError(response);
 
       // AC4: Handle 409 Conflict - user already has a prediction
+      // This is NOT an error - it's expected behavior when user tries to resubmit
       if (response.status === 409) {
         hasExistingPrediction = true;
         updateSubmitButtonText();
+
+        // Show helpful info message instead of error
+        showValidationMessage(
+          'You already have a prediction! To change it, update the date above and click "Update Prediction".',
+          'info'
+        );
+
+        // Log for monitoring but don't show error UI
+        console.log('User already has prediction - switched to update mode', {
+          dateValue
+        });
+
+        return;
       }
 
-      // Show error with retry callback for retryable errors
+      // Show error with retry callback for retryable errors (NOT for 409)
       showError(errorInfo.code, {
         ...errorInfo.details,
         retryCallback: errorInfo.retryable ? () => handleFormSubmit(event) : null
@@ -502,6 +523,30 @@ async function handleFormSubmit(event) {
     dateInput.value = '';
   } catch (error) {
     console.error('Form submission error:', error);
+
+    // Check if this is a 409 Response (user already has prediction)
+    if (error instanceof Response && error.status === 409) {
+      // Rollback optimistic UI
+      try {
+        const { rollbackOptimisticUI } = await import('/js/submission.js');
+        rollbackOptimisticUI();
+      } catch (importError) {
+        console.error('Failed to import rollback function:', importError);
+      }
+
+      // Switch to update mode
+      hasExistingPrediction = true;
+      updateSubmitButtonText();
+
+      // Show helpful info message
+      showValidationMessage(
+        'You already have a prediction! To change it, update the date above and click "Update Prediction".',
+        'info'
+      );
+
+      console.log('User already has prediction - switched to update mode', { dateValue });
+      return;
+    }
 
     // Story 3.3: Rollback optimistic UI on exception (AC7)
     try {

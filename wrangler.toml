@@ -31,6 +31,11 @@ id = "c7c91030ebcc45038f17419f1e48de45"  # Replace after creating namespace
 binding = "gta6_stats_cache"
 id = "c93739a812ea477d8cbba96d4b23e469"  # Replace after creating namespace
 
+# KV namespace for capacity monitoring and submission queue (Story 3.7)
+[[kv_namespaces]]
+binding = "gta6_capacity"
+id = "35f61412e3ec47c7b1b8c68e7eac995e"
+
 # Production environment configuration
 [env.production]
 name = "gta6-tracker"

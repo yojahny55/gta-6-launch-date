@@ -21,6 +21,8 @@ import {
   STATS_CACHE_KEY,
   STATS_CACHE_TTL,
 } from '../services/statistics.service';
+import { getCapacityLevel } from '../services/capacity.service';
+import { getStatsCacheTTL } from '../utils/degradation';
 
 /**
  * Create statistics routes
@@ -52,17 +54,22 @@ export function createStatsRoutes() {
     const startTime = Date.now();
 
     try {
-      // Get statistics with caching
+      // Get current capacity level to determine cache TTL (Story 3.7 - AC2)
+      const { level } = await getCapacityLevel(c.env.gta6_capacity);
+      const cacheTTL = getStatsCacheTTL(level);
+
+      // Get statistics with dynamic caching based on capacity
       const { stats, cacheHit } = await getStatisticsWithCache(
         c.env.DB,
         c.env.gta6_stats_cache,
         STATS_CACHE_KEY,
-        STATS_CACHE_TTL
+        cacheTTL
       );
 
-      // Set cache headers
-      c.header('Cache-Control', `public, max-age=${STATS_CACHE_TTL}`);
+      // Set cache headers with dynamic TTL
+      c.header('Cache-Control', `public, max-age=${cacheTTL}`);
       c.header('X-Cache', cacheHit ? 'HIT' : 'MISS');
+      c.header('X-Capacity-Level', level); // Debugging header
 
       // Log request
       console.log('Stats request processed', {

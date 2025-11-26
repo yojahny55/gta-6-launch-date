@@ -222,11 +222,9 @@ describe('Predictions Aggregation Service', () => {
       expect(result.cacheHit).toBe(false);
       expect(result.predictions.data).toHaveLength(1);
       expect(mockKV.get).toHaveBeenCalledWith(PREDICTIONS_CACHE_KEY);
-      expect(mockKV.put).toHaveBeenCalledWith(
-        PREDICTIONS_CACHE_KEY,
-        expect.any(String),
-        { expirationTtl: PREDICTIONS_CACHE_TTL }
-      );
+      expect(mockKV.put).toHaveBeenCalledWith(PREDICTIONS_CACHE_KEY, expect.any(String), {
+        expirationTtl: PREDICTIONS_CACHE_TTL,
+      });
     });
 
     it('should work without KV cache (direct calculation)', async () => {
@@ -351,7 +349,7 @@ describe('Predictions Aggregation Service', () => {
             // Simulate query delay
             await new Promise((resolve) => setTimeout(resolve, 50));
             const results = Array.from({ length: 100 }, (_, i) => ({
-              predicted_date: `2026-${String(i % 12 + 1).padStart(2, '0')}-15`,
+              predicted_date: `2026-${String((i % 12) + 1).padStart(2, '0')}-15`,
               count: Math.floor(Math.random() * 50) + 10,
             }));
             return { results };

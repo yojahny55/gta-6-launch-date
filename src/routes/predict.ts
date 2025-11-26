@@ -16,7 +16,7 @@
  */
 
 import { Hono } from 'hono';
-import type { Env, ErrorResponse } from '../types';
+import type { Env, ErrorResponse, QueuedSubmission } from '../types';
 import { PredictionRequestSchema } from '../utils/validation';
 import {
   getCookie,
@@ -31,6 +31,80 @@ import { verifyAndEvaluateTurnstile } from '../utils/turnstile';
 import { calculateWeight } from '../utils/weighted-median';
 import { calculateStatistics } from '../services/statistics.service';
 import { invalidateAllCaches } from '../services/predictions-aggregation.service';
+import {
+  getCapacityLevel,
+  incrementRequestCount,
+  queueSubmission,
+  hasAlertBeenSent,
+  markAlertSent,
+} from '../services/capacity.service';
+import { getDegradationState } from '../utils/degradation';
+
+/**
+ * Retry helper for database deadlocks and BUSY errors (Story 3.6 - AC: Scenario 3)
+ * Implements exponential backoff: 100ms, 200ms, 400ms
+ *
+ * @param fn - Async function to retry
+ * @param maxAttempts - Maximum number of attempts (default: 3)
+ * @param delays - Delay in ms between retries (default: [100, 200, 400])
+ * @returns Result from successful execution
+ * @throws Error if all retries fail
+ */
+async function retryWithBackoff<T>(
+  fn: () => Promise<T>,
+  maxAttempts: number = 3,
+  delays: number[] = [100, 200, 400]
+): Promise<T> {
+  let lastError: Error | null = null;
+  let deadlockCount = 0;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      const errorMessage = lastError.message.toLowerCase();
+
+      // Check if error is a deadlock or BUSY error (SQLite specific)
+      const isDeadlock =
+        errorMessage.includes('busy') ||
+        errorMessage.includes('deadlock') ||
+        errorMessage.includes('locked');
+
+      if (!isDeadlock || attempt === maxAttempts - 1) {
+        // Not a deadlock error, or final attempt - rethrow
+        throw lastError;
+      }
+
+      // Log deadlock detection (Story 3.6 - AC: Transaction logging)
+      deadlockCount++;
+      const delay = delays[attempt] || delays[delays.length - 1];
+      console.warn('Database deadlock/BUSY detected - retrying', {
+        attempt: attempt + 1,
+        maxAttempts,
+        nextDelay: delay,
+        error: errorMessage.substring(0, 100),
+        timestamp: new Date().toISOString(),
+      });
+
+      // Wait before retry with exponential backoff
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  // Log deadlock rate for monitoring (Story 3.6 - AC: Alert if rate > 1%)
+  if (deadlockCount > 0) {
+    console.log('Deadlock retry completed', {
+      totalAttempts: maxAttempts,
+      deadlockCount,
+      success: false,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  // All retries failed
+  throw lastError || new Error('Retry failed - unknown error');
+}
 
 /**
  * Create prediction submission routes
@@ -70,6 +144,42 @@ export function createPredictRoutes() {
     let ipHash: string | null = null;
 
     try {
+      // Step 0: Check capacity and increment request counter (Story 3.7)
+      const kv = c.env.gta6_capacity;
+      await incrementRequestCount(kv);
+
+      const { level: capacityLevel, requestsToday, resetAt } = await getCapacityLevel(kv);
+      const degradationState = getDegradationState(capacityLevel, requestsToday, resetAt);
+
+      // AC12: Alert at 80% threshold
+      if (capacityLevel === 'elevated' && !(await hasAlertBeenSent(kv))) {
+        console.warn(
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level: 'WARN',
+            message: 'Capacity threshold reached: 80%',
+            context: { requestsToday, capacityLevel },
+          })
+        );
+        await markAlertSent(kv);
+      }
+
+      // AC8-AC10: At 100% capacity - read-only mode
+      if (!degradationState.features.submissionsEnabled) {
+        const errorResponse: ErrorResponse = {
+          success: false,
+          error: {
+            code: 'SERVER_ERROR',
+            message: "We've reached capacity for today. Try again later.",
+            details: {
+              capacityLevel,
+              resetAt: degradationState.resetAt,
+            },
+          },
+        };
+        return c.json(errorResponse, 503);
+      }
+
       // Step 1: Parse and validate request body
       const body = await c.req.json();
       const validationResult = PredictionRequestSchema.safeParse(body);
@@ -93,11 +203,25 @@ export function createPredictRoutes() {
       const cookieHeader = c.req.header('Cookie') || '';
       cookieId = getCookie(cookieHeader, COOKIE_NAME) || null;
 
+      // DEBUG: Log cookie detection
+      console.log('POST /api/predict - Cookie detection', {
+        hasCookieHeader: !!cookieHeader,
+        cookieHeaderLength: cookieHeader?.length || 0,
+        extractedCookieId: cookieId ? cookieId.substring(0, 8) + '...' : null,
+        cookieName: COOKIE_NAME,
+      });
+
       // Generate new cookie if not present or invalid
       let isNewCookie = false;
       if (!cookieId || !validateCookieID(cookieId)) {
+        const oldCookie = cookieId;
         cookieId = generateCookieID();
         isNewCookie = true;
+        console.log('POST /api/predict - Generated new cookie', {
+          reason: !oldCookie ? 'no_cookie' : 'invalid_cookie',
+          oldCookiePrefix: oldCookie ? oldCookie.substring(0, 8) : null,
+          newCookiePrefix: cookieId.substring(0, 8),
+        });
       }
 
       // Step 3: Extract and hash IP address
@@ -142,21 +266,153 @@ export function createPredictRoutes() {
       // Step 6: Get user agent (optional)
       const userAgent = c.req.header('User-Agent') || null;
 
-      // Step 7: Database transaction - INSERT prediction
+      // Step 7: Check if cookie_id already exists (Story 3.6 - Cookie-first logic)
+      // If exists, route to UPDATE instead of INSERT (handles double-click scenario)
+      console.log('POST /api/predict - Checking for existing prediction by cookie', {
+        cookieIdPrefix: cookieId.substring(0, 8),
+        isNewCookie,
+      });
+
+      const existingByCookie = await c.env.DB.prepare(
+        'SELECT id, predicted_date FROM predictions WHERE cookie_id = ?'
+      )
+        .bind(cookieId)
+        .first();
+
+      console.log('POST /api/predict - Database lookup result', {
+        cookieIdPrefix: cookieId.substring(0, 8),
+        foundExisting: !!existingByCookie,
+        existingId: existingByCookie?.id,
+        existingDate: existingByCookie?.predicted_date,
+      });
+
+      if (existingByCookie) {
+        // Cookie exists - check if this is an idempotent resubmission (AC: Scenario 2 - Double-click)
+        console.log('POST /api/predict - Found existing prediction by cookie', {
+          cookieIdPrefix: cookieId.substring(0, 8),
+          existingDate: existingByCookie.predicted_date,
+          newDate: predicted_date,
+          dateChanged: existingByCookie.predicted_date !== predicted_date,
+        });
+
+        // If date is the SAME, return success immediately (idempotent - handles double-click)
+        // This prevents duplicate submissions when user rapidly clicks submit button
+        if (existingByCookie.predicted_date === predicted_date) {
+          console.log(
+            'POST /api/predict - Idempotent resubmission (same date) - returning success'
+          );
+          const stats = await calculateStatistics(c.env.DB);
+          const userDate = new Date(predicted_date);
+          const medianDate = new Date(stats.median);
+          const delta_days = Math.round(
+            (userDate.getTime() - medianDate.getTime()) / (24 * 60 * 60 * 1000)
+          );
+          let comparison: 'optimistic' | 'pessimistic' | 'aligned';
+          if (delta_days === 0) comparison = 'aligned';
+          else if (delta_days > 0) comparison = 'pessimistic';
+          else comparison = 'optimistic';
+
+          return c.json(
+            {
+              success: true,
+              data: {
+                prediction_id: existingByCookie.id,
+                predicted_date,
+                submitted_at: new Date().toISOString(),
+                stats: {
+                  median: stats.median,
+                  min: stats.min,
+                  max: stats.max,
+                  count: stats.count,
+                },
+                delta_days,
+                comparison,
+              },
+              message: 'Your prediction has been recorded!',
+            },
+            201
+          );
+        }
+
+        // Different date - this is an intentional update attempt
+        // Return 409 to let frontend handle update flow (maintains existing UI behavior)
+        console.log(
+          'POST /api/predict - Different date detected - returning 409 for frontend to handle'
+        );
+        const errorResponse: ErrorResponse = {
+          success: false,
+          error: {
+            code: 'VALIDATION_ERROR',
+            message: "You've already submitted a prediction. Use update instead.",
+          },
+        };
+        return c.json(errorResponse, 409);
+      }
+
+      // Step 8a: Check if capacity is critical - queue instead of direct insert (Story 3.7 - AC5-AC7)
+      if (capacityLevel === 'critical') {
+        // AC6: Queue submissions at 95% capacity
+        const queuedSubmission: QueuedSubmission = {
+          predicted_date,
+          cookie_id: cookieId,
+          ip_hash: ipHash,
+          user_agent: userAgent,
+          queued_at: new Date().toISOString(),
+        };
+
+        const { position } = await queueSubmission(kv, queuedSubmission);
+
+        console.log(
+          JSON.stringify({
+            timestamp: new Date().toISOString(),
+            level: 'INFO',
+            message: 'Submission queued - critical capacity',
+            context: { capacityLevel, position, cookieIdPrefix: cookieId.substring(0, 8) },
+          })
+        );
+
+        // Return success with queue position (AC7)
+        return c.json(
+          {
+            success: true,
+            data: {
+              queued: true,
+              position,
+              message:
+                "We're experiencing high traffic. Your submission will be processed shortly.",
+              resetAt: degradationState.resetAt,
+            },
+          },
+          202 // Accepted
+        );
+      }
+
+      // Step 8b: Database transaction - INSERT prediction with retry (Story 3.6 - AC: Scenario 3)
+      console.log('POST /api/predict - Proceeding to INSERT', {
+        cookieIdPrefix: cookieId.substring(0, 8),
+        ipHashPrefix: ipHash.substring(0, 8),
+        isNewCookie,
+        predicted_date,
+      });
+
       const now = new Date().toISOString();
 
       try {
-        // Attempt insert with current cookie_id
-        const insertResult = await c.env.DB.prepare(
-          `INSERT INTO predictions (predicted_date, submitted_at, updated_at, ip_hash, cookie_id, user_agent, weight)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`
-        )
-          .bind(predicted_date, now, now, ipHash, cookieId, userAgent, weight)
-          .run();
+        // Wrap INSERT in retry logic for deadlock/BUSY handling
+        const insertResult = await retryWithBackoff(async () => {
+          const result = await c.env.DB.prepare(
+            `INSERT INTO predictions (predicted_date, submitted_at, updated_at, ip_hash, cookie_id, user_agent, weight)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`
+          )
+            .bind(predicted_date, now, now, ipHash, cookieId, userAgent, weight)
+            .run();
 
-        if (!insertResult.success) {
-          throw new Error('Database insert failed');
-        }
+          if (!result.success) {
+            throw new Error('Database insert failed');
+          }
+
+          return result;
+        });
 
         // Get the inserted prediction_id
         const predictionId = insertResult.meta.last_row_id;
@@ -222,11 +478,18 @@ export function createPredictRoutes() {
         // Handle specific database errors
         const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown error';
 
-        // Check for UNIQUE constraint violation on ip_hash
+        // Check for UNIQUE constraint violation on ip_hash (Story 3.6 - AC: Scenario 1)
         if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('ip_hash')) {
-          console.warn('Duplicate IP submission attempt', {
+          // Enhanced logging for constraint violations (Story 3.6 - AC: Transaction logging)
+          console.warn('UNIQUE constraint violation: ip_hash', {
+            constraint: 'ip_hash',
             ipHashPrefix: ipHash.substring(0, 8),
+            cookieIdPrefix: cookieId.substring(0, 8),
+            predicted_date,
+            timestamp: new Date().toISOString(),
+            scenario: 'Same IP, different cookies (network switching)',
           });
+
           const errorResponse: ErrorResponse = {
             success: false,
             error: {
@@ -242,6 +505,16 @@ export function createPredictRoutes() {
           errorMessage.includes('UNIQUE constraint failed') &&
           errorMessage.includes('cookie_id')
         ) {
+          // Enhanced logging for cookie constraint violations (Story 3.6 - AC: Transaction logging)
+          console.warn('UNIQUE constraint violation: cookie_id', {
+            constraint: 'cookie_id',
+            cookieIdPrefix: cookieId.substring(0, 8),
+            ipHashPrefix: ipHash.substring(0, 8),
+            predicted_date,
+            timestamp: new Date().toISOString(),
+            scenario: 'Cookie collision (rare - 1 in 1 trillion chance)',
+          });
+
           // Cookie collision - regenerate and retry once
           if (!isNewCookie) {
             // Only retry if we haven't already generated a new cookie
@@ -322,6 +595,28 @@ export function createPredictRoutes() {
             },
           };
           return c.json(errorResponse, 500);
+        }
+
+        // Check for deadlock/BUSY errors after all retries exhausted (Story 3.6 - AC: Scenario 3)
+        const isDeadlock =
+          errorMessage.toLowerCase().includes('busy') ||
+          errorMessage.toLowerCase().includes('deadlock') ||
+          errorMessage.toLowerCase().includes('locked');
+
+        if (isDeadlock) {
+          console.error('Database deadlock - all retries exhausted', {
+            error: errorMessage,
+            ipHashPrefix: ipHash?.substring(0, 8),
+            timestamp: new Date().toISOString(),
+          });
+          const errorResponse: ErrorResponse = {
+            success: false,
+            error: {
+              code: 'SERVER_ERROR',
+              message: 'Service temporarily unavailable due to high load. Please try again.',
+            },
+          };
+          return c.json(errorResponse, 503);
         }
 
         // Generic database error
@@ -624,8 +919,8 @@ export function createPredictRoutes() {
             .run();
 
           if (retryResult.success && retryResult.meta.changes > 0) {
-            // Invalidate stats cache after successful update (Story 2.10)
-            await invalidateStatsCache(c.env.gta6_stats_cache);
+            // Invalidate both stats and predictions caches after successful update (Story 2.10, 3.4b)
+            await invalidateAllCaches(c.env.gta6_stats_cache);
 
             // Calculate fresh stats for comparison (Story 3.2)
             const stats = await calculateStatistics(c.env.DB);

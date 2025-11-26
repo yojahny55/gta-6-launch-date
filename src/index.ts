@@ -5,6 +5,7 @@ import { securityHeadersMiddleware } from './middleware/security-headers';
 import { createPredictRoutes } from './routes/predict';
 import { createStatsRoutes } from './routes/stats';
 import { createPredictionsRoutes } from './routes/predictions';
+import { createDegradationRoutes } from './routes/degradation';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -22,6 +23,9 @@ app.route('/', createStatsRoutes());
 
 // Register predictions data routes (Story 3.4b)
 app.route('/', createPredictionsRoutes());
+
+// Register degradation status routes (Story 3.7)
+app.route('/', createDegradationRoutes());
 
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() });

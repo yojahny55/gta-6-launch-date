@@ -156,9 +156,7 @@ describe('GET /api/predictions', () => {
 
     it('should return data when above 50 predictions', async () => {
       const aboveThreshold = {
-        data: [
-          { predicted_date: '2026-11-19', count: 51 },
-        ],
+        data: [{ predicted_date: '2026-11-19', count: 51 }],
         total_predictions: 51,
         cached_at: '2025-11-26T14:30:00.000Z',
       };
@@ -239,9 +237,7 @@ describe('GET /api/predictions', () => {
 
     it('should have correct data item structure', async () => {
       const predictions = {
-        data: [
-          { predicted_date: '2026-11-19', count: 1247 },
-        ],
+        data: [{ predicted_date: '2026-11-19', count: 1247 }],
         total_predictions: 1247,
         cached_at: '2025-11-26T10:00:00.000Z',
       };

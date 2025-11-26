@@ -25,7 +25,7 @@ export const securityHeadersMiddleware: MiddlewareHandler = async (c, next) => {
     "img-src 'self' data: https:",
     "font-src 'self' data:",
     "connect-src 'self'",
-    "frame-src https://challenges.cloudflare.com", // Allow Turnstile iframe
+    'frame-src https://challenges.cloudflare.com', // Allow Turnstile iframe
     "base-uri 'self'",
     "form-action 'self'",
     "frame-ancestors 'none'", // Prevent clickjacking

@@ -153,6 +153,41 @@ export interface RateLimitConfig {
   endpoint: string; // endpoint identifier (e.g., 'submit', 'update', 'stats')
 }
 
+/**
+ * Capacity level type for graceful degradation (Story 3.7)
+ * Determines system behavior under load
+ */
+export type CapacityLevel = 'normal' | 'elevated' | 'high' | 'critical' | 'exceeded';
+
+/**
+ * Degradation state interface (Story 3.7)
+ * Describes current system capacity and enabled features
+ */
+export interface DegradationState {
+  level: CapacityLevel;
+  requestsToday: number;
+  limitToday: number;
+  resetAt: string; // ISO 8601 timestamp for midnight UTC
+  features: {
+    statsEnabled: boolean;
+    submissionsEnabled: boolean;
+    chartEnabled: boolean;
+    cacheExtended: boolean;
+  };
+}
+
+/**
+ * Queued submission interface (Story 3.7)
+ * Stores submissions when capacity is critical (95%+)
+ */
+export interface QueuedSubmission {
+  predicted_date: string;
+  cookie_id: CookieID;
+  ip_hash: IPHash;
+  user_agent: string | null;
+  queued_at: string; // ISO 8601 timestamp
+}
+
 // Cloudflare Workers Environment
 export interface Env {
   DB: D1Database; // D1 database binding (Story 1.2)
@@ -164,4 +199,5 @@ export interface Env {
   TURNSTILE_SITE_KEY?: string; // Cloudflare Turnstile site key (public, optional in backend)
   gta6_rate_limit?: KVNamespace; // Cloudflare KV for rate limiting (Story 2.6)
   gta6_stats_cache?: KVNamespace; // Cloudflare KV for statistics caching (Story 2.10)
+  gta6_capacity?: KVNamespace; // Cloudflare KV for capacity monitoring and queue (Story 3.7)
 }
