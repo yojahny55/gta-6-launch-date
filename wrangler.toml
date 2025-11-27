@@ -39,7 +39,7 @@ id = "35f61412e3ec47c7b1b8c68e7eac995e"
 # Production environment configuration
 [env.production]
 name = "gta6-tracker"
-vars = { ENVIRONMENT = "production" }
+vars = { ENVIRONMENT = "production", TURNSTILE_SITE_KEY = "0x4AAAAAACCQiDtgUQCqo0gC" }
 
 [[env.production.d1_databases]]
 binding = "DB"
@@ -61,7 +61,7 @@ id = "35f61412e3ec47c7b1b8c68e7eac995e"
 # Dev environment configuration
 [env.dev]
 name = "gta6-tracker-dev"
-vars = { ENVIRONMENT = "dev" }
+vars = { ENVIRONMENT = "dev", TURNSTILE_SITE_KEY = "0x4AAAAAACCQiDtgUQCqo0gC" }
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -83,7 +83,7 @@ id = "35f61412e3ec47c7b1b8c68e7eac995e"
 # Preview environment configuration (for pull requests)
 [env.preview]
 name = "gta6-tracker-preview"
-vars = { ENVIRONMENT = "preview" }
+vars = { ENVIRONMENT = "preview", TURNSTILE_SITE_KEY = "0x4AAAAAACCQiDtgUQCqo0gC" }
 
 [[env.preview.d1_databases]]
 binding = "DB"
