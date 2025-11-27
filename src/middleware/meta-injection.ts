@@ -205,30 +205,6 @@ async function fetchStats(
 }
 
 /**
- * Check if request is from a social crawler
- * Optimizes cache by only injecting for crawlers (currently unused, kept for future optimization)
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function isSocialCrawler(userAgent: string | null): boolean {
-  if (!userAgent) return false;
-
-  const crawlers = [
-    'twitterbot',
-    'facebookexternalhit',
-    'linkedinbot',
-    'slackbot',
-    'discordbot',
-    'whatsapp',
-    'telegrambot',
-    'pinterestbot',
-    'redditbot',
-  ];
-
-  const lowerUA = userAgent.toLowerCase();
-  return crawlers.some((crawler) => lowerUA.includes(crawler));
-}
-
-/**
  * Meta Injection Middleware
  *
  * Intercepts HTML responses and injects dynamic Open Graph meta tags.
