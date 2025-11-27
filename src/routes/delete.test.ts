@@ -172,9 +172,7 @@ describe('DELETE Routes - Story 4.6', () => {
         expect(data.message).toContain('deleted successfully');
 
         // Verify deletion
-        const result = await testEnv.DB.prepare(
-          'SELECT * FROM predictions WHERE cookie_id = ?'
-        )
+        const result = await testEnv.DB.prepare('SELECT * FROM predictions WHERE cookie_id = ?')
           .bind(cookieId)
           .first();
 
@@ -236,9 +234,7 @@ describe('DELETE Routes - Story 4.6', () => {
       expect(response.status).toBe(200);
 
       // Verify all data deleted
-      const result = await testEnv.DB.prepare(
-        'SELECT * FROM predictions WHERE cookie_id = ?'
-      )
+      const result = await testEnv.DB.prepare('SELECT * FROM predictions WHERE cookie_id = ?')
         .bind(cookieId)
         .first();
 

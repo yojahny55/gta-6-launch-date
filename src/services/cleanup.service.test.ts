@@ -128,9 +128,7 @@ describe('Data Retention Cleanup Service', () => {
       expect(console.log).toHaveBeenCalledWith(
         expect.stringMatching(/"message":"Server logs cleanup completed"/)
       );
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringMatching(/"deleted":15/)
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/"deleted":15/));
     });
 
     it('should throw error and log when database operation fails', async () => {
@@ -140,9 +138,7 @@ describe('Data Retention Cleanup Service', () => {
         errorMessage: 'Database connection lost',
       });
 
-      await expect(cleanupServerLogs(mockDB)).rejects.toThrow(
-        'Database connection lost'
-      );
+      await expect(cleanupServerLogs(mockDB)).rejects.toThrow('Database connection lost');
 
       expect(console.error).toHaveBeenCalledWith(
         expect.stringMatching(/"message":"Server logs cleanup failed"/)
@@ -209,9 +205,7 @@ describe('Data Retention Cleanup Service', () => {
       expect(console.log).toHaveBeenCalledWith(
         expect.stringMatching(/"message":"Daily cleanup completed"/)
       );
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringMatching(/"serverLogsDeleted":10/)
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/"serverLogsDeleted":10/));
     });
 
     it('should include error count in compliance audit trail', async () => {
@@ -222,9 +216,7 @@ describe('Data Retention Cleanup Service', () => {
 
       await runDailyCleanup(mockDB);
 
-      expect(console.log).toHaveBeenCalledWith(
-        expect.stringMatching(/"errorCount":1/)
-      );
+      expect(console.log).toHaveBeenCalledWith(expect.stringMatching(/"errorCount":1/));
     });
   });
 
@@ -252,10 +244,7 @@ describe('Data Retention Cleanup Service', () => {
       const report: CleanupReport = {
         timestamp: '2024-11-27T02:00:00.000Z',
         serverLogsDeleted: 10,
-        errors: [
-          'Server logs cleanup failed: Connection timeout',
-          'Database unavailable',
-        ],
+        errors: ['Server logs cleanup failed: Connection timeout', 'Database unavailable'],
       };
 
       const summary = generateCleanupReportSummary(report);
@@ -291,9 +280,7 @@ describe('Data Retention Cleanup Service', () => {
       // Verify NO queries to predictions table
       const prepareCall = mockDB.prepare as ReturnType<typeof vi.fn>;
       const sqlQueries = prepareCall.mock.calls.map((call) => call[0]);
-      const predictionQueries = sqlQueries.filter((sql: string) =>
-        sql.includes('predictions')
-      );
+      const predictionQueries = sqlQueries.filter((sql: string) => sql.includes('predictions'));
 
       expect(predictionQueries).toHaveLength(0);
     });
@@ -345,9 +332,7 @@ describe('Data Retention Cleanup Service', () => {
       const logCalls = (console.log as ReturnType<typeof vi.fn>).mock.calls;
       const logMessages = logCalls.map((call) => call[0]);
 
-      const hasTimestamp = logMessages.some((msg: string) =>
-        msg.includes('"timestamp"')
-      );
+      const hasTimestamp = logMessages.some((msg: string) => msg.includes('"timestamp"'));
       const hasDeletionCount = logMessages.some((msg: string) =>
         msg.includes('"serverLogsDeleted"')
       );

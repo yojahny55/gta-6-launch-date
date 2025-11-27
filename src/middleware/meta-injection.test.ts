@@ -159,7 +159,9 @@ describe('Meta Injection Middleware - Story 5.3', () => {
       const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
-      expect(html).toContain('<meta property="og:image" content="http://localhost/images/og-image.svg"');
+      expect(html).toContain(
+        '<meta property="og:image" content="http://localhost/images/og-image.svg"'
+      );
     });
 
     it('should include twitter:image with same URL as og:image', async () => {
@@ -167,7 +169,9 @@ describe('Meta Injection Middleware - Story 5.3', () => {
       const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
-      expect(html).toContain('<meta name="twitter:image" content="http://localhost/images/og-image.svg"');
+      expect(html).toContain(
+        '<meta name="twitter:image" content="http://localhost/images/og-image.svg"'
+      );
     });
   });
 

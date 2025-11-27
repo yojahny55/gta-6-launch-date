@@ -102,20 +102,18 @@ export default {
    * @param env Environment bindings (DB, KV namespaces, etc.)
    * @param ctx ExecutionContext for extending worker lifetime
    */
-  async scheduled(
-    event: ScheduledEvent,
-    env: Env,
-    ctx: ExecutionContext
-  ): Promise<void> {
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: 'INFO',
-      message: 'Starting scheduled data retention cleanup',
-      context: {
-        scheduledTime: event.scheduledTime,
-        cron: event.cron
-      }
-    }));
+  async scheduled(event: ScheduledEvent, env: Env, ctx: ExecutionContext): Promise<void> {
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'INFO',
+        message: 'Starting scheduled data retention cleanup',
+        context: {
+          scheduledTime: event.scheduledTime,
+          cron: event.cron,
+        },
+      })
+    );
 
     try {
       // Run daily cleanup and wait for completion
@@ -124,40 +122,46 @@ export default {
           const report = await runDailyCleanup(env.DB);
           const summary = generateCleanupReportSummary(report);
 
-          console.log(JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            message: 'Scheduled cleanup completed successfully',
-            context: {
-              report,
-              summary
-            }
-          }));
+          console.log(
+            JSON.stringify({
+              timestamp: new Date().toISOString(),
+              level: 'INFO',
+              message: 'Scheduled cleanup completed successfully',
+              context: {
+                report,
+                summary,
+              },
+            })
+          );
 
           // Log any errors that occurred during cleanup
           if (report.errors.length > 0) {
-            console.error(JSON.stringify({
-              timestamp: new Date().toISOString(),
-              level: 'ERROR',
-              message: 'Cleanup completed with errors',
-              context: {
-                errorCount: report.errors.length,
-                errors: report.errors
-              }
-            }));
+            console.error(
+              JSON.stringify({
+                timestamp: new Date().toISOString(),
+                level: 'ERROR',
+                message: 'Cleanup completed with errors',
+                context: {
+                  errorCount: report.errors.length,
+                  errors: report.errors,
+                },
+              })
+            );
           }
         })()
       );
     } catch (error) {
-      console.error(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: 'ERROR',
-        message: 'Scheduled cleanup failed',
-        context: {
-          error: error instanceof Error ? error.message : String(error),
-          stack: error instanceof Error ? error.stack : undefined
-        }
-      }));
+      console.error(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: 'ERROR',
+          message: 'Scheduled cleanup failed',
+          context: {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          },
+        })
+      );
     }
-  }
+  },
 };

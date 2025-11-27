@@ -495,7 +495,8 @@ export function createPredictRoutes() {
             success: false,
             error: {
               code: 'IP_ALREADY_USED',
-              message: 'This IP address has already submitted a prediction. If you previously submitted and lost your cookie, you can restore it from your browser settings. Updates work across IP changes (WiFi, VPN, mobile networks).',
+              message:
+                'This IP address has already submitted a prediction. If you previously submitted and lost your cookie, you can restore it from your browser settings. Updates work across IP changes (WiFi, VPN, mobile networks).',
               details: {
                 help: 'Your cookie allows updates from any IP. Check your browser cookies for "gta6_prediction_id".',
                 aboutPage: '/about#how-it-works',

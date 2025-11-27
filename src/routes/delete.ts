@@ -11,7 +11,6 @@
 
 import { Hono } from 'hono';
 import type { Env, ErrorResponse } from '../types';
-import { validateCookieID } from '../utils/cookie';
 import { z } from 'zod';
 
 /**
@@ -29,8 +28,6 @@ const DeletionRequestSchema = z.object({
     message: 'You must confirm this action is permanent',
   }),
 });
-
-type DeletionRequest = z.infer<typeof DeletionRequestSchema>;
 
 /**
  * Delete prediction record by cookie_id
@@ -109,8 +106,7 @@ export function createDeleteRoutes() {
             success: false,
             error: {
               code: 'NOT_FOUND',
-              message:
-                'No prediction found for this Cookie ID. It may have already been deleted.',
+              message: 'No prediction found for this Cookie ID. It may have already been deleted.',
             },
           },
           404

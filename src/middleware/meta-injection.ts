@@ -86,10 +86,7 @@ async function lookupUserPrediction(
 /**
  * Calculate delta days and sentiment for personalized meta tags
  */
-function calculatePersonalization(
-  userDate: string,
-  medianDate: string
-): PersonalizedMetaData {
+function calculatePersonalization(userDate: string, medianDate: string): PersonalizedMetaData {
   const userDayjs = dayjs(userDate);
   const medianDayjs = dayjs(medianDate);
   const deltaDays = userDayjs.diff(medianDayjs, 'day');
@@ -139,15 +136,17 @@ function generateOGTags(
       personalized.sentiment === 'optimistic'
         ? `I'm ${personalized.deltaDays} days more optimistic`
         : personalized.sentiment === 'pessimistic'
-        ? `I'm ${personalized.deltaDays} days more pessimistic`
-        : "I'm aligned with the community";
+          ? `I'm ${personalized.deltaDays} days more pessimistic`
+          : "I'm aligned with the community";
 
     ogDescription = escapeHtml(
       `The community median is ${medianFormatted}. ${sentimentText}. What do you think?`
     );
 
     twitterTitle = ogTitle;
-    twitterDescription = escapeHtml(`Community median: ${medianFormatted} (${formatNumber(stats.count)} predictions)`);
+    twitterDescription = escapeHtml(
+      `Community median: ${medianFormatted} (${formatNumber(stats.count)} predictions)`
+    );
   } else {
     // Default meta tags
     const medianFormatted = formatDateForDisplay(stats.median);
@@ -159,7 +158,9 @@ function generateOGTags(
     );
 
     twitterTitle = escapeHtml('GTA 6 Launch Date Predictions');
-    twitterDescription = escapeHtml(`Community median: ${medianFormatted} (${countFormatted} predictions)`);
+    twitterDescription = escapeHtml(
+      `Community median: ${medianFormatted} (${countFormatted} predictions)`
+    );
   }
 
   // Generate meta tags HTML
@@ -179,7 +180,9 @@ function generateOGTags(
 /**
  * Fetch stats from /api/stats endpoint with caching
  */
-async function fetchStats(c: Context<{ Bindings: Env }>): Promise<{ median: string; count: number }> {
+async function fetchStats(
+  c: Context<{ Bindings: Env }>
+): Promise<{ median: string; count: number }> {
   try {
     // Call internal /api/stats endpoint (uses existing cache)
     const response = await c.env.DB.prepare(

@@ -30,46 +30,53 @@ export async function cleanupServerLogs(db: D1Database): Promise<number> {
 
   try {
     // Check if server_logs table exists
-    const tableCheck = await db.prepare(
-      `SELECT name FROM sqlite_master WHERE type='table' AND name='server_logs'`
-    ).first();
+    const tableCheck = await db
+      .prepare(`SELECT name FROM sqlite_master WHERE type='table' AND name='server_logs'`)
+      .first();
 
     if (!tableCheck) {
-      console.log(JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: 'INFO',
-        message: 'Server logs table does not exist, skipping cleanup',
-        context: { cutoffDate }
-      }));
+      console.log(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: 'INFO',
+          message: 'Server logs table does not exist, skipping cleanup',
+          context: { cutoffDate },
+        })
+      );
       return 0;
     }
 
-    const result = await db.prepare(
-      `DELETE FROM server_logs WHERE created_at < ?`
-    ).bind(cutoffDate).run();
+    const result = await db
+      .prepare(`DELETE FROM server_logs WHERE created_at < ?`)
+      .bind(cutoffDate)
+      .run();
 
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: 'INFO',
-      message: 'Server logs cleanup completed',
-      context: {
-        deleted: result.meta.changes,
-        cutoffDate,
-        retentionDays: 90
-      }
-    }));
+    console.log(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'INFO',
+        message: 'Server logs cleanup completed',
+        context: {
+          deleted: result.meta.changes,
+          cutoffDate,
+          retentionDays: 90,
+        },
+      })
+    );
 
     return result.meta.changes;
   } catch (error) {
-    console.error(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: 'ERROR',
-      message: 'Server logs cleanup failed',
-      context: {
-        error: error instanceof Error ? error.message : String(error),
-        cutoffDate
-      }
-    }));
+    console.error(
+      JSON.stringify({
+        timestamp: new Date().toISOString(),
+        level: 'ERROR',
+        message: 'Server logs cleanup failed',
+        context: {
+          error: error instanceof Error ? error.message : String(error),
+          cutoffDate,
+        },
+      })
+    );
     throw error;
   }
 }
@@ -85,7 +92,7 @@ export async function runDailyCleanup(db: D1Database): Promise<CleanupReport> {
   const report: CleanupReport = {
     timestamp: new Date().toISOString(),
     serverLogsDeleted: 0,
-    errors: []
+    errors: [],
   };
 
   try {
@@ -97,16 +104,18 @@ export async function runDailyCleanup(db: D1Database): Promise<CleanupReport> {
   }
 
   // Log cleanup report for compliance audit trail
-  console.log(JSON.stringify({
-    timestamp: report.timestamp,
-    level: 'INFO',
-    message: 'Daily cleanup completed',
-    context: {
-      serverLogsDeleted: report.serverLogsDeleted,
-      errorCount: report.errors.length,
-      errors: report.errors
-    }
-  }));
+  console.log(
+    JSON.stringify({
+      timestamp: report.timestamp,
+      level: 'INFO',
+      message: 'Daily cleanup completed',
+      context: {
+        serverLogsDeleted: report.serverLogsDeleted,
+        errorCount: report.errors.length,
+        errors: report.errors,
+      },
+    })
+  );
 
   return report;
 }
@@ -124,7 +133,7 @@ export function generateCleanupReportSummary(report: CleanupReport): string {
     `Predictions: No cleanup (indefinite retention)`,
     `Analytics: Handled by Cloudflare (24-month retention)`,
     `Rate Limit Data: TTL-based expiration (60 seconds)`,
-    `Cache Data: TTL-based expiration (5 minutes)`
+    `Cache Data: TTL-based expiration (5 minutes)`,
   ];
 
   if (report.errors.length > 0) {
