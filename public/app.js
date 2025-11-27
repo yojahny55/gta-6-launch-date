@@ -386,14 +386,7 @@ async function handleFormSubmit(event) {
   // Clear previous messages
   showValidationMessage(null);
 
-  // Import error handling functions (Story 3.5)
-  const { hideError, showError, classifyError, fetchWithRetry, saveSubmissionToLocalStorage, clearPendingSubmission, logError } =
-    await import('/js/errors.js');
-
-  // Hide any existing errors
-  hideError();
-
-  // Validate date
+  // Validate date FIRST (before async imports) so validation runs synchronously
   const validation = validateDate(dateValue);
 
   if (!validation.valid) {
@@ -401,6 +394,13 @@ async function handleFormSubmit(event) {
     dateInput.focus();
     return;
   }
+
+  // Import error handling functions (Story 3.5)
+  const { hideError, showError, classifyError, fetchWithRetry, saveSubmissionToLocalStorage, clearPendingSubmission, logError } =
+    await import('/js/errors.js');
+
+  // Hide any existing errors
+  hideError();
 
   // Disable submit button to prevent double submission (AC: Double-click prevention)
   submitButton.disabled = true;
@@ -685,11 +685,13 @@ function showStatsState(state) {
   const states = ['loading', 'content', 'threshold', 'error'];
 
   states.forEach((s) => {
-    if (statsElements[s]) {
+    // Try cached element first, fallback to direct DOM query if null
+    const element = statsElements[s] || document.getElementById(`stats-${s}`);
+    if (element) {
       if (s === state) {
-        statsElements[s].classList.remove('hidden');
+        element.classList.remove('hidden');
       } else {
-        statsElements[s].classList.add('hidden');
+        element.classList.add('hidden');
       }
     }
   });
@@ -767,7 +769,32 @@ function renderStats(stats) {
  * @param {string} message - Error message to display
  */
 function showStatsError(message) {
-  if (!statsElements) return;
+  if (!statsElements) {
+    // Fallback: Try to show error directly if statsElements not initialized
+    const loadingDiv = document.getElementById('stats-loading');
+    const contentDiv = document.getElementById('stats-content');
+    const thresholdDiv = document.getElementById('stats-threshold');
+    const errorDiv = document.getElementById('stats-error');
+    const errorMessage = document.getElementById('stats-error-message');
+
+    // Hide all other states
+    if (loadingDiv) loadingDiv.classList.add('hidden');
+    if (contentDiv) contentDiv.classList.add('hidden');
+    if (thresholdDiv) thresholdDiv.classList.add('hidden');
+
+    // Show error state
+    if (errorDiv) errorDiv.classList.remove('hidden');
+    if (errorMessage) errorMessage.textContent = message || 'Unable to load statistics';
+    return;
+  }
+
+  // Refresh error elements if they're null (defensive coding for test environments)
+  if (!statsElements.error) {
+    statsElements.error = document.getElementById('stats-error');
+  }
+  if (!statsElements.errorMessage) {
+    statsElements.errorMessage = document.getElementById('stats-error-message');
+  }
 
   if (statsElements.errorMessage) {
     statsElements.errorMessage.textContent = message || 'Unable to load statistics';
