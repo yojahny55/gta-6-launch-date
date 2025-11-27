@@ -1,0 +1,50 @@
+# Daily Data Cleanup - Story 4.8: Data Retention Policy
+# Runs daily at 2 AM UTC (low traffic period)
+# Deletes server logs older than 90 days
+
+name: Daily Data Cleanup
+
+on:
+  schedule:
+    # Runs at 2:00 AM UTC every day
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual triggering for testing
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run data retention cleanup
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          # Execute cleanup via D1 database
+          npx wrangler d1 execute gta6-predictions \
+            --remote \
+            --command="DELETE FROM server_logs WHERE created_at < datetime('now', '-90 days')"
+
+      - name: Log cleanup completion
+        run: |
+          echo "✅ Data retention cleanup completed at $(date -u)"
+          echo "Server logs older than 90 days have been deleted"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Data retention cleanup failed at $(date -u)"
+          echo "Please check workflow logs and database status"

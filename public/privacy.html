@@ -128,11 +128,22 @@
             Your prediction data is stored in a <strong>Cloudflare D1 database</strong>, which operates in data centers primarily in the <strong>United States and European Union</strong> regions. Cloudflare is a trusted infrastructure provider used by millions of websites.
           </p>
 
-          <h3 class="text-lg font-semibold mb-2">How Long We Keep It</h3>
+          <h3 class="text-lg font-semibold mb-2">How Long We Keep It (Data Retention Policies)</h3>
+          <p class="mb-2 text-base-content/80">
+            We comply with GDPR's "storage limitation" principle by automatically deleting old data according to these retention periods:
+          </p>
           <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li><strong>Prediction data:</strong> We keep your prediction <strong>indefinitely</strong> to maintain accurate historical statistics. You can request deletion at any time (see "Your Rights" section below).</li>
-            <li><strong>Analytics data:</strong> If you accept analytics cookies, we retain analytics data for a maximum of <strong>24 months</strong>.</li>
+            <li><strong>Prediction data:</strong> We keep your prediction <strong>indefinitely</strong> to maintain accurate historical statistics. This is core product value and users expect persistence. You can request deletion at any time (see "Your Rights" section below).</li>
+            <li><strong>Analytics data:</strong> If you accept analytics cookies, we retain analytics data for a maximum of <strong>24 months</strong>. Cloudflare handles this retention period automatically.</li>
+            <li><strong>Server logs:</strong> Automatically deleted after <strong>90 days</strong>. Server logs contain IP addresses, requests, and error details for security and debugging purposes. Our automated cleanup runs daily at 2 AM UTC.</li>
+            <li><strong>Rate limiting data:</strong> Automatically expires after <strong>60 seconds</strong> using Time-To-Live (TTL). This temporary data prevents spam without long-term storage.</li>
+            <li><strong>Statistics cache:</strong> Automatically expires after <strong>5 minutes</strong> using TTL. This improves performance without storing stale data.</li>
           </ul>
+
+          <h3 class="text-lg font-semibold mb-2">Automated Data Cleanup</h3>
+          <p class="mb-4 text-base-content/80">
+            Our system runs automated cleanup tasks daily at 2 AM UTC (low traffic period) to delete data older than the retention periods listed above. All deletion operations are logged with counts and timestamps for compliance audit trails. This automated process ensures we minimize data storage while maintaining service quality.
+          </p>
 
           <h3 class="text-lg font-semibold mb-2">Security Measures</h3>
           <p class="mb-2 text-base-content/80">

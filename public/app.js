@@ -516,6 +516,12 @@ async function handleFormSubmit(event) {
       displayComparison(userDate, medianDate);
     }
 
+    // Story 5.1: Display share buttons after successful submission
+    // AC: Share buttons shown after confirmation, above-the-fold
+    if (userDate && medianDate) {
+      displayShareButtons(userDate, medianDate);
+    }
+
     // Refresh stats display to show updated count (bypass cache for fresh data)
     loadStats(true);
 
@@ -1028,6 +1034,110 @@ function hideComparison() {
   }
 }
 
+// ============================================================================
+// Twitter Share Button (Story 5.1)
+// ============================================================================
+
+/**
+ * DOM elements for share buttons section
+ */
+let shareButtonsElements = null;
+
+/**
+ * Initialize and cache share buttons DOM elements
+ */
+function initShareButtonsElements() {
+  shareButtonsElements = {
+    container: document.getElementById('share-buttons-section'),
+    twitterBtn: document.getElementById('twitter-share-btn')
+  };
+}
+
+/**
+ * Store the latest prediction data for sharing
+ */
+let latestPrediction = {
+  userDate: null,
+  medianDate: null
+};
+
+/**
+ * Display share buttons section after successful prediction submission
+ * AC: Share buttons displayed immediately after submission confirmation
+ *
+ * @param {string} userDate - User's predicted date (ISO format)
+ * @param {string} medianDate - Community median date (ISO format)
+ */
+function displayShareButtons(userDate, medianDate) {
+  if (!shareButtonsElements) {
+    initShareButtonsElements();
+  }
+
+  // Store latest prediction data for share button handler
+  latestPrediction.userDate = userDate;
+  latestPrediction.medianDate = medianDate;
+
+  // Show the share buttons section
+  if (shareButtonsElements.container) {
+    shareButtonsElements.container.classList.remove('hidden');
+    // Smooth scroll to share buttons
+    setTimeout(() => {
+      shareButtonsElements.container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 200);
+  }
+
+  console.log('Share buttons displayed for prediction:', { userDate, medianDate });
+}
+
+/**
+ * Hide share buttons section
+ */
+function hideShareButtons() {
+  if (!shareButtonsElements) {
+    initShareButtonsElements();
+  }
+
+  if (shareButtonsElements.container) {
+    shareButtonsElements.container.classList.add('hidden');
+  }
+}
+
+/**
+ * Handle Twitter share button click
+ * AC: Opens Twitter Web Intent with pre-filled personalized text
+ */
+async function handleTwitterShareClick() {
+  try {
+    // Import twitter-share module dynamically
+    const { openTwitterShare, trackShareClick } = await import('/js/twitter-share.js');
+
+    // Get user's cookie ID for tracking parameter
+    const cookieId = getCookieID();
+
+    // Track share button click event (AC: Share analytics)
+    trackShareClick('twitter', {
+      user_prediction: latestPrediction.userDate,
+      median_prediction: latestPrediction.medianDate
+    });
+
+    // Open Twitter share dialog
+    const success = openTwitterShare(
+      latestPrediction.userDate,
+      latestPrediction.medianDate,
+      cookieId
+    );
+
+    if (!success) {
+      console.error('Failed to open Twitter share dialog');
+      // Show user-friendly error message
+      alert('Unable to open Twitter share. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error handling Twitter share click:', error);
+    alert('Unable to open Twitter share. Please try again.');
+  }
+}
+
 /**
  * Application Initialization
  * Runs on page load to set up cookie tracking, form handling, and stats display
@@ -1057,8 +1167,18 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize stats display (Story 3.1)
   initStatsDisplay();
 
+  // Initialize share buttons (Story 5.1)
+  initShareButtonsElements();
+
+  // Set up Twitter share button handler
+  const twitterShareBtn = document.getElementById('twitter-share-btn');
+  if (twitterShareBtn) {
+    twitterShareBtn.addEventListener('click', handleTwitterShareClick);
+  }
+
   console.log('Date picker initialized with validation');
   console.log('Stats display initialized');
+  console.log('Share buttons initialized');
 });
 
 // Export functions for testing and future use

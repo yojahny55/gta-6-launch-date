@@ -25,8 +25,24 @@ CREATE TABLE IF NOT EXISTS email_subscriptions (
   unsubscribe_token TEXT UNIQUE
 ) STRICT;
 
+-- Server logs table (Story 4.8: Data Retention - 90 days retention)
+CREATE TABLE IF NOT EXISTS server_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,  -- ISO 8601 timestamp
+  level TEXT NOT NULL,                        -- INFO, WARN, ERROR
+  message TEXT NOT NULL,                      -- Log message
+  ip_hash TEXT,                               -- Hashed IP address (privacy-preserving)
+  request_path TEXT,                          -- Request path (e.g., /api/predict)
+  request_method TEXT,                        -- HTTP method (GET, POST, etc.)
+  status_code INTEGER,                        -- HTTP status code
+  error_details TEXT,                         -- Error stack trace or details
+  user_agent TEXT                             -- User agent string
+) STRICT;
+
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_predictions_date ON predictions(predicted_date);
 CREATE INDEX IF NOT EXISTS idx_predictions_cookie ON predictions(cookie_id);
 CREATE INDEX IF NOT EXISTS idx_predictions_submitted ON predictions(submitted_at);
 CREATE INDEX IF NOT EXISTS idx_email_verified ON email_subscriptions(verified);
+CREATE INDEX IF NOT EXISTS idx_server_logs_created_at ON server_logs(created_at);
+CREATE INDEX IF NOT EXISTS idx_server_logs_level ON server_logs(level);

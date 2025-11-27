@@ -252,6 +252,44 @@
         </div>
       </div>
     </section>
+
+    <!-- Social Share Buttons Section (Story 5.1: Twitter/X Share Button) -->
+    <!-- AC: Displayed after submission confirmation, above-the-fold, prominent placement -->
+    <section id="share-buttons-section" class="hidden mb-8" aria-labelledby="share-heading">
+      <h2 id="share-heading" class="sr-only">Share Your Prediction</h2>
+
+      <div class="card bg-base-100 shadow-xl">
+        <div class="card-body items-center text-center">
+          <!-- Share Heading -->
+          <p class="text-lg font-semibold text-base-content mb-4">
+            Share your prediction with friends!
+          </p>
+
+          <!-- Share Buttons Container -->
+          <div class="flex flex-col sm:flex-row gap-3 w-full max-w-md">
+            <!-- Twitter/X Share Button (AC: Twitter blue color #1DA1F2, prominent) -->
+            <button
+              id="twitter-share-btn"
+              type="button"
+              class="btn btn-lg flex-1 text-white hover:opacity-90"
+              style="background-color: #1DA1F2; border-color: #1DA1F2;"
+              aria-label="Share your prediction on Twitter/X"
+            >
+              <!-- Twitter/X Logo SVG Icon -->
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+              </svg>
+              <span class="ml-2">Share on X</span>
+            </button>
+          </div>
+
+          <!-- Share CTR Info (Optional, subtle) -->
+          <p class="text-xs text-base-content/50 mt-3">
+            Help others discover the community predictions!
+          </p>
+        </div>
+      </div>
+    </section>
   </div>
 
   <!-- Cookie Consent Banner (Story 4.1: GDPR Cookie Consent Banner) -->
@@ -311,8 +349,9 @@
   <script src="/js/comparison.js"></script>
   <script src="/js/submission.js" type="module"></script>
   <script src="/js/chart.js" type="module"></script>
+  <script src="/js/twitter-share.js" type="module"></script>
   <script src="/js/degradation.js"></script>
   <script src="/js/cookie-consent.js"></script>
-  <script src="/app.js?v=3.7.0"></script>
+  <script src="/app.js?v=3.7.1"></script>
 </body>
 </html>

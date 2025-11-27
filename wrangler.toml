@@ -3,6 +3,11 @@ main = "src/index.ts"
 compatibility_date = "2025-11-09"
 compatibility_flags = ["nodejs_compat"]
 
+# Scheduled tasks (Story 4.8: Data Retention - Daily cleanup at 2 AM UTC)
+# Uncomment to use Cloudflare Cron Triggers instead of GitHub Actions
+# [triggers]
+# crons = ["0 2 * * *"]
+
 # Static assets configuration for Workers
 # Use Assets binding (requires Wrangler 3.22.0+)
 [assets]
