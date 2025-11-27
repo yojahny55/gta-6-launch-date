@@ -2,7 +2,13 @@
 <html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Story 5.5: Mobile-Responsive Meta Tags (FR93, FR87) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 
   <!-- SEO Meta Tags (Story 5.4: FR35, FR36) - Will be replaced by server-side injection -->
   <title>GTA 6 Launch Date Predictions - Community Sentiment Tracker</title>
@@ -374,6 +380,9 @@
       Protected by <a href="https://www.cloudflare.com/products/turnstile/" class="underline hover:text-primary" target="_blank" rel="noopener noreferrer">Cloudflare Turnstile</a>
     </p>
   </footer>
+
+  <!-- Story 5.5: Mobile-Responsive Utilities -->
+  <script src="/js/responsive-utils.js" type="module"></script>
 
   <script src="/js/comparison.js"></script>
   <script src="/js/submission.js" type="module"></script>

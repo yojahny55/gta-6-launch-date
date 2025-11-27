@@ -121,3 +121,272 @@ a:focus-visible {
 #confirmation-display {
   transition: opacity 0.3s ease-in-out;
 }
+
+/* Story 5.5: Mobile-Responsive Design */
+
+/* Base font size 16px (prevents mobile zoom on input focus - FR87) */
+html {
+  font-size: 16px;
+}
+
+/* Mobile-first: All touch targets minimum 44x44px (FR87, WCAG 2.1 Level AAA) */
+button,
+.btn {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.75rem 1rem;
+}
+
+/* Input fields touch-friendly */
+input[type="date"],
+input[type="text"],
+input[type="email"] {
+  min-height: 44px;
+  font-size: 16px; /* Prevents iOS zoom on focus */
+}
+
+/* Share buttons: Full width on mobile, side-by-side on tablet+ */
+#share-buttons-section .btn {
+  min-height: 48px; /* Slightly larger for better mobile UX */
+  padding: 0.875rem 1.25rem;
+}
+
+/* Spacing between tappable elements (minimum 8px - FR87) */
+.btn + .btn {
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .btn + .btn {
+    margin-top: 0;
+    margin-left: 0.75rem;
+  }
+}
+
+/* Mobile Layout (<768px): Single column, stacked elements */
+@media (max-width: 767px) {
+  /* Container padding adjustment for mobile */
+  #app {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  /* Headline responsive sizing */
+  h1 {
+    font-size: 1.875rem; /* 30px */
+    line-height: 1.2;
+  }
+
+  /* Stats display: Stack vertically, full width */
+  #stats-display .card-body {
+    padding: 1.5rem 1rem;
+  }
+
+  /* Form: Full width input, stacked layout */
+  #prediction-form .card-body {
+    padding: 1.5rem 1rem;
+  }
+
+  /* Share buttons: Stack vertically */
+  #share-buttons-section .flex {
+    flex-direction: column;
+  }
+
+  #share-buttons-section .btn {
+    width: 100%;
+  }
+
+  /* Footer: Collapse links to 2 columns or stack */
+  footer nav ul {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+/* Tablet Layout (768px-1024px): Two-column where appropriate */
+@media (min-width: 768px) and (max-width: 1023px) {
+  #app {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  h1 {
+    font-size: 2.25rem; /* 36px */
+  }
+
+  /* Stats and form can use two-column grid if needed */
+  /* For this app, single column is fine, just wider */
+
+  /* Share buttons: Side by side */
+  #share-buttons-section .flex {
+    flex-direction: row;
+  }
+}
+
+/* Desktop Layout (>1024px): Optimized spacing and layout */
+@media (min-width: 1024px) {
+  h1 {
+    font-size: 3rem; /* 48px */
+  }
+
+  /* Reduce vertical spacing on desktop for more compact layout */
+  #app {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  /* Desktop: Reduce spacing between sections */
+  #app > section,
+  #app > header {
+    margin-bottom: 2rem; /* Was 8 (2rem default) */
+  }
+
+  /* Stats display: More compact on desktop */
+  #stats-display .card-body {
+    padding: 2rem 1.5rem;
+  }
+
+  /* Form: More compact on desktop */
+  #prediction-form .card-body {
+    padding: 2rem 1.5rem;
+  }
+
+  /* Confirmation and comparison: More compact spacing */
+  #confirmation-display,
+  #comparison-display,
+  #share-buttons-section {
+    margin-bottom: 1.5rem;
+  }
+
+  /* Add hover states for buttons (desktop only) */
+  button:hover,
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  /* Respect prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    button:hover,
+    .btn:hover {
+      transform: none;
+    }
+  }
+
+  /* Share buttons with more spacing */
+  #share-buttons-section .flex {
+    gap: 1rem;
+  }
+
+  /* Share buttons section: More compact card body */
+  #share-buttons-section .card-body {
+    padding: 1.5rem;
+  }
+
+  /* Chart section: More compact */
+  #chart-section {
+    margin-bottom: 2rem;
+  }
+}
+
+
+/* Responsive images: Scale to viewport */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Lazy loading support (native) */
+img[loading="lazy"] {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+img[loading="lazy"].loaded {
+  opacity: 1;
+}
+
+/* Mobile-friendly spacing (comfortable tap targets) */
+.card-body > * + * {
+  margin-top: 0.75rem;
+}
+
+/* Ensure no horizontal overflow on mobile */
+body {
+  overflow-x: hidden;
+}
+
+#app {
+  max-width: 100%;
+}
+
+/* Desktop: Override Tailwind's max-w-2xl (672px) for better desktop experience */
+@media (min-width: 1024px) {
+  #app.max-w-2xl {
+    max-width: 900px; /* Better desktop width */
+  }
+}
+
+@media (min-width: 1280px) {
+  #app.max-w-2xl {
+    max-width: 1200px; /* Even wider on XL screens */
+  }
+}
+
+@media (min-width: 1536px) {
+  #app.max-w-2xl {
+    max-width: 1400px; /* Max width on 2XL screens */
+  }
+}
+
+/* Override default Tailwind spacing for better desktop layout */
+@media (min-width: 1024px) {
+  /* Reduce excessive margin-bottom on sections */
+  #app .mb-8 {
+    margin-bottom: 1.5rem;
+  }
+
+  /* Header can have a bit more space */
+  #app > header.mb-8 {
+    margin-bottom: 2rem;
+  }
+
+  /* Reduce container vertical padding on desktop */
+  #app.py-8 {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+  }
+
+  /* More compact cards on desktop */
+  .card-body {
+    padding: 1.5rem;
+  }
+
+  /* Stats display can be more compact */
+  #stats-content .card-body,
+  #stats-threshold .card-body {
+    padding: 2rem 1.5rem;
+  }
+}
+
+/* Desktop: Layout optimizations for better horizontal space usage */
+@media (min-width: 1280px) {
+  /* On XL screens, reduce section spacing even more */
+  #app .mb-8 {
+    margin-bottom: 1.25rem;
+  }
+
+  /* Form can be in a more compact card */
+  #prediction-form .card-body {
+    padding: 2rem;
+  }
+
+  /* Confirmation and comparison sections: More compact */
+  #confirmation-display .card-body,
+  #comparison-display .card-body {
+    padding: 1.75rem;
+  }
+}
