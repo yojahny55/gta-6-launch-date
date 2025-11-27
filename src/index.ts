@@ -44,19 +44,50 @@ app.get('/health', (c) => {
 
 // Serve HTML files with meta injection (Story 5.3)
 // Handle index.html requests to inject dynamic meta tags
+// Note: html_handling = "none" in wrangler.toml ensures HTML goes through this handler
 app.get('/', async (c) => {
-  // Fetch the HTML file from Assets
-  const response = await c.env.ASSETS.fetch(new Request('https://dummy.com/index.html'));
+  try {
+    // Fetch index.html from Assets binding
+    // Use the request URL to maintain proper context
+    const assetUrl = new URL(c.req.url);
+    assetUrl.pathname = '/index.html';
 
-  if (!response.ok) {
-    return c.notFound();
+    const response = await c.env.ASSETS.fetch(assetUrl.toString());
+
+    if (!response.ok) {
+      return c.notFound();
+    }
+
+    // Get HTML content
+    const html = await response.text();
+
+    // Return HTML response (meta injection middleware will process it)
+    return c.html(html);
+  } catch (error) {
+    console.error('Error serving index.html:', error);
+    return c.text('Error loading page', 500);
   }
+});
 
-  // Clone response to read body
-  const html = await response.text();
+// Serve other HTML pages with meta injection (privacy, terms, about, delete)
+app.get('/:page.html', async (c) => {
+  try {
+    const page = c.req.param('page');
+    const assetUrl = new URL(c.req.url);
+    assetUrl.pathname = `/${page}.html`;
 
-  // Return HTML response (meta injection middleware will process it)
-  return c.html(html);
+    const response = await c.env.ASSETS.fetch(assetUrl.toString());
+
+    if (!response.ok) {
+      return c.notFound();
+    }
+
+    const html = await response.text();
+    return c.html(html);
+  } catch (error) {
+    console.error('Error serving HTML page:', error);
+    return c.text('Error loading page', 500);
+  }
 });
 
 // Database connection test endpoint (Story 1.2 - Task 5)

@@ -13,6 +13,9 @@ compatibility_flags = ["nodejs_compat"]
 [assets]
 directory = "./public"
 binding = "ASSETS"
+# Exclude HTML files so they go through Worker for meta tag injection (Story 5.3)
+# Worker will handle HTML serving with dynamic meta tags
+html_handling = "none"
 
 # Global environment variables (apply to all environments)
 [vars]
