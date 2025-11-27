@@ -218,6 +218,7 @@ export interface PersonalizedMetaData {
 
 export interface Env {
   DB: D1Database; // D1 database binding (Story 1.2)
+  ASSETS: Fetcher; // Cloudflare Workers Assets binding (Story 5.3 - for serving static files with meta injection)
   IP_HASH_SALT: string; // Legacy salt (deprecated - use SALT_V1)
   SALT_V1: string; // Versioned salt for IP hashing (Story 2.2, FR79)
   RECAPTCHA_SECRET_KEY?: string; // DEPRECATED: reCAPTCHA v3 secret key (Story 2.5) - kept for backward compatibility
