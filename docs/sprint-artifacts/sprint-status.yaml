@@ -82,8 +82,8 @@ development_status:
   4-1-gdpr-cookie-consent-banner: done  # Code review approved 2025-11-26 (all 8 ACs implemented, 32/32 tests passing, GDPR-compliant)
   4-2-privacy-policy-page: done  # Code review approved 2025-11-26 (all 7 ACs implemented, 11/11 tasks verified, 68/68 tests passing, exceptional GDPR-compliant implementation)
   4-3-terms-of-service-page: done  # Code review approved 2025-11-26 (all 16 ACs implemented, 12/12 tasks verified, 84/84 tests passing, exceptional GDPR-compliant legal documentation)
-  4-4-about-page-transparency-and-methodology: ready-for-dev
-  4-5-cookie-management-and-expiration: ready-for-dev
+  4-4-about-page-transparency-and-methodology: review  # Implementation completed 2025-11-26 (all 11 tasks done, 63/63 tests passing, 1010 total tests passing)
+  4-5-cookie-management-and-expiration: review  # Implementation completed 2025-11-26 (all 7 tasks done, 25/25 tests passing, privacy policy updated)
   4-6-gdpr-data-deletion-request-form: ready-for-dev
   4-7-cookie-conflict-resolution-cookie-vs-ip: ready-for-dev
   4-8-data-retention-policy-implementation: ready-for-dev
