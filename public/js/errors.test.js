@@ -200,12 +200,10 @@ describe('Error Handling Module', () => {
         .mockRejectedValueOnce(networkError)
         .mockRejectedValueOnce(networkError);
 
-      // Start the fetch promise with error handling
-      let thrownError;
-      const fetchPromise = fetchWithRetry('/api/test').catch(err => {
-        thrownError = err;
-        return Promise.reject(err);
-      });
+      const fetchPromise = fetchWithRetry('/api/test');
+
+      // Attach rejection handler immediately to prevent unhandled rejection
+      const errorPromise = fetchPromise.catch(err => err);
 
       // Fast-forward timers for all retries
       await vi.advanceTimersByTimeAsync(1000); // First retry
@@ -213,23 +211,19 @@ describe('Error Handling Module', () => {
       await vi.advanceTimersByTimeAsync(4000); // Third retry (should fail)
 
       // Wait for promise to settle
-      try {
-        await fetchPromise;
-        throw new Error('Should have thrown');
-      } catch (error) {
-        expect(error.message).toBe('Failed to fetch');
-        expect(global.fetch).toHaveBeenCalledTimes(3);
-      }
+      const error = await errorPromise;
+      expect(error.message).toBe('Failed to fetch');
+      expect(global.fetch).toHaveBeenCalledTimes(3);
     });
 
     it('should timeout after 10 seconds total (AC2)', async () => {
       const networkError = new TypeError('Failed to fetch');
       global.fetch.mockRejectedValue(networkError);
 
-      // Start the fetch promise with error handling
-      const fetchPromise = fetchWithRetry('/api/test').catch(err => {
-        return Promise.reject(err);
-      });
+      const fetchPromise = fetchWithRetry('/api/test');
+
+      // Attach rejection handler immediately to prevent unhandled rejection
+      const errorPromise = fetchPromise.catch(err => err);
 
       // Fast-forward to exceed 10s total timeout
       await vi.advanceTimersByTimeAsync(1000); // First retry (1s)
@@ -238,12 +232,8 @@ describe('Error Handling Module', () => {
       await vi.advanceTimersByTimeAsync(5000); // Would exceed 10s - should stop
 
       // Wait for promise to settle
-      try {
-        await fetchPromise;
-        throw new Error('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(TypeError);
-      }
+      const error = await errorPromise;
+      expect(error).toBeInstanceOf(TypeError);
     });
 
     it('should not retry non-retryable errors (AC3, AC4)', async () => {
@@ -268,22 +258,18 @@ describe('Error Handling Module', () => {
         backoffMultiplier: 2
       };
 
-      // Start the fetch promise with error handling
-      const fetchPromise = fetchWithRetry('/api/test', {}, customConfig).catch(err => {
-        return Promise.reject(err);
-      });
+      const fetchPromise = fetchWithRetry('/api/test', {}, customConfig);
+
+      // Attach rejection handler immediately to prevent unhandled rejection
+      const errorPromise = fetchPromise.catch(err => err);
 
       await vi.advanceTimersByTimeAsync(500); // First retry
       await vi.advanceTimersByTimeAsync(1000); // Second retry
 
       // Wait for promise to settle
-      try {
-        await fetchPromise;
-        throw new Error('Should have thrown');
-      } catch (error) {
-        expect(error).toBeInstanceOf(TypeError);
-        expect(global.fetch).toHaveBeenCalledTimes(2);
-      }
+      const error = await errorPromise;
+      expect(error).toBeInstanceOf(TypeError);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
     });
   });
 
