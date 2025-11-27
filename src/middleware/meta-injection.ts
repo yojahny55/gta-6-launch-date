@@ -116,9 +116,9 @@ function generateOGTags(
   personalized?: PersonalizedMetaData
 ): string {
   const baseUrl = new URL(url).origin;
-  // TODO: Convert SVG to PNG for production (social platforms prefer PNG)
-  // For now, using SVG which works on most platforms
-  const ogImageUrl = `${baseUrl}/images/og-image.svg`;
+  // Use PNG for Twitter compatibility (Twitter doesn't support SVG)
+  // SVG version available at og-image.svg for platforms that support it
+  const ogImageUrl = `${baseUrl}/images/og-image.png`;
 
   let ogTitle: string;
   let ogDescription: string;
