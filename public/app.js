@@ -449,24 +449,54 @@ async function handleFormSubmit(event) {
       // Story 3.5: Classify error and show appropriate message (AC3-AC7)
       const errorInfo = await classifyError(response);
 
-      // AC4: Handle 409 Conflict - user already has a prediction
-      // This is NOT an error - it's expected behavior when user tries to resubmit
+      // AC4: Handle 409 Conflict - two scenarios:
+      // 1. VALIDATION_ERROR: User's cookie already has a prediction (switch to PUT)
+      // 2. IP_ALREADY_USED: User's IP has prediction with different cookie (don't switch)
       if (response.status === 409) {
-        hasExistingPrediction = true;
-        updateSubmitButtonText();
+        // Check error code to determine which scenario
+        if (result.error?.code === 'VALIDATION_ERROR') {
+          // Scenario 1: Cookie already has prediction → Switch to update mode
+          hasExistingPrediction = true;
+          updateSubmitButtonText();
 
-        // Show helpful info message instead of error
-        showValidationMessage(
-          'You already have a prediction! To change it, update the date above and click "Update Prediction".',
-          'info'
-        );
+          // Show helpful info message instead of error
+          showValidationMessage(
+            'You already have a prediction! To change it, update the date above and click "Update Prediction".',
+            'info'
+          );
 
-        // Log for monitoring but don't show error UI
-        console.log('User already has prediction - switched to update mode', {
-          dateValue
-        });
+          // Log for monitoring but don't show error UI
+          console.log('User already has prediction - switched to update mode', {
+            dateValue,
+            errorCode: result.error?.code
+          });
 
-        return;
+          return;
+        } else if (result.error?.code === 'IP_ALREADY_USED') {
+          // Scenario 2: IP conflict with different cookie → Show error
+          // User either lost their cookie or is on a shared network
+          const helpMessage = result.error.details?.help ||
+            'Your cookie allows updates from any IP. Check your browser cookies for "gta6_user_id".';
+
+          showValidationMessage(
+            `${result.error.message}\n\n${helpMessage}`,
+            'error'
+          );
+
+          console.warn('IP conflict detected - different cookie used', {
+            errorCode: result.error?.code,
+            errorDetails: result.error?.details,
+            suggestion: 'User needs to either: 1) Recover original cookie, 2) Clear IP hash from DB, or 3) Use different network'
+          });
+
+          return;
+        } else {
+          // Unknown 409 scenario - fallback to showing the error message
+          console.warn('Unknown 409 conflict scenario', {
+            errorCode: result.error?.code,
+            errorMessage: result.error?.message
+          });
+        }
       }
 
       // Show error with retry callback for retryable errors (NOT for 409)
@@ -491,6 +521,13 @@ async function handleFormSubmit(event) {
     // Mark that user now has a prediction
     hasExistingPrediction = true;
     updateSubmitButtonText();
+
+    // Update the "Your Current Prediction" card with the new data
+    displayCurrentPrediction({
+      predicted_date: result.data?.predicted_date || result.predicted_date,
+      submitted_at: result.data?.submitted_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(), // Just updated now
+    });
 
     // Success! Update confirmation with actual data (Story 3.3, AC: Update with actual ranking)
     console.log('Prediction submitted/updated successfully:', result);
@@ -532,6 +569,14 @@ async function handleFormSubmit(event) {
 
     // Check if this is a 409 Response (user already has prediction)
     if (error instanceof Response && error.status === 409) {
+      // Parse response to check error code
+      let errorData;
+      try {
+        errorData = await error.json();
+      } catch (jsonError) {
+        console.error('Failed to parse 409 response:', jsonError);
+      }
+
       // Rollback optimistic UI
       try {
         const { rollbackOptimisticUI } = await import('/js/submission.js');
@@ -540,17 +585,41 @@ async function handleFormSubmit(event) {
         console.error('Failed to import rollback function:', importError);
       }
 
-      // Switch to update mode
-      hasExistingPrediction = true;
-      updateSubmitButtonText();
+      // Only switch to update mode for VALIDATION_ERROR (not IP_ALREADY_USED)
+      if (errorData?.error?.code === 'VALIDATION_ERROR') {
+        hasExistingPrediction = true;
+        updateSubmitButtonText();
 
-      // Show helpful info message
-      showValidationMessage(
-        'You already have a prediction! To change it, update the date above and click "Update Prediction".',
-        'info'
-      );
+        showValidationMessage(
+          'You already have a prediction! To change it, update the date above and click "Update Prediction".',
+          'info'
+        );
 
-      console.log('User already has prediction - switched to update mode', { dateValue });
+        console.log('User already has prediction - switched to update mode', {
+          dateValue,
+          errorCode: errorData.error?.code
+        });
+      } else if (errorData?.error?.code === 'IP_ALREADY_USED') {
+        showValidationMessage(
+          errorData.error.message || 'This IP address has already submitted a prediction.',
+          'error'
+        );
+
+        console.warn('IP conflict detected - different cookie used', {
+          errorCode: errorData.error?.code
+        });
+      } else {
+        // Fallback for unknown 409 scenarios
+        showValidationMessage(
+          errorData?.error?.message || 'Conflict detected. Please try again.',
+          'error'
+        );
+
+        console.warn('Unknown 409 scenario in catch block', {
+          errorCode: errorData?.error?.code
+        });
+      }
+
       return;
     }
 
@@ -1176,6 +1245,88 @@ async function handleRedditShareClick() {
 }
 
 /**
+ * Check for existing prediction on page load
+ * Fetches user's current prediction and updates UI accordingly
+ */
+async function checkExistingPrediction() {
+  try {
+    const response = await fetch('/api/predict', {
+      method: 'GET',
+      credentials: 'same-origin',
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // User has an existing prediction
+        hasExistingPrediction = true;
+        updateSubmitButtonText();
+
+        // Display current prediction in UI
+        displayCurrentPrediction(result.data);
+
+        console.log('Existing prediction loaded:', {
+          predicted_date: result.data.predicted_date,
+          submitted_at: result.data.submitted_at,
+          updated_at: result.data.updated_at,
+        });
+      }
+    } else if (response.status === 404) {
+      // User hasn't submitted yet - this is normal
+      console.log('No existing prediction found - user is new');
+    } else {
+      // Other errors - log but don't disrupt UX
+      console.warn('Error checking existing prediction:', response.status);
+    }
+  } catch (error) {
+    // Network or other errors - log but don't disrupt UX
+    console.error('Failed to check existing prediction:', error);
+  }
+}
+
+/**
+ * Display user's current prediction in the UI
+ * @param {Object} data - Prediction data from API
+ */
+function displayCurrentPrediction(data) {
+  const section = document.getElementById('current-prediction-section');
+  const dateElement = document.getElementById('current-prediction-date');
+  const updatedElement = document.getElementById('current-prediction-updated');
+
+  if (!section || !dateElement || !updatedElement) {
+    console.warn('Current prediction UI elements not found');
+    return;
+  }
+
+  // FIX: Parse date as local date to avoid timezone shift
+  // "2026-03-15" should display as March 15, not March 14
+  const [year, month, day] = data.predicted_date.split('-').map(Number);
+  const predictionDate = new Date(year, month - 1, day); // month is 0-indexed
+
+  const formattedDate = predictionDate.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+
+  // Format the updated timestamp
+  const updatedDate = new Date(data.updated_at || data.submitted_at);
+  const formattedUpdated = updatedDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+
+  // Update UI
+  dateElement.textContent = formattedDate;
+  updatedElement.textContent = `Last updated: ${formattedUpdated}`;
+  section.classList.remove('hidden');
+}
+
+/**
  * Application Initialization
  * Runs on page load to set up cookie tracking, form handling, and stats display
  */
@@ -1203,6 +1354,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Initialize stats display (Story 3.1)
   initStatsDisplay();
+
+  // Check for existing prediction (UX Enhancement)
+  checkExistingPrediction();
 
   // Initialize share buttons (Story 5.1)
   initShareButtonsElements();

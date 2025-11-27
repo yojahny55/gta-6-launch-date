@@ -115,6 +115,93 @@ export function createPredictRoutes() {
   const app = new Hono<{ Bindings: Env }>();
 
   /**
+   * GET /api/predict - Get current user's prediction
+   *
+   * Fetches the user's existing prediction using their cookie_id.
+   * Returns 404 if no prediction found (user hasn't submitted yet).
+   *
+   * Success (200 OK):
+   * {
+   *   "success": true,
+   *   "data": {
+   *     "predicted_date": "2027-02-14",
+   *     "submitted_at": "2025-11-27T10:30:00.000Z",
+   *     "updated_at": "2025-11-27T15:45:00.000Z"
+   *   }
+   * }
+   *
+   * Error responses:
+   * - 404: No prediction found (user hasn't submitted)
+   * - 400: Invalid or missing cookie
+   */
+  app.get('/api/predict', async (c) => {
+    try {
+      // Extract cookie_id
+      const cookieHeader = c.req.header('Cookie') || '';
+      const cookieId = getCookie(cookieHeader, COOKIE_NAME) || null;
+
+      // Validate cookie
+      if (!cookieId || !validateCookieID(cookieId)) {
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'NOT_FOUND',
+              message: 'No prediction found. Please submit a prediction first.',
+            },
+          },
+          404
+        );
+      }
+
+      // Query prediction by cookie_id
+      const prediction = await c.env.DB.prepare(
+        'SELECT predicted_date, submitted_at, updated_at FROM predictions WHERE cookie_id = ?'
+      )
+        .bind(cookieId)
+        .first();
+
+      if (!prediction) {
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: 'NOT_FOUND',
+              message: 'No prediction found. Please submit a prediction first.',
+            },
+          },
+          404
+        );
+      }
+
+      // Return user's prediction
+      return c.json(
+        {
+          success: true,
+          data: {
+            predicted_date: prediction.predicted_date,
+            submitted_at: prediction.submitted_at,
+            updated_at: prediction.updated_at,
+          },
+        },
+        200
+      );
+    } catch (error) {
+      console.error('Error fetching user prediction:', error);
+      return c.json(
+        {
+          success: false,
+          error: {
+            code: 'SERVER_ERROR',
+            message: 'Unable to fetch prediction. Please try again.',
+          },
+        },
+        500
+      );
+    }
+  });
+
+  /**
    * POST /api/predict - Submit a new prediction
    *
    * Request body:

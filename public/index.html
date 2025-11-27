@@ -19,11 +19,13 @@
   <link rel="canonical" href="https://gta6predictions.com/">
 
   <!-- Favicon and App Icons (Story 5.4) -->
+  <!-- Story 5.6: Preload favicon for faster icon load -->
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png">
 
+  <!-- Story 5.6: Load stylesheet normally (preload trick had compatibility issues) -->
   <link rel="stylesheet" href="/styles.built.css">
 
   <!-- Cloudflare Turnstile (Story 2.5B) -->
@@ -142,6 +144,24 @@
             <div id="chart-data-table" class="sr-only" role="table" aria-label="Prediction distribution data table">
               <!-- Table will be populated dynamically -->
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Current Prediction Display (UX Enhancement) -->
+    <section id="current-prediction-section" class="mb-6 hidden" aria-labelledby="current-prediction-heading">
+      <div class="card bg-info/10 border border-info/20 shadow-lg">
+        <div class="card-body py-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 id="current-prediction-heading" class="text-sm font-medium text-base-content/70 mb-1">Your Current Prediction</h3>
+              <p id="current-prediction-date" class="text-2xl font-bold text-info">Loading...</p>
+              <p id="current-prediction-updated" class="text-xs text-base-content/60 mt-1">Last updated: --</p>
+            </div>
+            <svg class="w-12 h-12 text-info/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
           </div>
         </div>
       </div>
@@ -381,16 +401,23 @@
     </p>
   </footer>
 
-  <!-- Story 5.5: Mobile-Responsive Utilities -->
-  <script src="/js/responsive-utils.js" type="module"></script>
+  <!-- Story 5.6: Optimized JavaScript Loading - Critical scripts first, non-critical deferred -->
+  <!-- Critical: Main app logic (needed for form submission) -->
+  <script src="/app.js?v=3.7.1" defer></script>
+  <script src="/js/submission.js" type="module" defer></script>
+  <script src="/js/cookie-consent.js" defer></script>
 
-  <script src="/js/comparison.js"></script>
-  <script src="/js/submission.js" type="module"></script>
-  <script src="/js/chart.js" type="module"></script>
-  <script src="/js/twitter-share.js" type="module"></script>
-  <script src="/js/reddit-share.js" type="module"></script>
-  <script src="/js/degradation.js"></script>
-  <script src="/js/cookie-consent.js"></script>
-  <script src="/app.js?v=3.7.1"></script>
+  <!-- Non-critical: Features that load after LCP (lazy loaded) -->
+  <script src="/js/comparison.js" defer></script>
+  <script src="/js/twitter-share.js" type="module" defer></script>
+  <script src="/js/reddit-share.js" type="module" defer></script>
+  <script src="/js/degradation.js" defer></script>
+  <script src="/js/responsive-utils.js" type="module" defer></script>
+
+  <!-- Lowest priority: Chart visualization (only loaded when user clicks toggle) -->
+  <script src="/js/chart.js" type="module" defer></script>
+
+  <!-- Story 5.6: Core Web Vitals Monitoring (FR102) -->
+  <script src="/js/web-vitals.js" defer></script>
 </body>
 </html>
