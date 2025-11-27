@@ -478,23 +478,28 @@ export function createPredictRoutes() {
         // Handle specific database errors
         const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown error';
 
-        // Check for UNIQUE constraint violation on ip_hash (Story 3.6 - AC: Scenario 1)
+        // Check for UNIQUE constraint violation on ip_hash (Story 3.6 - AC: Scenario 1, Story 4.7 - AC: Scenario 2 & 3)
         if (errorMessage.includes('UNIQUE constraint failed') && errorMessage.includes('ip_hash')) {
-          // Enhanced logging for constraint violations (Story 3.6 - AC: Transaction logging)
-          console.warn('UNIQUE constraint violation: ip_hash', {
+          // Enhanced logging for constraint violations (Story 3.6 - AC: Transaction logging, Story 4.7 - AC: Conflict logging)
+          console.warn('IP conflict detected - same IP, different cookie', {
             constraint: 'ip_hash',
             ipHashPrefix: ipHash.substring(0, 8),
             cookieIdPrefix: cookieId.substring(0, 8),
             predicted_date,
             timestamp: new Date().toISOString(),
-            scenario: 'Same IP, different cookies (network switching)',
+            scenario: 'Same IP, different cookies - likely cookie loss or multiple users',
+            conflictType: 'ip_already_used',
           });
 
           const errorResponse: ErrorResponse = {
             success: false,
             error: {
-              code: 'VALIDATION_ERROR',
-              message: "You've already submitted a prediction. Use update instead.",
+              code: 'IP_ALREADY_USED',
+              message: 'This IP address has already submitted a prediction. If you previously submitted and lost your cookie, you can restore it from your browser settings. Updates work across IP changes (WiFi, VPN, mobile networks).',
+              details: {
+                help: 'Your cookie allows updates from any IP. Check your browser cookies for "gta6_prediction_id".',
+                aboutPage: '/about#how-it-works',
+              },
             },
           };
           return c.json(errorResponse, 409);
@@ -800,14 +805,18 @@ export function createPredictRoutes() {
       // Step 8: Calculate new weight
       const weight = calculateWeight(predicted_date);
 
-      // Step 9: Detect IP change for IP conflict resolution (FR67)
+      // Step 9: Detect IP change for IP conflict resolution (FR67, Story 4.7 - AC: Scenario 1)
       // Cookie_id takes precedence - update ip_hash to new IP
       const ipChanged = storedIpHash !== ipHash;
       if (ipChanged) {
-        console.log('IP change detected during update - updating ip_hash', {
+        console.log('IP change detected - cookie allows update from any IP', {
           cookieIdPrefix: cookieId.substring(0, 8),
           oldIpHashPrefix: storedIpHash.substring(0, 8),
           newIpHashPrefix: ipHash.substring(0, 8),
+          timestamp: new Date().toISOString(),
+          scenario: 'User changed networks (WiFi/mobile/VPN)',
+          conflictType: 'ip_change_allowed',
+          resolution: 'Update ip_hash to new IP, keep cookie_id (FR67)',
         });
       }
 

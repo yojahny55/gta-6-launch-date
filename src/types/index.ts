@@ -63,7 +63,8 @@ export interface ErrorResponse {
       | 'RATE_LIMIT_EXCEEDED'
       | 'NOT_FOUND'
       | 'SERVER_ERROR'
-      | 'BOT_DETECTED';
+      | 'BOT_DETECTED'
+      | 'IP_ALREADY_USED'; // Story 4.7 - Cookie conflict resolution
     message: string;
     field?: string;
     details?: Record<string, unknown>;
