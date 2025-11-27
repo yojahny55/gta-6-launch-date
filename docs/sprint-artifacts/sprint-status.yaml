@@ -79,7 +79,7 @@ development_status:
 
   # Epic 4: Privacy, Compliance & Trust
   epic-4: backlog
-  4-1-gdpr-cookie-consent-banner: ready-for-dev
+  4-1-gdpr-cookie-consent-banner: done  # Code review approved 2025-11-26 (all 8 ACs implemented, 32/32 tests passing, GDPR-compliant)
   4-2-privacy-policy-page: ready-for-dev
   4-3-terms-of-service-page: ready-for-dev
   4-4-about-page-transparency-and-methodology: ready-for-dev
