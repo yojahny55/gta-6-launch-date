@@ -1,0 +1,236 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>1</storyId>
+    <title>GDPR Cookie Consent Banner</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-1-gdpr-cookie-consent-banner.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to understand what cookies are used and consent to their use</iWant>
+    <soThat>my privacy rights are respected (GDPR requirement)</soThat>
+    <tasks>
+      - Task 1: Design cookie consent banner UI (AC: Banner display)
+      - Task 2: Implement consent logic (AC: Consent behavior)
+      - Task 3: Implement granular consent handling (AC: Granular consent)
+      - Task 4: Integrate with existing analytics (AC: Analytics script loading)
+      - Task 5: Add banner visibility logic (AC: Banner display)
+      - Task 6: Link to Privacy Policy (prerequisite: Story 4.2)
+      - Task 7: Write automated tests (ADR-011 Testing Requirements)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** a user visits the site for the first time
+    **When** the page loads
+    **Then** a cookie consent banner is displayed with proper GDPR-compliant options
+    **And** automated tests exist covering main functionality
+
+    ### Banner Content and Behavior
+    1. Banner Display: Headline "We use cookies", description explaining functional vs analytics cookies, two buttons "Accept All" | "Functional Only", link to Privacy Policy, bottom position (non-intrusive), dismisses on click, stores consent in cookie_consent cookie
+
+    2. Granular Consent (FR68): Functional cookies always enabled (gta6_user_id), Analytics cookies optional (Cloudflare Analytics, ad tracking if present)
+
+    3. Consent Behavior: "Accept All" enables both, "Functional Only" disables analytics, default is functional only, consent before non-essential cookies set, timestamp recorded
+
+    ### Testing Requirements
+    - Unit tests for consent banner display logic
+    - Test consent choice storage (cookie creation)
+    - Test "Accept All" button behavior
+    - Test "Functional Only" button behavior
+    - Test banner dismissal on click
+    - Test analytics script loading based on consent
+    - Test banner reappearance after cookie expiration
+    - Integration test for cookie consent flow
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD - FR50 Cookie Consent Banner -->
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR50: Legal &amp; Privacy - Cookie Consent Banner</section>
+        <snippet>System displays cookie consent banner on first visit (GDPR). Banner explains cookie usage and offers consent.</snippet>
+      </artifact>
+
+      <!-- Epic 4 Story 4.1 Definition -->
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.1: GDPR Cookie Consent Banner</section>
+        <snippet>Banner at bottom, non-intrusive, does not block content. Two buttons "Accept All" | "Functional Only". Functional cookies always enabled (gta6_user_id). Analytics cookies optional. Consent stored in cookie_consent cookie with 12-month expiration.</snippet>
+      </artifact>
+
+      <!-- Architecture - Security: Cookie Security -->
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture - Cookie Security</section>
+        <snippet>Cookie flags: httpOnly, secure, sameSite=strict. js-cookie library handles encoding/decoding safely. GDPR compliance via cookie consent banner (simple HTML modal), IP hashing (SHA-256), right to be forgotten (delete by cookie_id).</snippet>
+      </artifact>
+
+      <!-- Architecture - Cookie Management Pattern -->
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Cookie Management Pattern</section>
+        <snippet>Uses js-cookie library. Set cookie with secure flags: Cookies.set('gta6_user_id', generateCookieId(), {expires: 365, secure: true, sameSite: 'strict'}). Get cookie: Cookies.get('gta6_user_id').</snippet>
+      </artifact>
+
+      <!-- ADR-011: Mandatory Testing Requirements -->
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>ADR-011: Mandatory Automated Testing for All Stories</section>
+        <snippet>All stories MUST include automated tests. AC must explicitly state "And automated tests exist covering main functionality". Testing requirements subsection required. Tests pass before story marked done. No exceptions.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <!-- Existing Cookie Utility -->
+      <artifact>
+        <path>src/utils/cookie.ts</path>
+        <kind>utility module</kind>
+        <symbol>generateCookieID, validateCookieID, setCookie, getCookie</symbol>
+        <lines>1-210</lines>
+        <reason>Reusable cookie management utilities. Story 4.1 can extend for cookie_consent cookie using same secure patterns (httpOnly: false, secure: true, sameSite: 'Strict', maxAge: 63072000)</reason>
+      </artifact>
+
+      <!-- Frontend Cookie Management -->
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend module</kind>
+        <symbol>Cookies.set, Cookies.get, COOKIE_OPTIONS, COOKIE_NAME</symbol>
+        <lines>1-152</lines>
+        <reason>Frontend cookie handling with js-cookie library already implemented. Story 4.1 should reuse same cookie options pattern for cookie_consent cookie (expires: 730 days, secure: true, sameSite: 'strict')</reason>
+      </artifact>
+
+      <!-- Main HTML Template -->
+      <artifact>
+        <path>public/index.html</path>
+        <kind>HTML template</kind>
+        <symbol>DOM structure, DaisyUI components</symbol>
+        <lines>1-100</lines>
+        <reason>Banner UI will be added to this file. Use existing DaisyUI alert components for consistency. Add banner at bottom of body with fixed positioning.</reason>
+      </artifact>
+
+      <!-- Degradation Banner Pattern -->
+      <artifact>
+        <path>public/js/degradation.js</path>
+        <kind>frontend module</kind>
+        <symbol>showDegradationNotice, ARIA live regions</symbol>
+        <lines>N/A</lines>
+        <reason>Story 3.7 established banner display pattern with ARIA accessibility. Cookie consent banner should follow similar pattern for screen reader announcements.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="js-cookie" version="^3.0.5">Cookie library already in use for gta6_user_id. Extend for cookie_consent cookie.</package>
+        <package name="tailwindcss" version="^4.0.0">Styling framework. Use existing utility classes for banner positioning and appearance.</package>
+        <package name="hono" version="^4.10.0">Backend framework. No backend changes needed (client-side only feature).</package>
+        <package name="vitest" version="^3.2.4">Testing framework for unit tests (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing (90%+ coverage for consent logic)
+    - Use existing cookie security patterns from src/utils/cookie.ts (secure: true, sameSite: 'Strict')
+    - Banner must not block content access (GDPR requirement)
+    - Use DaisyUI components for consistency with existing UI
+    - ARIA accessibility: aria-live regions for screen reader announcements
+    - Functional cookies (gta6_user_id) always work - cannot be disabled
+    - Analytics cookies conditional on consent choice
+    - Cookie consent storage: cookie_consent cookie with 12-month (365 days) expiration
+    - Re-show banner after cookie expires
+    - Frontend-only feature (no backend API changes required)
+    - Link to /privacy page (will be created in Story 4.2)
+  </constraints>
+
+  <interfaces>
+    <!-- Cookie Management Interface (Frontend) -->
+    <interface>
+      <name>Cookies API (js-cookie)</name>
+      <kind>JavaScript Library</kind>
+      <signature>
+        Cookies.set(name: string, value: string, options: {expires, secure, sameSite, path})
+        Cookies.get(name: string): string | undefined
+      </signature>
+      <path>public/app.js (lines 60-107)</path>
+    </interface>
+
+    <!-- Cookie Utility Interface (Backend) -->
+    <interface>
+      <name>Cookie Utility Functions</name>
+      <kind>TypeScript Module</kind>
+      <signature>
+        setCookie(name: string, value: string, options: CookieOptions): string
+        getCookie(cookieString: string, name: string): string | undefined
+        getDefaultCookieOptions(): CookieOptions
+      </signature>
+      <path>src/utils/cookie.ts (lines 102-209)</path>
+    </interface>
+
+    <!-- Analytics Loading (Cloudflare) -->
+    <interface>
+      <name>Cloudflare Analytics</name>
+      <kind>Third-party Service</kind>
+      <signature>Conditional script loading based on cookie_consent value. If consent=all, load analytics. If consent=functional, skip analytics.</signature>
+      <path>public/index.html (Cloudflare Analytics script tag)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, all stories require automated tests. Testing framework: Vitest v3.2.4 with @cloudflare/vitest-pool-workers for Workers tests. Tests co-located with source (src/foo.test.ts) or in tests/unit/ directory. Frontend tests use happy-dom or jsdom for DOM manipulation. Coverage target: 90%+ for core logic. CI/CD blocks deployment on failing tests.
+    </standards>
+
+    <locations>
+      - tests/unit/ (unit tests)
+      - src/**/*.test.ts (co-located tests)
+      - public/js/**/*.test.js (frontend tests co-located)
+      - vitest.config.unit.ts (configuration for unit tests)
+    </locations>
+
+    <ideas>
+      **Mapped to Acceptance Criteria:**
+
+      AC1 (Banner Display):
+      - Test banner HTML structure rendered correctly
+      - Test banner shows on first visit (no cookie_consent cookie)
+      - Test banner hidden when cookie_consent exists
+      - Test banner positioning (bottom, fixed, non-intrusive)
+
+      AC2 (Consent Choice Storage):
+      - Test "Accept All" sets cookie_consent=all
+      - Test "Functional Only" sets cookie_consent=functional
+      - Test cookie expiration (365 days)
+      - Test cookie attributes (secure, sameSite)
+
+      AC3 (Analytics Script Loading):
+      - Test analytics loaded when consent=all
+      - Test analytics NOT loaded when consent=functional
+      - Test analytics NOT loaded when no consent given
+
+      AC4 (Banner Dismissal):
+      - Test banner hidden after "Accept All" click
+      - Test banner hidden after "Functional Only" click
+      - Test banner does not re-appear on same session
+
+      AC5 (Cookie Expiration):
+      - Test banner re-appears after cookie expires (12 months)
+      - Test consent persists across page loads
+
+      AC6 (Accessibility):
+      - Test ARIA attributes present
+      - Test keyboard navigation works
+      - Test screen reader announcements
+    </ideas>
+  </tests>
+</story-context>

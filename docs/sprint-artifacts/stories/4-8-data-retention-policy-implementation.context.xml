@@ -1,0 +1,166 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>8</storyId>
+    <title>Data Retention Policy Implementation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-8-data-retention-policy-implementation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to enforce data retention policies</iWant>
+    <soThat>we comply with privacy regulations and minimize data storage</soThat>
+    <tasks>
+      - Task 1: Create cleanup service
+      - Task 2: Implement analytics data cleanup (24 months)
+      - Task 3: Implement server logs cleanup (90 days)
+      - Task 4: Schedule cleanup task (daily 2 AM UTC)
+      - Task 5: Implement audit trail logging
+      - Task 6: Document retention policies in Privacy Policy
+      - Task 7: Update About page with retention info
+      - Task 8: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** data retention policies are defined (FR90)
+    **When** automated cleanup runs (nightly scheduled task)
+    **Then** old data is purged according to retention policies
+    **And** automated tests exist covering main functionality
+
+    ### 5 Retention Policies
+    1. Predictions: Indefinite retention (core product value, exception: user-requested deletion FR54-55)
+    2. Analytics Data (Cloudflare): 24 months retention, auto-deletion after 24 months (Cloudflare handles)
+    3. Server Logs: 90 days retention, auto-deletion after 90 days
+    4. Rate Limit Data (Cloudflare KV): 60 seconds retention, TTL automatic expiration
+    5. Cache Data (Stats): 5 minutes retention, TTL automatic expiration
+
+    ### Cleanup Script Runs
+    - Schedule: Daily at 2 AM UTC (low traffic)
+    - Task: Delete analytics logs > 24 months
+    - Task: Delete server logs > 90 days
+    - Logging: Record cleanup counts
+
+    ### Retention is Documented
+    - Privacy Policy states retention periods
+    - Users informed during submission
+    - Compliance audit trail maintained
+
+    ### Testing Requirements
+    - Unit tests for cleanup script logic
+    - Test analytics data deletion (24 months)
+    - Test server logs deletion (90 days)
+    - Test prediction data preservation (indefinite)
+    - Test cleanup logging
+    - Integration test for scheduled cleanup
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR90: 24-Month Analytics Retention</section>
+        <snippet>Analytics data deleted after 24 months. Prediction data retained indefinitely (core product value).</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.8: Data Retention Policy Implementation</section>
+        <snippet>5 retention policies: Predictions (indefinite), Analytics (24 months), Server logs (90 days), Rate limit data (60s TTL), Cache (5min TTL). Daily cleanup at 2 AM UTC. Audit trail logging for compliance.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Database Schema - Predictions Table</section>
+        <snippet>Predictions table stores core data indefinitely. No cleanup for predictions except user-requested deletion (FR54-55).</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table</symbol>
+        <lines>N/A</lines>
+        <reason>Predictions table data retained indefinitely. Cleanup service must NOT delete from predictions table (except user-requested deletion via Story 4.6).</reason>
+      </artifact>
+
+      <artifact>
+        <path>wrangler.toml</path>
+        <kind>configuration file</kind>
+        <symbol>cron triggers</symbol>
+        <lines>N/A</lines>
+        <reason>Add Cloudflare Worker cron trigger for daily cleanup task at 2 AM UTC. Alternative: GitHub Actions scheduled workflow.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0">Backend framework for cleanup service endpoints.</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - FR90: 24-month analytics retention, indefinite prediction retention
+    - Daily cleanup at 2 AM UTC (low traffic period)
+    - Audit trail logging for compliance (record deletion counts, timestamps)
+    - Document retention policies in Privacy Policy Section 3 (Data Storage)
+    - Update About page Section 5 (Privacy & Data)
+    - Cloudflare KV and Cache TTLs handle automatic expiration (no manual cleanup)
+    - Predictions NEVER deleted by automated cleanup (only user-requested deletion)
+    - Server logs cleanup after 90 days
+    - Structured logging format for compliance audits
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Cleanup Service Module</name>
+      <kind>TypeScript Module</kind>
+      <signature>
+        cleanupAnalyticsData(): Promise&lt;{deletedCount: number}&gt;
+        cleanupServerLogs(): Promise&lt;{deletedCount: number}&gt;
+        generateCleanupReport(): string
+      </signature>
+      <path>src/services/cleanup.service.ts</path>
+    </interface>
+
+    <interface>
+      <name>Cron Trigger (Cloudflare Workers)</name>
+      <kind>Scheduled Task</kind>
+      <signature>
+        Schedule: "0 2 * * *" (Daily at 2 AM UTC)
+        Executes: Cleanup service functions
+      </signature>
+      <path>wrangler.toml (cron_triggers section) or GitHub Actions workflow</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4. Test cleanup logic, threshold calculations, data preservation, logging. Coverage target: 90%+.
+    </standards>
+
+    <locations>
+      - tests/unit/data-retention.test.ts
+      - src/services/cleanup.service.test.ts
+      - vitest.config.unit.ts
+    </locations>
+
+    <ideas>
+      AC1 (Analytics Cleanup): Test data older than 24 months deleted, recent data preserved
+      AC2 (Server Logs Cleanup): Test logs older than 90 days deleted, recent logs preserved
+      AC3 (Prediction Preservation): Test predictions NEVER deleted by automated cleanup
+      AC4 (Cleanup Logging): Test deletion counts logged, timestamps recorded
+      AC5 (Scheduled Task): Test cron trigger executes cleanup service (integration test)
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,196 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>6</storyId>
+    <title>GDPR Data Deletion Request Form</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-6-gdpr-data-deletion-request-form.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to request deletion of my data</iWant>
+    <soThat>I can exercise my "right to be forgotten" (GDPR)</soThat>
+    <tasks>
+      - Task 1: Create deletion request form HTML
+      - Task 2: Implement form validation
+      - Task 3: Create deletion request API endpoint
+      - Task 4: Implement confirmation email flow
+      - Task 5: Create confirmation endpoint
+      - Task 6: Implement deletion logic
+      - Task 7: Handle edge cases
+      - Task 8: Add rate limiting
+      - Task 9: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** GDPR requires data deletion capability (FR54-55)
+    **When** a user navigates to /delete or Privacy Policy deletion section
+    **Then** a data deletion request form is displayed with proper validation and confirmation flow
+    **And** automated tests exist covering main functionality
+
+    ### Form Fields (4 fields)
+    1. Cookie ID: Auto-populated if exists, manual input otherwise. UUID v4 validation.
+    2. Email: Optional but recommended. Valid email format validation.
+    3. Reason: Optional dropdown (Privacy concerns, No longer interested, Other).
+    4. Confirm: Required checkbox "I understand this action is permanent".
+
+    ### Submission Process (6 steps)
+    1. User submits form
+    2. Backend validates cookie_id exists in database
+    3. Send confirmation email if email provided
+    4. User clicks confirmation link
+    5. Backend deletes prediction record (DELETE FROM predictions WHERE cookie_id = ?)
+    6. Display confirmation message
+
+    ### Edge Cases
+    - Cookie ID not found: Display error message
+    - No email provided: Immediate deletion (less secure but allowed)
+    - Email not confirmed: Delete after 30 days (GDPR grace period)
+
+    ### Deletion Scope
+    - Prediction record deleted
+    - Cookie ID removed from database
+    - IP hash removed
+    - Analytics data removed (if tied to cookie)
+    - User must manually delete browser cookie
+
+    ### Testing Requirements
+    - Unit tests for deletion request endpoint
+    - Test cookie ID validation (UUID v4)
+    - Test email validation
+    - Test confirmation email sending
+    - Test deletion execution
+    - Test edge cases (not found, no email)
+    - Integration test for full deletion flow
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR54-55: Data Deletion &amp; Right to be Forgotten</section>
+        <snippet>Users can request data deletion via contact form. GDPR "right to be forgotten" compliance. System deletes prediction by cookie_id.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.6: GDPR Data Deletion Request Form</section>
+        <snippet>Form with cookie_id, email, reason, confirm checkbox. Email confirmation flow (24-hour token). Immediate deletion if no email. DELETE FROM predictions WHERE cookie_id = ?. GDPR requires deletion within 30 days.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture - GDPR Compliance</section>
+        <snippet>Data deletion capability. Right to be forgotten: Delete prediction by cookie_id. Implement DELETE endpoint on request.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/utils/cookie.ts</path>
+        <kind>utility module</kind>
+        <symbol>validateCookieID</symbol>
+        <lines>67-72</lines>
+        <reason>Reuse UUID v4 validation for cookie ID input. Validates format: 8-4-4-4-12 hex digits.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table</symbol>
+        <lines>N/A</lines>
+        <reason>DELETE operation targets predictions table. Remove record WHERE cookie_id = ?. Also remove associated analytics data if present.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>API route</kind>
+        <symbol>Database query patterns</symbol>
+        <lines>N/A</lines>
+        <reason>Reference existing database query patterns (prepare, bind, all/run). Use similar pattern for DELETE operation.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0">Backend framework for API endpoints.</package>
+        <package name="zod" version="^3.25.76">Schema validation for form inputs (cookie_id, email).</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - GDPR compliance: Deletion within 30 days maximum
+    - Email confirmation prevents malicious deletion
+    - Immediate deletion if no email (user choice)
+    - Rate limiting to prevent abuse (prevent spam deletion requests)
+    - Confirmation token expires in 24 hours
+    - Use Cloudflare KV for token storage (temporary, TTL-based)
+    - Deletion scope: prediction record, cookie_id, ip_hash, analytics data
+    - Log deletions for compliance audit trail
+    - User must manually delete browser cookie (cannot delete client-side cookies from server)
+    - Link from Privacy Policy "Right to Erasure" section
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/delete</name>
+      <kind>REST API Endpoint</kind>
+      <signature>
+        Request: {cookie_id: string, email?: string, reason?: string, confirm: boolean}
+        Response: {success: true, message: "Deletion request received"} or {success: false, error: {...}}
+      </signature>
+      <path>src/routes/delete.ts</path>
+    </interface>
+
+    <interface>
+      <name>GET /delete/confirm</name>
+      <kind>REST API Endpoint</kind>
+      <signature>
+        Query: ?token=uuid
+        Response: HTML page confirming deletion or error message
+      </signature>
+      <path>src/routes/delete.ts</path>
+    </interface>
+
+    <interface>
+      <name>Cloudflare KV (Token Storage)</name>
+      <kind>Key-Value Store</kind>
+      <signature>
+        Store confirmation tokens with 24-hour TTL
+        Key: token (UUID), Value: {cookie_id, timestamp}
+      </signature>
+      <path>Cloudflare KV namespace binding</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4 with @cloudflare/vitest-pool-workers for Workers tests. Test API endpoints, validation, deletion logic, email flow, edge cases. Coverage target: 90%+.
+    </standards>
+
+    <locations>
+      - src/routes/delete.test.ts (API endpoint tests)
+      - tests/unit/delete-form.test.ts (form validation tests)
+      - vitest.config.ts (Workers pool configuration)
+    </locations>
+
+    <ideas>
+      AC1 (Form Validation): Test UUID v4 validation, email validation, checkbox required
+      AC2 (Submission): Test cookie_id exists check, token generation, email sending
+      AC3 (Confirmation): Test token validation, expiration, deletion execution
+      AC4 (Edge Cases): Test cookie not found, no email (immediate delete), expired token
+      AC5 (Deletion Scope): Test prediction deleted, ip_hash removed, analytics cleaned
+      AC6 (Rate Limiting): Test abuse prevention, max requests per IP
+    </ideas>
+  </tests>
+</story-context>

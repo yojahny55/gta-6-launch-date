@@ -1,0 +1,281 @@
+# Story 4.7: Cookie Conflict Resolution (Cookie vs IP)
+
+Status: ready-for-dev
+
+## Story
+
+As a system,
+I want to handle conflicts when users access from different IPs,
+so that cookie-based tracking works even when IP changes.
+
+## Acceptance Criteria
+
+**Given** a user previously submitted from IP A with Cookie X
+**When** they return from IP B with same Cookie X
+**Then** cookie takes precedence (FR67) and IP is updated
+**And** automated tests exist covering main functionality
+
+### Conflict Scenarios
+
+**Scenario 1: Update from different IP**
+- User submitted: IP_A (hashed), Cookie_X, Date_1
+- User updates: IP_B (hashed), Cookie_X, Date_2
+- Action: UPDATE prediction, change ip_hash to IP_B, keep cookie_id
+- Rationale: User changed networks (home→work, WiFi→mobile)
+
+**Scenario 2: New submission from same IP, different cookie**
+- User submitted: IP_A, Cookie_X, Date_1
+- New submission: IP_A, Cookie_Y, Date_2
+- Action: REJECT with 409 Conflict "IP already used"
+- Rationale: Prevent same-IP multi-submissions
+
+**Scenario 3: Cookie lost, same IP**
+- User submitted: IP_A, Cookie_X, Date_1
+- New submission: IP_A, Cookie_Y (user cleared cookies), Date_2
+- Action: REJECT with 409 "IP already used. Restore your cookie to update."
+- Provide: Instructions to recover cookie_id
+
+### Update SQL Handles Conflict
+```sql
+UPDATE predictions
+SET predicted_date = ?,
+    ip_hash = ?, -- Update to new IP
+    weight = ?,
+    updated_at = CURRENT_TIMESTAMP
+WHERE cookie_id = ?
+```
+
+### Conflict Resolution Documented
+- About page explains: "Updates work across IP changes"
+- Error message helpful: "Your cookie allows updates from any IP"
+
+### Testing Requirements
+- [ ] Unit tests for conflict resolution logic
+- [ ] Test Scenario 1: Update from different IP
+- [ ] Test Scenario 2: New submission from same IP, different cookie
+- [ ] Test Scenario 3: Cookie lost, same IP
+- [ ] Test SQL update with IP change
+- [ ] Integration test for full conflict flow
+
+## Tasks / Subtasks
+
+- [ ] Task 1: Implement cookie-first conflict resolution (AC: Scenario 1)
+  - [ ] Modify `src/routes/predict.ts` update endpoint
+  - [ ] If cookie_id exists in DB: Allow update from any IP
+  - [ ] Update ip_hash to new IP on update
+  - [ ] Preserve cookie_id
+  - [ ] Return success response
+
+- [ ] Task 2: Implement same-IP rejection (AC: Scenario 2, 3)
+  - [ ] Modify `src/routes/predict.ts` submission endpoint
+  - [ ] Check if IP hash exists with different cookie_id
+  - [ ] Return 409 Conflict error
+  - [ ] Provide helpful error message
+  - [ ] Suggest restoring cookie if lost
+
+- [ ] Task 3: Update SQL for IP change handling (AC: Update SQL)
+  - [ ] Modify update query in `src/db/queries.ts`
+  - [ ] Update ip_hash field on prediction update
+  - [ ] Update updated_at timestamp
+  - [ ] WHERE cookie_id = ? (cookie-based lookup)
+
+- [ ] Task 4: Create helpful error messages (AC: Scenario 2, 3)
+  - [ ] Error message for same-IP different-cookie: "IP already used"
+  - [ ] Provide cookie recovery instructions
+  - [ ] Link to /about page explaining updates
+  - [ ] Format: User-friendly, actionable
+
+- [ ] Task 5: Document conflict resolution (AC: Conflict resolution documented)
+  - [ ] Update `public/about.html` Section 3 (How It Works)
+  - [ ] Explain: "Updates work across IP changes"
+  - [ ] Explain cookie priority over IP
+  - [ ] Clarify mobile/VPN use case
+
+- [ ] Task 6: Add logging for conflict events (AC: Monitoring)
+  - [ ] Log IP change updates
+  - [ ] Log same-IP rejections
+  - [ ] Track conflict resolution patterns
+  - [ ] Structured logging for analysis
+
+- [ ] Task 7: Write automated tests (ADR-011 Testing Requirements)
+  - [ ] Create `tests/cookie-conflict-resolution.test.ts`
+  - [ ] Test Scenario 1: Different IP update allowed
+  - [ ] Test Scenario 2: Same IP different cookie rejected
+  - [ ] Test Scenario 3: Cookie lost rejection
+  - [ ] Test IP hash update in database
+  - [ ] Verify test coverage: 90%+
+
+## Dev Notes
+
+### Requirements Context
+
+**From Epic 4 Story 4.7 (Cookie Conflict Resolution - Cookie vs IP):**
+- Cookie takes precedence over IP in conflicts (FR67)
+- Allow updates from different IPs (same cookie)
+- Reject new submissions from same IP (different cookie)
+- Update ip_hash on IP change
+- Helpful error messages with recovery instructions
+
+[Source: docs/epics/epic-4-privacy-compliance-trust.md:396-451]
+
+**From PRD - FR67 (Cookie Wins Over IP in Conflicts):**
+- Cookie-based identity more stable than IP
+- Mobile users frequently change IPs (WiFi→LTE→WiFi)
+- VPN users change IPs constantly
+- Cookie allows updates from any IP
+
+[Source: Derived from Epic 4 Story 4.7]
+
+### Architecture Patterns
+
+**From Architecture - Security Architecture:**
+- IP Address Privacy:
+  - Hash with SHA-256 + salt before storage
+  - Use `request.headers.get('CF-Connecting-IP')` for real IP
+  - Never log raw IPs
+
+[Source: docs/architecture.md:674-706]
+
+**From Architecture - Database Schema:**
+```sql
+CREATE TABLE predictions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  predicted_date DATE NOT NULL,
+  submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  ip_hash TEXT NOT NULL,
+  cookie_id TEXT NOT NULL UNIQUE,
+  user_agent TEXT,
+  weight REAL DEFAULT 1.0,
+  UNIQUE(ip_hash) ON CONFLICT FAIL
+);
+```
+
+- UNIQUE constraint on ip_hash enforces one submission per IP
+- UNIQUE constraint on cookie_id allows update via cookie
+
+[Source: docs/architecture.md:229-259]
+
+**Conflict Resolution Logic:**
+```typescript
+// Scenario 1: Update from different IP (ALLOW)
+async function updatePrediction(cookie_id, new_date, new_ip_hash) {
+  const result = await DB.prepare(
+    `UPDATE predictions
+     SET predicted_date = ?,
+         ip_hash = ?, -- Update to new IP
+         weight = ?,
+         updated_at = CURRENT_TIMESTAMP
+     WHERE cookie_id = ?`
+  ).bind(new_date, new_ip_hash, weight, cookie_id).run();
+
+  if (result.success) {
+    console.log(`Updated prediction for ${cookie_id}, IP changed`);
+    return { success: true };
+  }
+}
+
+// Scenario 2 & 3: New submission from same IP (REJECT)
+async function createPrediction(cookie_id, date, ip_hash) {
+  try {
+    await DB.prepare(
+      `INSERT INTO predictions (cookie_id, predicted_date, ip_hash, weight)
+       VALUES (?, ?, ?, ?)`
+    ).bind(cookie_id, date, ip_hash, weight).run();
+  } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed: predictions.ip_hash')) {
+      return {
+        success: false,
+        error: {
+          code: 'IP_ALREADY_USED',
+          message: 'This IP address has already submitted a prediction. Restore your cookie to update.',
+        }
+      };
+    }
+  }
+}
+```
+
+### Project Structure Notes
+
+**File Structure:**
+```
+src/
+├── routes/
+│   └── predict.ts               (MODIFY - conflict resolution logic)
+├── db/
+│   └── queries.ts               (MODIFY - update query with IP change)
+public/
+├── about.html                   (MODIFY - document conflict resolution)
+tests/
+├── unit/
+│   └── cookie-conflict-resolution.test.ts (NEW - conflict tests)
+```
+
+### Learnings from Previous Story
+
+**From Story 4.6 (GDPR Data Deletion Request Form):**
+- ✅ **UUID v4 validation:** Cookie ID format validation
+- **Recommendation:** Reuse validation for conflict resolution
+
+**From Story 2.8 (Prediction Update API Endpoint):**
+- ✅ **Update endpoint exists:** PUT /api/predict/:cookie_id
+- ✅ **Cookie-based updates:** Update prediction via cookie
+- **Recommendation:** Modify to handle IP change (update ip_hash field)
+
+**From Story 2.7 (Prediction Submission API Endpoint):**
+- ✅ **IP conflict handling:** UNIQUE constraint on ip_hash
+- **Recommendation:** Add helpful error message for IP conflicts
+
+**From Story 2.2 (IP Address Hashing):**
+- ✅ **IP hashing pattern:** SHA-256 with salt
+- **Recommendation:** Update ip_hash on IP change in updates
+
+**New Patterns Created:**
+- Cookie-first conflict resolution logic
+- IP change update pattern
+
+**Files to Modify:**
+- `src/routes/predict.ts` - Add conflict resolution
+- `src/db/queries.ts` - Update query with IP change
+- `public/about.html` - Document conflict resolution
+
+**Technical Debt to Address:**
+- None from previous stories
+
+### References
+
+**Epic Breakdown:**
+- [Epic 4 Story 4.7 Definition](docs/epics/epic-4-privacy-compliance-trust.md:396-451)
+
+**PRD:**
+- [PRD - FR67: Cookie Wins Over IP in Conflicts](docs/epics/epic-4-privacy-compliance-trust.md:407-418)
+
+**Architecture:**
+- [Architecture - Security: IP Address Privacy](docs/architecture.md:674-706)
+- [Architecture - Database Schema: UNIQUE Constraints](docs/architecture.md:229-259)
+
+**Dependencies:**
+- Story 2.7 (Prediction submission - IP conflict handling)
+- Story 2.8 (Prediction update - cookie-based updates)
+- Story 2.2 (IP hashing - hash comparison)
+- Story 4.4 (About page - documentation target)
+
+**Testing:**
+- [ADR-011: Mandatory Automated Testing](docs/architecture.md:1171-1303)
+
+## Dev Agent Record
+
+### Context Reference
+
+- docs/sprint-artifacts/stories/4-7-cookie-conflict-resolution-cookie-vs-ip.context.xml
+
+### Agent Model Used
+
+{{agent_model_name_version}}
+
+### Debug Log References
+
+### Completion Notes List
+
+### File List

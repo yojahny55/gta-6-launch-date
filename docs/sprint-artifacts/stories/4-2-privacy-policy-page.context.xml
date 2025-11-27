@@ -1,0 +1,197 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>2</storyId>
+    <title>Privacy Policy Page</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-2-privacy-policy-page.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to read the privacy policy</iWant>
+    <soThat>I understand how my data is collected, used, and protected</soThat>
+    <tasks>
+      - Task 1: Create privacy policy HTML structure
+      - Task 2: Write Data Collection section
+      - Task 3: Write Data Usage section
+      - Task 4: Write Data Storage section
+      - Task 5: Write Data Sharing section
+      - Task 6: Write Your Rights (GDPR) section
+      - Task 7: Write Cookies section
+      - Task 8: Write Contact section
+      - Task 9: Style privacy policy page
+      - Task 10: Add footer link to all pages
+      - Task 11: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** the site has a privacy policy requirement (GDPR)
+    **When** a user navigates to /privacy or clicks Privacy Policy link
+    **Then** a comprehensive privacy policy page is displayed with all required GDPR sections
+    **And** automated tests exist covering main functionality
+
+    ### Required Sections (7 sections)
+    1. Data Collection: What we collect, how we collect, why we collect
+    2. Data Usage: Median calculation, prediction tracking, spam prevention, analytics
+    3. Data Storage: Cloudflare D1 location, retention periods (indefinite predictions, 24 months analytics), security (HTTPS, IP hashing)
+    4. Data Sharing: No data selling, third parties (Cloudflare, Google), legal requirements
+    5. Your Rights (GDPR): Right to access, rectification, erasure, object
+    6. Cookies: Functional vs analytics, purposes, durations (2 years functional, 12 months analytics)
+    7. Contact: privacy@gta6predictions.com, 30-day response time
+
+    ### Page Formatting
+    - Plain language (no legalese)
+    - Table of contents with jump links
+    - Last updated date displayed
+    - Link from footer on every page
+    - Mobile-responsive design
+
+    ### Testing Requirements
+    - Unit tests for privacy page route
+    - Test page accessibility (WCAG AA)
+    - Test table of contents navigation
+    - Test mobile responsiveness
+    - Test footer link presence
+    - Test last updated date display
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR51: Privacy Policy Accessible</section>
+        <snippet>Users can access Privacy Policy via footer link. GDPR compliance requirement.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.2: Privacy Policy Page</section>
+        <snippet>7 required sections: Data Collection, Usage, Storage (Cloudflare D1, 24-month analytics retention), Sharing (no selling), GDPR Rights, Cookies (functional vs analytics), Contact. Plain language, table of contents, last updated date, footer link.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture - GDPR Compliance</section>
+        <snippet>Privacy Policy page at public/privacy.html. IP hashing (SHA-256 with salt). Data deletion capability. Right to be forgotten implemented.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Database Schema</section>
+        <snippet>Predictions table stores: id, predicted_date, submitted_at, updated_at, ip_hash (SHA-256), cookie_id (UUID v4), user_agent, weight. IP addresses never stored in plaintext.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>HTML template</kind>
+        <symbol>Footer, header structure</symbol>
+        <lines>1-100</lines>
+        <reason>Add footer link to /privacy.html. Use existing header/footer pattern for consistency.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table</symbol>
+        <lines>N/A</lines>
+        <reason>Reference database schema for Data Collection and Data Storage sections of privacy policy. Explains what data is collected and how it's stored.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/utils/ip-hash.ts</path>
+        <kind>utility module</kind>
+        <symbol>hashIpAddress</symbol>
+        <lines>N/A</lines>
+        <reason>Reference IP hashing implementation for Data Storage section. Explains security measure (SHA-256 with salt, no plaintext IPs).</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="tailwindcss" version="^4.0.0">Styling for privacy page. Use existing utility classes for consistency.</package>
+        <package name="vitest" version="^3.2.4">Testing framework for page tests (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - Use plain language (avoid legal jargon where possible)
+    - GDPR compliance: All required sections must be present
+    - Mobile-responsive design (Tailwind CSS responsive utilities)
+    - Accessibility: WCAG AA compliance, table of contents with anchor links
+    - Static HTML page (no backend API required)
+    - Footer link must appear on ALL pages
+    - Last updated date displayed prominently
+    - Reference Story 4.1 cookie consent in Cookies section
+    - Reference Story 4.6 deletion form in Your Rights section
+    - Link from "Learn more" in cookie consent banner (Story 4.1)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Static HTML Page</name>
+      <kind>Web Page</kind>
+      <signature>GET /privacy.html → HTML document with 7 sections, table of contents, footer navigation</signature>
+      <path>public/privacy.html</path>
+    </interface>
+
+    <interface>
+      <name>Footer Navigation</name>
+      <kind>HTML Component</kind>
+      <signature>Footer with links to Home, Privacy, Terms, About pages. Should appear consistently across all pages.</signature>
+      <path>public/index.html (footer element), public/privacy.html (footer element)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, all stories require automated tests. Testing framework: Vitest v3.2.4. Frontend tests use happy-dom or jsdom for DOM manipulation. Test HTML structure, accessibility, navigation, mobile responsiveness. Coverage target: 90%+ for critical functionality.
+    </standards>
+
+    <locations>
+      - tests/unit/privacy-page.test.ts (unit tests)
+      - vitest.config.unit.ts (configuration)
+    </locations>
+
+    <ideas>
+      **Mapped to Acceptance Criteria:**
+
+      AC1 (7 Required Sections):
+      - Test all 7 section headings present
+      - Test each section contains required content
+      - Test section IDs match table of contents links
+
+      AC2 (Table of Contents):
+      - Test TOC links point to correct sections
+      - Test smooth scroll behavior (if implemented)
+      - Test TOC navigation works on mobile
+
+      AC3 (Page Formatting):
+      - Test last updated date displayed
+      - Test footer link present
+      - Test mobile responsive breakpoints
+      - Test accessibility (WCAG AA compliance)
+
+      AC4 (Footer Link):
+      - Test footer link exists on index.html
+      - Test footer link points to /privacy.html
+      - Test link is clickable and navigates correctly
+
+      AC5 (Content Accuracy):
+      - Test retention periods stated correctly (indefinite predictions, 24 months analytics)
+      - Test data types listed match database schema
+      - Test security measures mentioned (HTTPS, IP hashing)
+    </ideas>
+  </tests>
+</story-context>

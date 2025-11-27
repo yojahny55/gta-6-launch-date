@@ -79,14 +79,14 @@ development_status:
 
   # Epic 4: Privacy, Compliance & Trust
   epic-4: backlog
-  4-1-gdpr-cookie-consent-banner: backlog
-  4-2-privacy-policy-page: backlog
-  4-3-terms-of-service-page: backlog
-  4-4-about-page-transparency-and-methodology: backlog
-  4-5-cookie-management-and-expiration: backlog
-  4-6-gdpr-data-deletion-request-form: backlog
-  4-7-cookie-conflict-resolution-cookie-vs-ip: backlog
-  4-8-data-retention-policy-implementation: backlog
+  4-1-gdpr-cookie-consent-banner: ready-for-dev
+  4-2-privacy-policy-page: ready-for-dev
+  4-3-terms-of-service-page: ready-for-dev
+  4-4-about-page-transparency-and-methodology: ready-for-dev
+  4-5-cookie-management-and-expiration: ready-for-dev
+  4-6-gdpr-data-deletion-request-form: ready-for-dev
+  4-7-cookie-conflict-resolution-cookie-vs-ip: ready-for-dev
+  4-8-data-retention-policy-implementation: ready-for-dev
   epic-4-retrospective: optional
 
   # Epic 5: Social Sharing & Virality

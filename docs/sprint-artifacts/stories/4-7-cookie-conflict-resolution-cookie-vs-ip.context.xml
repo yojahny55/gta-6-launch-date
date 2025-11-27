@@ -1,0 +1,163 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>7</storyId>
+    <title>Cookie Conflict Resolution (Cookie vs IP)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-7-cookie-conflict-resolution-cookie-vs-ip.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>to handle conflicts when users access from different IPs</iWant>
+    <soThat>cookie-based tracking works even when IP changes</soThat>
+    <tasks>
+      - Task 1: Implement cookie-first conflict resolution
+      - Task 2: Implement same-IP rejection
+      - Task 3: Update SQL for IP change handling
+      - Task 4: Create helpful error messages
+      - Task 5: Document conflict resolution
+      - Task 6: Add logging for conflict events
+      - Task 7: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** a user previously submitted from IP A with Cookie X
+    **When** they return from IP B with same Cookie X
+    **Then** cookie takes precedence (FR67) and IP is updated
+    **And** automated tests exist covering main functionality
+
+    ### 3 Conflict Scenarios
+    1. Update from different IP: Allow UPDATE, change ip_hash to IP_B, keep cookie_id (user changed networks)
+    2. New submission from same IP, different cookie: REJECT with 409 "IP already used" (prevent multi-submissions)
+    3. Cookie lost, same IP: REJECT with 409 "IP already used. Restore your cookie to update." (provide recovery instructions)
+
+    ### Update SQL Handles Conflict
+    UPDATE predictions SET predicted_date = ?, ip_hash = ?, weight = ?, updated_at = CURRENT_TIMESTAMP WHERE cookie_id = ?
+
+    ### Conflict Resolution Documented
+    - About page explains: "Updates work across IP changes"
+    - Error message helpful: "Your cookie allows updates from any IP"
+
+    ### Testing Requirements
+    - Unit tests for conflict resolution logic
+    - Test all 3 scenarios
+    - Test SQL update with IP change
+    - Integration test for full conflict flow
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.7: Cookie Conflict Resolution (Cookie vs IP)</section>
+        <snippet>FR67: Cookie takes precedence over IP in conflicts. Allow updates from different IPs (same cookie). Reject new submissions from same IP (different cookie). Update ip_hash on IP change. Helpful error messages with recovery instructions.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR67: Cookie Priority Over IP</section>
+        <snippet>If user changes IP address but has same cookie, allow update. Cookie is primary identifier for user tracking.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Database Schema - UNIQUE Constraints</section>
+        <snippet>predictions table: UNIQUE(ip_hash) ON CONFLICT FAIL, UNIQUE(cookie_id). Cookie ID is primary identifier for updates.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>API route</kind>
+        <symbol>POST /api/predict, PUT /api/predict</symbol>
+        <lines>N/A</lines>
+        <reason>Modify submission and update endpoints to handle cookie-first conflict resolution. Check cookie_id first, then ip_hash. Allow IP change if cookie matches.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/utils/ip-hash.ts</path>
+        <kind>utility module</kind>
+        <symbol>hashIpAddress</symbol>
+        <lines>N/A</lines>
+        <reason>Reference IP hashing implementation. Update ip_hash when user changes IP address (network change scenario).</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table UNIQUE constraints</symbol>
+        <lines>N/A</lines>
+        <reason>UNIQUE(ip_hash) and UNIQUE(cookie_id) constraints enforce one submission per IP or cookie. UPDATE query must handle IP change by updating ip_hash WHERE cookie_id = ?.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0">Backend framework for API endpoint modifications.</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - FR67: Cookie takes precedence over IP in conflicts
+    - Allow updates from different IPs (same cookie)
+    - Reject new submissions from same IP (different cookie)
+    - Update ip_hash on IP change (mobile/VPN use case)
+    - Provide helpful error messages with recovery instructions
+    - Log conflict events for monitoring
+    - Document conflict resolution in About page
+    - Cookie-first lookup: Check cookie_id before ip_hash
+    - Error code: 409 Conflict for same-IP different-cookie scenarios
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>PUT /api/predict</name>
+      <kind>REST API Endpoint</kind>
+      <signature>
+        Request: {cookie_id: string, predicted_date: string}
+        Response: Success even if IP changed (update ip_hash)
+      </signature>
+      <path>src/routes/predict.ts</path>
+    </interface>
+
+    <interface>
+      <name>Database Update Query</name>
+      <kind>SQL Query</kind>
+      <signature>
+        UPDATE predictions SET predicted_date = ?, ip_hash = ?, weight = ?, updated_at = CURRENT_TIMESTAMP WHERE cookie_id = ?
+      </signature>
+      <path>src/db/queries.ts or src/routes/predict.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4 with @cloudflare/vitest-pool-workers. Test conflict scenarios, SQL updates, error messages. Coverage target: 90%+.
+    </standards>
+
+    <locations>
+      - tests/cookie-conflict-resolution.test.ts
+      - src/routes/predict.test.ts (extend existing tests)
+      - vitest.config.ts (Workers pool configuration)
+    </locations>
+
+    <ideas>
+      AC1 (Scenario 1): Test update from IP_A to IP_B with same cookie_id, verify ip_hash updated
+      AC2 (Scenario 2): Test new submission from IP_A with different cookie_id, verify 409 Conflict
+      AC3 (Scenario 3): Test cookie lost scenario, verify helpful error message with recovery instructions
+      AC4 (SQL Update): Test UPDATE query updates ip_hash when IP changes
+      AC5 (Logging): Test conflict events logged correctly
+    </ideas>
+  </tests>
+</story-context>
