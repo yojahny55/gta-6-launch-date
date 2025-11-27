@@ -46,6 +46,18 @@ binding = "DB"
 database_name = "gta6-predictions"
 database_id = "150217ee-5408-406e-98be-37b15a8e5990"
 
+[[env.production.kv_namespaces]]
+binding = "gta6_rate_limit"
+id = "c7c91030ebcc45038f17419f1e48de45"
+
+[[env.production.kv_namespaces]]
+binding = "gta6_stats_cache"
+id = "c93739a812ea477d8cbba96d4b23e469"
+
+[[env.production.kv_namespaces]]
+binding = "gta6_capacity"
+id = "35f61412e3ec47c7b1b8c68e7eac995e"
+
 # Dev environment configuration
 [env.dev]
 name = "gta6-tracker-dev"
@@ -56,6 +68,18 @@ binding = "DB"
 database_name = "gta6-predictions"
 database_id = "150217ee-5408-406e-98be-37b15a8e5990"
 
+[[env.dev.kv_namespaces]]
+binding = "gta6_rate_limit"
+id = "c7c91030ebcc45038f17419f1e48de45"
+
+[[env.dev.kv_namespaces]]
+binding = "gta6_stats_cache"
+id = "c93739a812ea477d8cbba96d4b23e469"
+
+[[env.dev.kv_namespaces]]
+binding = "gta6_capacity"
+id = "35f61412e3ec47c7b1b8c68e7eac995e"
+
 # Preview environment configuration (for pull requests)
 [env.preview]
 name = "gta6-tracker-preview"
@@ -65,3 +89,15 @@ vars = { ENVIRONMENT = "preview" }
 binding = "DB"
 database_name = "gta6-predictions"
 database_id = "150217ee-5408-406e-98be-37b15a8e5990"
+
+[[env.preview.kv_namespaces]]
+binding = "gta6_rate_limit"
+id = "c7c91030ebcc45038f17419f1e48de45"
+
+[[env.preview.kv_namespaces]]
+binding = "gta6_stats_cache"
+id = "c93739a812ea477d8cbba96d4b23e469"
+
+[[env.preview.kv_namespaces]]
+binding = "gta6_capacity"
+id = "35f61412e3ec47c7b1b8c68e7eac995e"
