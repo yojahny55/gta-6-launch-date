@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- GTA 6 Prediction Tracker Icon - Simple Calendar/Prediction Icon -->
+  <rect width="512" height="512" fill="#1DA1F2"/>
+  <g fill="#FFFFFF">
+    <!-- Calendar Icon -->
+    <rect x="96" y="128" width="320" height="320" rx="24" fill="none" stroke="#FFFFFF" stroke-width="24"/>
+    <rect x="96" y="128" width="320" height="80" rx="24" fill="#FFFFFF" opacity="0.3"/>
+
+    <!-- Date Number "6" -->
+    <text x="256" y="340" font-family="Arial, sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#FFFFFF">6</text>
+
+    <!-- Question Mark (prediction uncertainty) -->
+    <text x="360" y="280" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#FFD700">?</text>
+  </g>
+</svg>

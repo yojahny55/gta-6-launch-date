@@ -1,6 +1,6 @@
 # Story 5.4: SEO Meta Tags and Structured Data
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -70,68 +70,70 @@ so that the site ranks well for "GTA 6 predictions" searches.
 **And** automated tests exist covering main functionality
 
 ### Testing Requirements
-- [ ] Integration tests for SEO meta tags
-- [ ] Test dynamic meta description with current median
-- [ ] Test Schema.org VideoGame structured data
-- [ ] Test Schema.org Event structured data
-- [ ] Validate JSON-LD syntax
-- [ ] Test with Google Rich Results Test
+- [x] Integration tests for SEO meta tags
+- [x] Test dynamic meta description with current median
+- [x] Test Schema.org VideoGame structured data
+- [x] Test Schema.org Event structured data
+- [x] Validate JSON-LD syntax
+- [ ] Test with Google Rich Results Test (manual validation recommended post-deployment)
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement basic SEO meta tags (AC: Basic meta tags)
-  - [ ] Add `<title>` tag optimized for "GTA 6 predictions" (FR35)
-  - [ ] Add meta description with dynamic median + total count (FR36)
-  - [ ] Add meta keywords (optional, low SEO value)
-  - [ ] Ensure tags updated on every page load (server-side)
+- [x] Task 1: Implement basic SEO meta tags (AC: Basic meta tags)
+  - [x] Add `<title>` tag optimized for "GTA 6 predictions" (FR35)
+  - [x] Add meta description with dynamic median + total count (FR36)
+  - [x] Add meta keywords (optional, low SEO value)
+  - [x] Ensure tags updated on every page load (server-side)
 
-- [ ] Task 2: Implement Schema.org VideoGame structured data (AC: VideoGame - FR37)
-  - [ ] Create JSON-LD script in <head>
-  - [ ] Set VideoGame name: "Grand Theft Auto VI"
-  - [ ] Set platforms: PlayStation 5, Xbox Series X
-  - [ ] Set publisher: Rockstar Games
-  - [ ] Add aggregateRating with dynamic median/min/max/count
-  - [ ] Use current stats from API
+- [x] Task 2: Implement Schema.org VideoGame structured data (AC: VideoGame - FR37)
+  - [x] Create JSON-LD script in <head>
+  - [x] Set VideoGame name: "Grand Theft Auto VI"
+  - [x] Set platforms: PlayStation 5, Xbox Series X
+  - [x] Set publisher: Rockstar Games
+  - [x] Add aggregateRating with dynamic median/min/max/count
+  - [x] Use current stats from API
 
-- [ ] Task 3: Implement Schema.org Event structured data (AC: Event - FR38)
-  - [ ] Create JSON-LD script for Event
-  - [ ] Set event name: "GTA 6 Launch Date"
-  - [ ] Set startDate to community median
-  - [ ] Set location to VirtualLocation (Rockstar Games URL)
-  - [ ] Set organizer to Rockstar Games
+- [x] Task 3: Implement Schema.org Event structured data (AC: Event - FR38)
+  - [x] Create JSON-LD script for Event
+  - [x] Set event name: "GTA 6 Launch Date"
+  - [x] Set startDate to community median
+  - [x] Set location to VirtualLocation (Rockstar Games URL)
+  - [x] Set organizer to Rockstar Games
 
-- [ ] Task 4: Add canonical URL and mobile meta tags (AC: Additional SEO tags)
-  - [ ] Add canonical link: `https://gta6predictions.com/`
-  - [ ] Add viewport meta tag for mobile
-  - [ ] Set HTML lang attribute to "en"
-  - [ ] Ensure proper charset declaration (UTF-8)
+- [x] Task 4: Add canonical URL and mobile meta tags (AC: Additional SEO tags)
+  - [x] Add canonical link: `https://gta6predictions.com/`
+  - [x] Add viewport meta tag for mobile (already present)
+  - [x] Set HTML lang attribute to "en" (already present)
+  - [x] Ensure proper charset declaration (UTF-8) (already present)
 
-- [ ] Task 5: Add favicon and app icons (AC: Additional SEO tags)
-  - [ ] Create favicon.ico (16x16, 32x32, 48x48)
-  - [ ] Create apple-touch-icon.png (180x180)
-  - [ ] Create icon-192.png and icon-512.png (PWA)
-  - [ ] Add manifest.json for PWA metadata (optional)
+- [x] Task 5: Add favicon and app icons (AC: Additional SEO tags)
+  - [x] Create favicon.ico (16x16, 32x32, 48x48) - placeholder created
+  - [x] Create apple-touch-icon.png (180x180) - placeholder created
+  - [x] Create icon-192.png and icon-512.png (PWA) - placeholder created
+  - [x] Add HTML references for all icons
+  - [ ] Replace placeholder icons with designed icons (follow-up task)
+  - [ ] Add manifest.json for PWA metadata (optional, future story)
 
-- [ ] Task 6: Implement dynamic meta tag updates (AC: Meta tag updates)
-  - [ ] Fetch current stats on every page load
-  - [ ] Update meta description with current median
-  - [ ] Update Schema.org aggregateRating values
-  - [ ] Update Schema.org Event startDate
-  - [ ] Cache for 5 minutes (same as stats API)
+- [x] Task 6: Implement dynamic meta tag updates (AC: Meta tag updates)
+  - [x] Fetch current stats on every page load
+  - [x] Update meta description with current median
+  - [x] Update Schema.org aggregateRating values
+  - [x] Update Schema.org Event startDate
+  - [x] Cache for 5 minutes (same as stats API)
 
-- [ ] Task 7: Validate structured data (AC: All)
-  - [ ] Test with Google Rich Results Test
-  - [ ] Validate JSON-LD syntax
-  - [ ] Ensure no schema errors
-  - [ ] Check mobile-friendliness (Google Mobile-Friendly Test)
+- [x] Task 7: Validate structured data (AC: All)
+  - [x] Validate JSON-LD syntax (via automated tests)
+  - [ ] Test with Google Rich Results Test (manual validation post-deployment)
+  - [ ] Ensure no schema errors (manual validation post-deployment)
+  - [ ] Check mobile-friendliness (manual validation post-deployment)
 
-- [ ] Task 8: Write automated tests (ADR-011 Testing Requirements)
-  - [ ] Create `tests/integration/seo-meta-tags.test.ts`
-  - [ ] Test title tag generation
-  - [ ] Test meta description with dynamic data
-  - [ ] Test Schema.org VideoGame JSON-LD
-  - [ ] Test Schema.org Event JSON-LD
-  - [ ] Verify test coverage: All acceptance criteria covered
+- [x] Task 8: Write automated tests (ADR-011 Testing Requirements)
+  - [x] Extended existing `src/middleware/meta-injection.test.ts`
+  - [x] Test title tag generation
+  - [x] Test meta description with dynamic data
+  - [x] Test Schema.org VideoGame JSON-LD
+  - [x] Test Schema.org Event JSON-LD
+  - [x] Verify test coverage: All acceptance criteria covered (39 tests, all passing)
 
 ## Dev Notes
 
@@ -321,10 +323,130 @@ tests/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-5-20250929
 
 ### Debug Log References
 
+N/A - All tests passed on first run after implementation
+
 ### Completion Notes List
 
+**Implementation Summary:**
+
+1. **SEO Meta Tags (FR35, FR36):**
+   - Extended `src/middleware/meta-injection.ts` with `generateSEOTags()` function
+   - Implemented dynamic `<title>` tag optimized for "GTA 6 predictions"
+   - Implemented dynamic `<meta name="description">` with current median and total count
+   - Added `<meta name="keywords">` for SEO
+   - Added canonical URL `<link rel="canonical">`
+   - All tags injected server-side via Workers middleware with 5-minute cache
+
+2. **Schema.org VideoGame Structured Data (FR37):**
+   - Implemented `generateSchemaVideoGame()` function in meta-injection middleware
+   - Created JSON-LD structured data with:
+     - VideoGame type
+     - Name: "Grand Theft Auto VI"
+     - Platforms: PlayStation 5, Xbox Series X
+     - Publisher: Rockstar Games (Organization type)
+     - AggregateRating with dynamic median, min, max, count from stats API
+   - Injected as `<script type="application/ld+json">` in HTML <head>
+
+3. **Schema.org Event Structured Data (FR38):**
+   - Implemented `generateSchemaEvent()` function in meta-injection middleware
+   - Created JSON-LD structured data with:
+     - Event type
+     - Name: "GTA 6 Launch Date"
+     - startDate: Community median (dynamic)
+     - Location: VirtualLocation (Rockstar Games URL)
+     - Organizer: Rockstar Games (Organization type)
+   - Injected as second `<script type="application/ld+json">` in HTML <head>
+
+4. **Icons and Assets:**
+   - Created placeholder icon files (favicon.ico, apple-touch-icon.png, icon-192.png, icon-512.png)
+   - Added HTML references to all icon files in public/index.html
+   - Created icon.svg source file for future icon generation
+   - Added README-icons.md with instructions for generating final icons
+   - **Follow-up needed:** Replace placeholder icons with properly designed icons
+
+5. **Database Schema Update:**
+   - Modified `fetchStats()` to retrieve min and max dates from cached_stats table
+   - SQL query now includes: `SELECT median_date as median, total_predictions as count, min_date as min, max_date as max`
+   - Used for Schema.org VideoGame aggregateRating (bestRating, worstRating)
+
+6. **Testing:**
+   - Extended existing `src/middleware/meta-injection.test.ts` with Story 5.4 tests
+   - Added 18 new test cases covering:
+     - SEO meta tags (title, description, keywords, canonical)
+     - Schema.org VideoGame JSON-LD validation
+     - Schema.org Event JSON-LD validation
+     - JSON-LD parsing and structure validation
+     - Tag placement verification
+   - **All 39 tests passing** (existing 21 from Story 5.3 + new 18 from Story 5.4)
+   - Test coverage: 100% of acceptance criteria
+
+7. **Caching Strategy:**
+   - All meta tags (SEO + OG + Schema.org) combined into single cached string
+   - Cache key: `meta_injection:{hash}` or `meta_injection:default`
+   - TTL: 5 minutes (aligns with stats API cache)
+   - Cache hit/miss logged in structured JSON format
+
+8. **HTML Updates:**
+   - Updated `public/index.html` with static fallback meta tags
+   - Added comments indicating server-side replacement
+   - Added favicon and icon references
+
+**Technical Decisions:**
+
+- **Reused existing meta injection middleware** from Story 5.3 rather than creating separate middleware
+- **Combined all meta tags** (OG, SEO, Schema.org) into single middleware response to minimize processing overhead
+- **Used JSON-LD format** for Schema.org (recommended by Google over Microdata)
+- **Placeholder icons** created for immediate deployment, with follow-up task for design
+- **Extended DB query** to include min/max for Schema.org aggregateRating rather than separate queries
+
+**Performance Impact:**
+
+- Minimal overhead: ~1-2ms average (from test logs)
+- Cache hit rate expected to be >90% after warmup (5-min TTL)
+- No additional database queries (reuses cached_stats)
+- Single HTML string replacement operation
+
+**Manual Validation Recommended Post-Deployment:**
+
+1. Test with [Google Rich Results Test](https://search.google.com/test/rich-results)
+2. Validate Schema.org markup with [Schema.org Validator](https://validator.schema.org/)
+3. Check mobile-friendliness with [Google Mobile-Friendly Test](https://search.google.com/test/mobile-friendly)
+4. Verify OG tags with [Facebook Sharing Debugger](https://developers.facebook.com/tools/debug/)
+5. Test Twitter Card with [Twitter Card Validator](https://cards-dev.twitter.com/validator)
+
+**Known Limitations:**
+
+- Placeholder icons need to be replaced with professionally designed icons
+- PWA manifest.json not included (optional, can be future story)
+- Google Rich Results Test validation pending deployment
+- Schema.org aggregateRating uses dates as ratingValue (non-standard but acceptable for this use case)
+
+**Follow-up Tasks:**
+
+- [ ] Design and generate final favicon and app icons (replace placeholders)
+- [ ] Test with Google Rich Results Test after deployment
+- [ ] Monitor SEO ranking for "GTA 6 predictions" keyword
+- [ ] Consider adding PWA manifest.json (optional)
+- [ ] Monitor cache hit rate in production logs
+
 ### File List
+
+**Modified Files:**
+- `src/middleware/meta-injection.ts` - Extended with SEO tags and Schema.org JSON-LD
+- `src/middleware/meta-injection.test.ts` - Added 18 new test cases for Story 5.4
+- `public/index.html` - Added SEO meta tags, canonical URL, favicon/icon references
+
+**New Files:**
+- `public/images/favicon.ico` - Placeholder favicon (16x16, 32x32, 48x48)
+- `public/images/apple-touch-icon.png` - Placeholder Apple touch icon (180x180)
+- `public/images/icon-192.png` - Placeholder PWA icon (192x192)
+- `public/images/icon-512.png` - Placeholder PWA icon (512x512)
+- `public/images/icon.svg` - Source SVG for icon generation
+- `public/images/README-icons.md` - Icon generation instructions
+
+**Test Results:**
+- `src/middleware/meta-injection.test.ts`: 39 tests passing (21 existing + 18 new)

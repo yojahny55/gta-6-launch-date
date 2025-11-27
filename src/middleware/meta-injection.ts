@@ -1,12 +1,16 @@
 /**
- * Meta Injection Middleware - Story 5.3
+ * Meta Injection Middleware - Stories 5.3 & 5.4
  *
- * Server-side injection of dynamic Open Graph meta tags into HTML responses.
+ * Server-side injection of dynamic Open Graph, SEO, and Schema.org meta tags into HTML responses.
  * Enables rich social previews when links are shared on Twitter, Facebook, LinkedIn, etc.
+ * Provides SEO optimization and structured data for search engines.
  *
  * Features:
- * - Dynamic OG tags with current median/total from /api/stats
+ * - Dynamic OG tags with current median/total from /api/stats (Story 5.3)
  * - Personalized meta tags when ?u={hash} parameter present (FR23)
+ * - SEO meta tags (title, description, keywords) - FR35, FR36
+ * - Schema.org VideoGame structured data - FR37
+ * - Schema.org Event structured data - FR38
  * - 5-minute cache TTL (aligns with stats API cache)
  * - Only processes HTML responses (checks Content-Type)
  * - Sanitizes all data to prevent XSS
@@ -19,6 +23,7 @@
 import { Context, Next } from 'hono';
 import type { Env, PersonalizedMetaData } from '../types';
 import dayjs from 'dayjs';
+import { getStatisticsWithCache, STATS_CACHE_KEY, STATS_CACHE_TTL } from '../services/statistics.service';
 
 /**
  * Cache key for meta injection (5-minute TTL)
@@ -108,6 +113,85 @@ function calculatePersonalization(userDate: string, medianDate: string): Persona
 }
 
 /**
+ * Generate SEO meta tags HTML (Story 5.4: FR35, FR36)
+ */
+function generateSEOTags(
+  stats: { median: string; count: number; min?: string; max?: string },
+  url: string
+): string {
+  const medianFormatted = formatDateForDisplay(stats.median);
+  const countFormatted = formatNumber(stats.count);
+
+  // FR35: Meta title optimized for "GTA 6 predictions"
+  const title = escapeHtml('GTA 6 Launch Date Predictions - Community Sentiment Tracker');
+
+  // FR36: Meta description with dynamic median and total count
+  const description = escapeHtml(
+    `Track community predictions for GTA 6's launch date. Submit your prediction and see what ${countFormatted} other fans think. Current median: ${medianFormatted}.`
+  );
+
+  // Keywords (optional, low SEO value per modern SEO best practices)
+  const keywords = escapeHtml('GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6');
+
+  // Canonical URL (must be absolute)
+  const baseUrl = new URL(url).origin;
+  const canonicalUrl = escapeHtml(`${baseUrl}/`);
+
+  return `
+    <title>${title}</title>
+    <meta name="description" content="${description}" />
+    <meta name="keywords" content="${keywords}" />
+    <link rel="canonical" href="${canonicalUrl}" />
+  `.trim();
+}
+
+/**
+ * Generate Schema.org VideoGame structured data (Story 5.4: FR37)
+ */
+function generateSchemaVideoGame(
+  stats: { median: string; count: number; min?: string; max?: string }
+): object {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoGame',
+    name: 'Grand Theft Auto VI',
+    gamePlatform: ['PlayStation 5', 'Xbox Series X'],
+    publisher: {
+      '@type': 'Organization',
+      name: 'Rockstar Games',
+    },
+    datePublished: 'TBD',
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: stats.median,
+      ratingCount: stats.count,
+      bestRating: stats.max || '2099-01-01',
+      worstRating: stats.min || '2025-12-01',
+    },
+  };
+}
+
+/**
+ * Generate Schema.org Event structured data (Story 5.4: FR38)
+ */
+function generateSchemaEvent(stats: { median: string }): object {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Event',
+    name: 'GTA 6 Launch Date',
+    startDate: stats.median,
+    location: {
+      '@type': 'VirtualLocation',
+      url: 'https://rockstargames.com',
+    },
+    organizer: {
+      '@type': 'Organization',
+      name: 'Rockstar Games',
+    },
+  };
+}
+
+/**
  * Generate Open Graph meta tags HTML
  */
 function generateOGTags(
@@ -178,25 +262,33 @@ function generateOGTags(
 }
 
 /**
- * Fetch stats from /api/stats endpoint with caching
+ * Fetch stats from statistics service with caching
+ * Story 5.4: Extended to include min/max for Schema.org aggregateRating
+ * Uses the same statistics service and KV cache as /api/stats endpoint
  */
 async function fetchStats(
   c: Context<{ Bindings: Env }>
-): Promise<{ median: string; count: number }> {
+): Promise<{ median: string; count: number; min?: string; max?: string }> {
   try {
-    // Call internal /api/stats endpoint (uses existing cache)
-    const response = await c.env.DB.prepare(
-      'SELECT median_date as median, total_predictions as count FROM cached_stats WHERE id = 1'
-    ).first<{ median: string; count: number }>();
+    // Use the statistics service with KV cache (same as /api/stats)
+    const { stats } = await getStatisticsWithCache(
+      c.env.DB,
+      c.env.gta6_stats_cache,
+      STATS_CACHE_KEY,
+      STATS_CACHE_TTL
+    );
 
-    if (response && response.median && response.count >= 0) {
+    // Return stats in the format expected by meta tag generation
+    if (stats && stats.median && stats.count >= 0) {
       return {
-        median: response.median,
-        count: response.count,
+        median: stats.median,
+        count: stats.count,
+        min: stats.min,
+        max: stats.max,
       };
     }
 
-    // Fallback to hardcoded default
+    // Fallback to hardcoded default if no stats available
     return FALLBACK_STATS;
   } catch (error) {
     console.error('Error fetching stats for meta injection:', error);
@@ -267,7 +359,18 @@ export async function metaInjectionMiddleware(
         }
       }
 
-      metaTags = generateOGTags(stats, url, personalized);
+      // Generate all meta tags (OG, SEO, Schema.org)
+      const ogTags = generateOGTags(stats, url, personalized);
+      const seoTags = generateSEOTags(stats, url);
+      const schemaVideoGame = generateSchemaVideoGame(stats);
+      const schemaEvent = generateSchemaEvent(stats);
+
+      // Generate JSON-LD script tags for Schema.org
+      const schemaVideoGameScript = `<script type="application/ld+json">${JSON.stringify(schemaVideoGame, null, 2)}</script>`;
+      const schemaEventScript = `<script type="application/ld+json">${JSON.stringify(schemaEvent, null, 2)}</script>`;
+
+      // Combine all meta tags
+      metaTags = `${seoTags}\n${ogTags}\n${schemaVideoGameScript}\n${schemaEventScript}`;
 
       // Cache generated meta tags
       if (c.env.gta6_stats_cache) {

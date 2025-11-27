@@ -1,10 +1,10 @@
 /**
- * Meta Injection Integration Tests - Story 5.3
+ * Meta Injection Integration Tests - Stories 5.3 & 5.4
  *
- * Tests for Open Graph meta tag injection middleware.
+ * Tests for Open Graph, SEO, and Schema.org meta tag injection middleware.
  * Validates dynamic meta tags, personalization, caching, and error handling.
  *
- * Test Coverage:
+ * Test Coverage - Story 5.3 (Open Graph):
  * - AC1: Dynamic OG tags with current median/total
  * - AC2: Rich social previews
  * - AC3: OG image URL
@@ -12,14 +12,23 @@
  * - AC5: Personalized meta tags (FR23)
  * - AC6: Cache behavior
  *
+ * Test Coverage - Story 5.4 (SEO & Schema.org):
+ * - AC1: SEO meta tags (title, description, keywords)
+ * - AC2: Schema.org VideoGame structured data
+ * - AC3: Schema.org Event structured data
+ * - AC4: Canonical URL
+ * - AC5: Dynamic data injection
+ *
  * @see src/middleware/meta-injection.ts
  * @see docs/sprint-artifacts/stories/5-3-open-graph-meta-tags-for-rich-previews.md
+ * @see docs/sprint-artifacts/stories/5-4-seo-meta-tags-and-structured-data.md
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { Hono } from 'hono';
 import { metaInjectionMiddleware } from '../../src/middleware/meta-injection';
 import type { Env } from '../../src/types';
+import * as statisticsService from '../../src/services/statistics.service';
 
 // Mock environment
 function createMockEnv(): Env {
@@ -31,7 +40,7 @@ function createMockEnv(): Env {
         bind: vi.fn(() => ({
           first: vi.fn(async () => {
             if (query.includes('cached_stats')) {
-              return { median: '2027-03-15', count: 10234 };
+              return { median: '2027-03-15', count: 10234, min: '2025-12-01', max: '2099-01-01' };
             }
             if (query.includes('predictions WHERE cookie_id')) {
               return { predicted_date: '2027-06-15' };
@@ -41,7 +50,7 @@ function createMockEnv(): Env {
         })),
         first: vi.fn(async () => {
           if (query.includes('cached_stats')) {
-            return { median: '2027-03-15', count: 10234 };
+            return { median: '2027-03-15', count: 10234, min: '2025-12-01', max: '2099-01-01' };
           }
           return null;
         }),
@@ -66,6 +75,18 @@ describe('Meta Injection Middleware - Story 5.3', () => {
   beforeEach(() => {
     app = new Hono<{ Bindings: Env }>();
     mockEnv = createMockEnv();
+
+    // Mock the statistics service to return test data
+    vi.spyOn(statisticsService, 'getStatisticsWithCache').mockResolvedValue({
+      stats: {
+        median: '2027-03-15',
+        min: '2025-12-01',
+        max: '2099-01-01',
+        count: 10234,
+        cached_at: '2025-11-27T12:00:00Z',
+      },
+      cacheHit: false,
+    });
 
     // Apply middleware
     app.use('*', metaInjectionMiddleware);
@@ -273,17 +294,20 @@ describe('Meta Injection Middleware - Story 5.3', () => {
 
   describe('AC6: HTML sanitization (XSS prevention)', () => {
     it('should not allow XSS via malicious input', async () => {
-      const envWithXSS = {
-        ...mockEnv,
-        DB: {
-          prepare: vi.fn(() => ({
-            first: vi.fn(async () => ({ median: '<script>alert("xss")</script>', count: 100 })),
-          })),
-        } as any,
-      };
+      // Mock statistics service to return malicious data for this test
+      vi.spyOn(statisticsService, 'getStatisticsWithCache').mockResolvedValueOnce({
+        stats: {
+          median: '<script>alert("xss")</script>',
+          min: '2025-12-01',
+          max: '2099-01-01',
+          count: 100,
+          cached_at: '2025-11-27T12:00:00Z',
+        },
+        cacheHit: false,
+      });
 
       const req = new Request('http://localhost/');
-      const res = await app.fetch(req, envWithXSS);
+      const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
       // Should NOT contain raw script tag that could execute
@@ -306,17 +330,13 @@ describe('Meta Injection Middleware - Story 5.3', () => {
 
   describe('Error handling and graceful degradation', () => {
     it('should not break page load if meta injection fails', async () => {
-      const envWithError = {
-        ...mockEnv,
-        DB: {
-          prepare: vi.fn(() => {
-            throw new Error('Database error');
-          }),
-        } as any,
-      };
+      // Mock statistics service to throw error for this test
+      vi.spyOn(statisticsService, 'getStatisticsWithCache').mockRejectedValueOnce(
+        new Error('Database error')
+      );
 
       const req = new Request('http://localhost/');
-      const res = await app.fetch(req, envWithError);
+      const res = await app.fetch(req, mockEnv);
 
       // Page should still load (status 200)
       expect(res.status).toBe(200);
@@ -327,19 +347,11 @@ describe('Meta Injection Middleware - Story 5.3', () => {
     });
 
     it('should use fallback stats if database query fails', async () => {
-      const envWithError = {
-        ...mockEnv,
-        DB: {
-          prepare: vi.fn(() => ({
-            first: vi.fn(async () => {
-              throw new Error('DB error');
-            }),
-          })),
-        } as any,
-      };
+      // Mock statistics service to throw error for this test
+      vi.spyOn(statisticsService, 'getStatisticsWithCache').mockRejectedValueOnce(new Error('DB error'));
 
       const req = new Request('http://localhost/');
-      const res = await app.fetch(req, envWithError);
+      const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
       // Should NOT break, might use fallback stats or skip injection
@@ -411,6 +423,192 @@ describe('Meta Injection Middleware - Story 5.3', () => {
 
       // File size verified manually via: ls -lh public/images/og-image.png
       // Output: 66K (well under 300KB recommended, and under 1MB maximum)
+    });
+  });
+
+  describe('Story 5.4: SEO Meta Tags (FR35, FR36)', () => {
+    it('should inject meta title optimized for "GTA 6 predictions"', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('<title>GTA 6 Launch Date Predictions - Community Sentiment Tracker</title>');
+    });
+
+    it('should inject meta description with dynamic median and count', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('<meta name="description" content="Track community predictions for GTA 6&#039;s launch date');
+      expect(html).toContain('10,234 other fans think');
+      expect(html).toContain('Current median: Mar 15, 2027');
+    });
+
+    it('should inject meta keywords', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('<meta name="keywords" content="GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6"');
+    });
+
+    it('should inject canonical URL as absolute URL', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('<link rel="canonical" href="http://localhost/"');
+    });
+  });
+
+  describe('Story 5.4: Schema.org VideoGame Structured Data (FR37)', () => {
+    it('should inject Schema.org VideoGame JSON-LD script', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('<script type="application/ld+json">');
+      expect(html).toContain('"@context": "https://schema.org"');
+      expect(html).toContain('"@type": "VideoGame"');
+    });
+
+    it('should include VideoGame name as "Grand Theft Auto VI"', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"name": "Grand Theft Auto VI"');
+    });
+
+    it('should include game platforms (PlayStation 5, Xbox Series X)', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"gamePlatform": [\n    "PlayStation 5",\n    "Xbox Series X"\n  ]');
+    });
+
+    it('should include publisher as Rockstar Games organization', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"publisher": {');
+      expect(html).toContain('"@type": "Organization"');
+      expect(html).toContain('"name": "Rockstar Games"');
+    });
+
+    it('should include aggregateRating with dynamic stats', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"aggregateRating": {');
+      expect(html).toContain('"@type": "AggregateRating"');
+      expect(html).toContain('"ratingValue": "2027-03-15"'); // Median
+      expect(html).toContain('"ratingCount": 10234'); // Total predictions
+      expect(html).toContain('"bestRating": "2099-01-01"'); // Max
+      expect(html).toContain('"worstRating": "2025-12-01"'); // Min
+    });
+  });
+
+  describe('Story 5.4: Schema.org Event Structured Data (FR38)', () => {
+    it('should inject Schema.org Event JSON-LD script', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"@type": "Event"');
+      expect(html).toContain('"name": "GTA 6 Launch Date"');
+    });
+
+    it('should use median as event startDate', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"startDate": "2027-03-15"'); // Community median
+    });
+
+    it('should include VirtualLocation with Rockstar Games URL', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"location": {');
+      expect(html).toContain('"@type": "VirtualLocation"');
+      expect(html).toContain('"url": "https://rockstargames.com"');
+    });
+
+    it('should include organizer as Rockstar Games organization', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      expect(html).toContain('"organizer": {');
+      expect(html).toContain('"@type": "Organization"');
+      expect(html).toContain('"name": "Rockstar Games"');
+    });
+  });
+
+  describe('Story 5.4: JSON-LD Validation', () => {
+    it('should generate valid JSON-LD that can be parsed', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      // Extract JSON-LD scripts
+      const jsonLdRegex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g;
+      const matches = Array.from(html.matchAll(jsonLdRegex));
+
+      expect(matches.length).toBeGreaterThanOrEqual(2); // VideoGame + Event
+
+      // Parse each JSON-LD script to verify valid JSON
+      matches.forEach((match) => {
+        const jsonContent = match[1];
+        expect(() => JSON.parse(jsonContent)).not.toThrow();
+      });
+    });
+
+    it('should have both VideoGame and Event structured data', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      const jsonLdRegex = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/g;
+      const matches = Array.from(html.matchAll(jsonLdRegex));
+
+      const hasVideoGame = matches.some((m) => m[1].includes('"@type": "VideoGame"'));
+      const hasEvent = matches.some((m) => m[1].includes('"@type": "Event"'));
+
+      expect(hasVideoGame).toBe(true);
+      expect(hasEvent).toBe(true);
+    });
+  });
+
+  describe('Story 5.4: Tag Placement', () => {
+    it('should inject SEO, OG, and Schema.org tags before </head>', async () => {
+      const req = new Request('http://localhost/');
+      const res = await app.fetch(req, mockEnv);
+      const html = await res.text();
+
+      const headCloseIndex = html.indexOf('</head>');
+
+      // Find all tag types
+      const titleIndex = html.indexOf('<title>GTA 6 Launch Date Predictions');
+      const canonicalIndex = html.indexOf('<link rel="canonical"');
+      const ogTitleIndex = html.indexOf('<meta property="og:title"');
+      const videoGameIndex = html.indexOf('"@type": "VideoGame"');
+      const eventIndex = html.indexOf('"@type": "Event"');
+
+      // All should be before </head>
+      expect(titleIndex).toBeGreaterThan(0);
+      expect(titleIndex).toBeLessThan(headCloseIndex);
+      expect(canonicalIndex).toBeLessThan(headCloseIndex);
+      expect(ogTitleIndex).toBeLessThan(headCloseIndex);
+      expect(videoGameIndex).toBeLessThan(headCloseIndex);
+      expect(eventIndex).toBeLessThan(headCloseIndex);
     });
   });
 });
