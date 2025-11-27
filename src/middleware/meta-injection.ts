@@ -23,7 +23,11 @@
 import { Context, Next } from 'hono';
 import type { Env, PersonalizedMetaData } from '../types';
 import dayjs from 'dayjs';
-import { getStatisticsWithCache, STATS_CACHE_KEY, STATS_CACHE_TTL } from '../services/statistics.service';
+import {
+  getStatisticsWithCache,
+  STATS_CACHE_KEY,
+  STATS_CACHE_TTL,
+} from '../services/statistics.service';
 
 /**
  * Cache key for meta injection (5-minute TTL)
@@ -131,7 +135,9 @@ function generateSEOTags(
   );
 
   // Keywords (optional, low SEO value per modern SEO best practices)
-  const keywords = escapeHtml('GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6');
+  const keywords = escapeHtml(
+    'GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6'
+  );
 
   // Canonical URL (must be absolute)
   const baseUrl = new URL(url).origin;
@@ -148,9 +154,12 @@ function generateSEOTags(
 /**
  * Generate Schema.org VideoGame structured data (Story 5.4: FR37)
  */
-function generateSchemaVideoGame(
-  stats: { median: string; count: number; min?: string; max?: string }
-): object {
+function generateSchemaVideoGame(stats: {
+  median: string;
+  count: number;
+  min?: string;
+  max?: string;
+}): object {
   return {
     '@context': 'https://schema.org',
     '@type': 'VideoGame',

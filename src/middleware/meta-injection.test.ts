@@ -348,7 +348,9 @@ describe('Meta Injection Middleware - Story 5.3', () => {
 
     it('should use fallback stats if database query fails', async () => {
       // Mock statistics service to throw error for this test
-      vi.spyOn(statisticsService, 'getStatisticsWithCache').mockRejectedValueOnce(new Error('DB error'));
+      vi.spyOn(statisticsService, 'getStatisticsWithCache').mockRejectedValueOnce(
+        new Error('DB error')
+      );
 
       const req = new Request('http://localhost/');
       const res = await app.fetch(req, mockEnv);
@@ -432,7 +434,9 @@ describe('Meta Injection Middleware - Story 5.3', () => {
       const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
-      expect(html).toContain('<title>GTA 6 Launch Date Predictions - Community Sentiment Tracker</title>');
+      expect(html).toContain(
+        '<title>GTA 6 Launch Date Predictions - Community Sentiment Tracker</title>'
+      );
     });
 
     it('should inject meta description with dynamic median and count', async () => {
@@ -440,7 +444,9 @@ describe('Meta Injection Middleware - Story 5.3', () => {
       const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
-      expect(html).toContain('<meta name="description" content="Track community predictions for GTA 6&#039;s launch date');
+      expect(html).toContain(
+        '<meta name="description" content="Track community predictions for GTA 6&#039;s launch date'
+      );
       expect(html).toContain('10,234 other fans think');
       expect(html).toContain('Current median: Mar 15, 2027');
     });
@@ -450,7 +456,9 @@ describe('Meta Injection Middleware - Story 5.3', () => {
       const res = await app.fetch(req, mockEnv);
       const html = await res.text();
 
-      expect(html).toContain('<meta name="keywords" content="GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6"');
+      expect(html).toContain(
+        '<meta name="keywords" content="GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6"'
+      );
     });
 
     it('should inject canonical URL as absolute URL', async () => {
