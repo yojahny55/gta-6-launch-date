@@ -1,0 +1,316 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.3</storyId>
+    <title>Open Graph Meta Tags for Rich Previews</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-3-open-graph-meta-tags-for-rich-previews.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>dynamic Open Graph meta tags</iWant>
+    <soThat>shared links show rich previews with current data</soThat>
+    <tasks>
+      - [ ] Task 1: Create Workers middleware for meta tag injection (AC: Meta tags)
+        - [ ] Create `src/middleware/meta-injection.ts`
+        - [ ] Intercept HTML responses
+        - [ ] Fetch current stats from `/api/stats`
+        - [ ] Inject dynamic meta tags into HTML &lt;head&gt;
+        - [ ] Apply 5-minute cache to avoid D1 overload
+
+      - [ ] Task 2: Implement default Open Graph tags (AC: Meta tags)
+        - [ ] Generate og:title: "GTA 6 Launch Date Predictions - Community Sentiment"
+        - [ ] Generate og:description with current median + total count
+        - [ ] Set og:image to static branded image
+        - [ ] Set og:url to canonical URL
+        - [ ] Set og:type to "website"
+
+      - [ ] Task 3: Implement Twitter Card tags (AC: Meta tags)
+        - [ ] Set twitter:card to "summary_large_image"
+        - [ ] Set twitter:title to concise version
+        - [ ] Set twitter:description with median + count
+        - [ ] Set twitter:image to same OG image
+
+      - [ ] Task 4: Implement personalized meta tags (AC: Personalized sharing - FR23)
+        - [ ] Detect `?u={hash}` parameter in URL
+        - [ ] Look up user prediction from database by cookie_id hash
+        - [ ] Generate personalized title: "I predicted {user_date} for GTA 6"
+        - [ ] Generate personalized description with comparison
+        - [ ] Fall back to default tags if user not found
+
+      - [ ] Task 5: Create static Open Graph image (AC: Dynamic image - fallback)
+        - [ ] Design 1200x630px image
+        - [ ] Include branding: "GTA 6 Launch Date Predictions"
+        - [ ] Include placeholder text or visual
+        - [ ] Optimize for social sharing (&lt; 1MB)
+        - [ ] Place in `public/images/og-image.png`
+
+      - [ ] Task 6: (Optional) Implement dynamic image generation (AC: Dynamic image)
+        - [ ] Create image generation endpoint `/api/og-image`
+        - [ ] Use Canvas API or image generation library
+        - [ ] Render current median + total count
+        - [ ] Cache generated image for 1 hour
+        - [ ] Return PNG with proper headers
+
+      - [ ] Task 7: Implement cache strategy (AC: Meta tag updates)
+        - [ ] Cache meta tag injection for 5 minutes (Cloudflare Workers Cache API)
+        - [ ] Cache OG image generation for 1 hour (if implemented)
+        - [ ] Invalidate cache on stats update (optional optimization)
+        - [ ] Ensure fresh data on social crawler requests
+
+      - [ ] Task 8: Write automated tests (ADR-011 Testing Requirements)
+        - [ ] Create `tests/integration/meta-injection.test.ts`
+        - [ ] Test default meta tags generation
+        - [ ] Test personalized meta tags with u parameter
+        - [ ] Test cache TTL behavior
+        - [ ] Test fallback to default when user not found
+        - [ ] Verify test coverage: All acceptance criteria covered
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** a URL is shared on social media
+    **When** the platform fetches meta tags
+    **Then** dynamic Open Graph tags are returned:
+
+    **Meta Tags (Server-side rendered):**
+    ```html
+    &lt;meta property="og:title" content="GTA 6 Launch Date Predictions - Community Sentiment" /&gt;
+    &lt;meta property="og:description" content="The community predicts GTA 6 will launch on Feb 14, 2027 (median of 10,234 predictions). What do you think?" /&gt;
+    &lt;meta property="og:image" content="https://gta6predictions.com/og-image.png" /&gt;
+    &lt;meta property="og:url" content="https://gta6predictions.com/" /&gt;
+    &lt;meta property="og:type" content="website" /&gt;
+
+    &lt;!-- Twitter Card --&gt;
+    &lt;meta name="twitter:card" content="summary_large_image" /&gt;
+    &lt;meta name="twitter:title" content="GTA 6 Launch Date Predictions" /&gt;
+    &lt;meta name="twitter:description" content="Community median: Feb 14, 2027 (10,234 predictions)" /&gt;
+    &lt;meta name="twitter:image" content="https://gta6predictions.com/og-image.png" /&gt;
+    ```
+
+    **And** personalized sharing (FR23):
+    - If URL has `?u={hash}` parameter: Show user's specific prediction
+    - Title: "I predicted {user_date} for GTA 6"
+    - Description: "The community median is {median_date}. I'm {X} days {optimistic/pessimistic}."
+
+    **And** dynamic image generation (optional):
+    - Generate image with current median + total count
+    - Update every hour (cached)
+    - Fallback: Static branded image
+
+    **And** meta tag updates:
+    - Reflect current median (not stale data)
+    - Update on every page load (server-side rendering)
+    - Cache for 5 minutes (same as stats API)
+
+    **And** automated tests exist covering main functionality
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>Epic 5 Technical Specification - MetaInjectionMiddleware</title>
+        <section>Services and Modules</section>
+        <snippet>MetaInjectionMiddleware: Server-side inject dynamic OG tags into HTML. Located at src/middleware/meta-injection.ts. Inputs: Stats API data, request URL. Outputs: Modified HTML with meta tags. Uses cached /api/stats endpoint (5-min TTL) to avoid database overload.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>OpenGraphMetaTags Interface</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Interface defining og:title, og:description, og:image, og:url, og:type='website', twitter:card='summary_large_image', twitter:title, twitter:description, twitter:image. All meta tags must be properly escaped to prevent XSS.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-social-sharing-virality.md</path>
+        <title>Epic 5: Story 5.3 Open Graph</title>
+        <section>Open Graph Meta Injection Flow</section>
+        <snippet>Social crawler requests page → Workers intercepts → Check User-Agent → Fetch /api/stats (5-min cache) → Generate dynamic OG tags with median_date, total_predictions → Inject into &lt;head&gt; → Return modified HTML → Crawler parses → Social platform displays rich preview.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>Personalized Sharing (FR23)</title>
+        <section>Meta Tags - Personalization</section>
+        <snippet>If URL has ?u={hash} parameter, look up user prediction, generate personalized og:title="I predicted {user_date}" and og:description with comparison to median. Falls back to default if user not found.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/index.ts</path>
+        <kind>file</kind>
+        <symbol>Hono app initialization</symbol>
+        <lines>all</lines>
+        <reason>Main Workers entry point - meta injection middleware will be added here to intercept HTML responses</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/stats.ts</path>
+        <kind>module</kind>
+        <symbol>GET /api/stats</symbol>
+        <lines>all</lines>
+        <reason>Stats API endpoint (Story 2.10) - will be called by meta injection middleware to get current median, min, max, total for OG tags</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>file</kind>
+        <symbol>HTML head section</symbol>
+        <lines>1-20</lines>
+        <reason>Base HTML template where meta tags will be injected server-side - middleware will modify this before serving to crawlers</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>file</kind>
+        <symbol>Type definitions</symbol>
+        <lines>all</lines>
+        <reason>TypeScript types - will add OpenGraphMetaTags interface and related types for meta injection</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency>
+          <name>hono</name>
+          <version>^4.10.0</version>
+          <purpose>Web framework for Workers - middleware support for intercepting HTML responses</purpose>
+        </dependency>
+        <dependency>
+          <name>dayjs</name>
+          <version>^1.11.19</version>
+          <purpose>Date formatting for meta tag descriptions</purpose>
+        </dependency>
+        <dependency>
+          <name>zod</name>
+          <version>^3.25.76</version>
+          <purpose>Validation for meta tag data and query parameters</purpose>
+        </dependency>
+      </node>
+      <cloudflare>
+        <dependency>
+          <name>Cloudflare Workers</name>
+          <purpose>Server-side execution environment for meta tag injection middleware</purpose>
+        </dependency>
+        <dependency>
+          <name>Cloudflare Workers Cache API</name>
+          <purpose>5-minute cache for meta tag generation to avoid repeated /api/stats calls</purpose>
+        </dependency>
+        <dependency>
+          <name>Cloudflare D1</name>
+          <purpose>Database for looking up user predictions when ?u={hash} parameter present</purpose>
+        </dependency>
+      </cloudflare>
+      <external>
+        <api>
+          <name>Facebook Sharing Debugger</name>
+          <endpoint>https://developers.facebook.com/tools/debug/</endpoint>
+          <purpose>Testing tool to validate Open Graph meta tags</purpose>
+        </api>
+        <api>
+          <name>Twitter Card Validator</name>
+          <endpoint>https://cards-dev.twitter.com/validator</endpoint>
+          <purpose>Testing tool to validate Twitter Card meta tags</purpose>
+        </api>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Server-side rendering REQUIRED - meta tags must be in HTML when social crawlers request page</constraint>
+    <constraint>Meta tag injection must not break existing HTML structure</constraint>
+    <constraint>Sanitize all stats data before injection to prevent XSS (escape HTML entities)</constraint>
+    <constraint>Meta injection middleware must only process HTML responses (check content-type)</constraint>
+    <constraint>Cache meta tag generation for 5 minutes to align with /api/stats cache</constraint>
+    <constraint>Fallback to default meta tags if /api/stats fails (graceful degradation)</constraint>
+    <constraint>OG image must be 1200x630px (optimal for all social platforms)</constraint>
+    <constraint>OG image must be < 1MB for fast loading on social platforms</constraint>
+    <constraint>Personalized meta tags (?u={hash}) must look up user from D1 by cookie_id hash</constraint>
+    <constraint>Detect social crawler User-Agents (Twitterbot, facebookexternalhit, LinkedInBot, etc.)</constraint>
+    <constraint>Follow ADR-011: Mandatory automated testing (integration tests for middleware)</constraint>
+    <constraint>Meta injection overhead must be < 10ms per request</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>injectMetaTags</name>
+      <kind>Middleware function</kind>
+      <signature>async function injectMetaTags(c: Context, next: () => Promise&lt;void&gt;): Promise&lt;void&gt;</signature>
+      <path>src/middleware/meta-injection.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>generateOGTags</name>
+      <kind>Function signature</kind>
+      <signature>function generateOGTags(stats: StatsData, personalized?: PersonalizedData): OpenGraphMetaTags</signature>
+      <path>src/middleware/meta-injection.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>lookupUserPrediction</name>
+      <kind>Function signature</kind>
+      <signature>async function lookupUserPrediction(env: Env, cookieHash: string): Promise&lt;{predicted_date: string} | null&gt;</signature>
+      <path>src/middleware/meta-injection.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>/api/stats</name>
+      <kind>REST endpoint (existing)</kind>
+      <signature>GET /api/stats -&gt; {data: {median: string, min: string, max: string, total: number}}</signature>
+      <path>src/routes/stats.ts (EXISTING - Story 2.10)</path>
+    </interface>
+    <interface>
+      <name>OpenGraphMetaTags</name>
+      <kind>TypeScript interface</kind>
+      <signature>interface OpenGraphMetaTags { 'og:title': string; 'og:description': string; 'og:image': string; 'og:url': string; 'og:type': 'website'; 'twitter:card': 'summary_large_image'; 'twitter:title': string; 'twitter:description': string; 'twitter:image': string; }</signature>
+      <path>src/types/index.ts (NEW interface)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest testing framework with Cloudflare Workers pool for integration tests. ADR-011 requires minimum 80% code coverage. Integration tests for middleware, unit tests for meta tag generation functions. Must test with mock social crawler User-Agents. Test cache behavior with Cloudflare Workers Cache API. Test execution must complete in under 2 minutes.
+    </standards>
+    <locations>
+      - Integration tests: `tests/integration/meta-injection.test.ts` (NEW)
+      - Middleware tests: `src/middleware/meta-injection.test.ts` (NEW)
+      - Test config: `vitest.config.ts` (Workers pool)
+      - Run: `npm run test:workers`
+    </locations>
+    <ideas>
+      <test ac="Default meta tags">
+        - Test generateOGTags() with stats data → returns correct og:title, og:description, og:image, og:url
+        - Test og:description includes current median date formatted correctly
+        - Test og:description includes total predictions count with commas
+        - Test twitter:card set to "summary_large_image"
+        - Test twitter:title and twitter:description match OG tags
+      </test>
+      <test ac="Personalized meta tags">
+        - Test generateOGTags() with ?u={hash} parameter → looks up user prediction
+        - Test personalized og:title: "I predicted {user_date} for GTA 6"
+        - Test personalized og:description includes comparison (optimistic/pessimistic/aligned)
+        - Test fallback to default tags if user lookup fails
+        - Test fallback if ?u parameter missing
+      </test>
+      <test ac="Meta tag injection">
+        - Test middleware intercepts HTML responses only (not JSON, CSS, JS)
+        - Test middleware injects meta tags before &lt;/head&gt; closing tag
+        - Test middleware preserves existing HTML structure
+        - Test middleware doesn't break existing meta tags
+        - Test middleware works with social crawler User-Agents (Twitterbot, facebookexternalhit)
+      </test>
+      <test ac="Cache behavior">
+        - Test meta tags cached for 5 minutes
+        - Test subsequent requests within 5 min use cached tags
+        - Test cache miss after 5 min triggers fresh /api/stats call
+        - Test cache key includes URL (different for personalized vs default)
+      </test>
+      <test ac="Error handling">
+        - Test graceful fallback if /api/stats fails → use static default median
+        - Test graceful fallback if D1 user lookup fails → use default tags
+        - Test sanitization prevents XSS (escape special characters in median/count)
+        - Test middleware errors don't break page load (serve HTML without dynamic tags)
+      </test>
+      <test ac="OG image">
+        - Test og:image URL is absolute (https://gta6predictions.com/og-image.png)
+        - Test image exists at specified path
+        - Test image dimensions are 1200x630px
+        - Test image file size < 1MB
+      </test>
+    </ideas>
+  </tests>
+</story-context>

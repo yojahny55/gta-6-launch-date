@@ -82,21 +82,21 @@ development_status:
   4-1-gdpr-cookie-consent-banner: done  # Code review approved 2025-11-26 (all 8 ACs implemented, 32/32 tests passing, GDPR-compliant)
   4-2-privacy-policy-page: done  # Code review approved 2025-11-26 (all 7 ACs implemented, 11/11 tasks verified, 68/68 tests passing, exceptional GDPR-compliant implementation)
   4-3-terms-of-service-page: done  # Code review approved 2025-11-26 (all 16 ACs implemented, 12/12 tasks verified, 84/84 tests passing, exceptional GDPR-compliant legal documentation)
-  4-4-about-page-transparency-and-methodology: review  # Implementation completed 2025-11-26 (all 11 tasks done, 63/63 tests passing, 1010 total tests passing)
-  4-5-cookie-management-and-expiration: review  # Implementation completed 2025-11-26 (all 7 tasks done, 25/25 tests passing, privacy policy updated)
-  4-6-gdpr-data-deletion-request-form: ready-for-dev
+  4-4-about-page-transparency-and-methodology: done  # Implementation completed 2025-11-26 (all 11 tasks done, 63/63 tests passing, 1010 total tests passing)
+  4-5-cookie-management-and-expiration: done  # Implementation completed 2025-11-26 (all 7 tasks done, 25/25 tests passing, privacy policy updated)
+  4-6-gdpr-data-deletion-request-form: done  # Implementation completed 2025-11-26 (all 9 tasks done, 9/9 tests passing, immediate deletion design, GDPR-compliant). Documentation corrected 2025-11-26 (ACs updated to match 3-field immediate deletion). CODE REVIEW APPROVED 2025-11-26 (5/5 ACs implemented, 9/9 tasks verified, zero blocking issues, production-ready)
   4-7-cookie-conflict-resolution-cookie-vs-ip: ready-for-dev
   4-8-data-retention-policy-implementation: ready-for-dev
   epic-4-retrospective: optional
 
   # Epic 5: Social Sharing & Virality
-  epic-5: backlog
-  5-1-twitter-x-share-button-with-pre-filled-text: backlog
-  5-2-reddit-share-button-with-pre-filled-text: backlog
-  5-3-open-graph-meta-tags-for-rich-previews: backlog
-  5-4-seo-meta-tags-and-structured-data: backlog
-  5-5-mobile-responsive-design: backlog
-  5-6-performance-optimization-for-fast-load-times: backlog
+  epic-5: contexted  # Tech spec created 2025-11-26
+  5-1-twitter-x-share-button-with-pre-filled-text: ready-for-dev
+  5-2-reddit-share-button-with-pre-filled-text: ready-for-dev
+  5-3-open-graph-meta-tags-for-rich-previews: ready-for-dev
+  5-4-seo-meta-tags-and-structured-data: ready-for-dev
+  5-5-mobile-responsive-design: ready-for-dev
+  5-6-performance-optimization-for-fast-load-times: ready-for-dev
   epic-5-retrospective: optional
 
   # Epic 6: Embeddable Widget

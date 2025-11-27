@@ -1,0 +1,299 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.1</storyId>
+    <title>Twitter/X Share Button with Pre-filled Text</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-1-twitter-x-share-button-with-pre-filled-text.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to easily share my prediction to Twitter/X</iWant>
+    <soThat>I can show my friends and start conversations</soThat>
+    <tasks>
+      - [ ] Task 1: Implement tweet text generation (AC: Tweet template)
+        - [ ] Create `generateTweetText(userDate, medianDate)` function
+        - [ ] Implement date formatting (user-friendly format)
+        - [ ] Add personalization logic (optimistic/pessimistic/aligned)
+        - [ ] Calculate delta days between user date and median
+        - [ ] Include URL with tracking parameters
+
+      - [ ] Task 2: Create Twitter share button UI (AC: Button placement)
+        - [ ] Add button to submission confirmation section
+        - [ ] Position above-the-fold (prominent placement)
+        - [ ] Style with Twitter blue color (#1DA1F2)
+        - [ ] Add Twitter/X logo icon (SVG or icon font)
+        - [ ] Ensure button is responsive on mobile
+
+      - [ ] Task 3: Implement Twitter Web Intent integration (AC: Tweet template)
+        - [ ] Use Twitter Web Intent API: `https://twitter.com/intent/tweet?text={encoded_text}`
+        - [ ] URL-encode tweet text properly
+        - [ ] Open in new window/tab with `window.open()`
+        - [ ] Set window dimensions (550x420 recommended)
+
+      - [ ] Task 4: Add URL tracking parameters (AC: URL parameters)
+        - [ ] Append `?ref=twitter` to shared URL
+        - [ ] Generate optional `u={hash}` for unique user tracking
+        - [ ] Use cookie_id hash for u parameter (privacy-preserving)
+        - [ ] Validate URL encoding
+
+      - [ ] Task 5: Implement share button click tracking (AC: Share analytics)
+        - [ ] Track button clicks via onclick event
+        - [ ] Log share event before opening Twitter window
+        - [ ] Store share click count (client-side or API)
+        - [ ] Track clicks from Twitter referrer (`ref=twitter` parameter)
+
+      - [ ] Task 6: Calculate share CTR (AC: Share analytics)
+        - [ ] Count total share button clicks
+        - [ ] Count total predictions submitted
+        - [ ] Calculate: Share CTR = (shares / submissions) * 100
+        - [ ] Display in analytics (optional admin view)
+
+      - [ ] Task 7: Write automated tests (ADR-011 Testing Requirements)
+        - [ ] Create `tests/unit/twitter-share.test.ts`
+        - [ ] Test tweet text generation with various dates
+        - [ ] Test personalization logic (all 3 cases)
+        - [ ] Test URL encoding correctness
+        - [ ] Test tracking parameter generation
+        - [ ] Verify test coverage: All acceptance criteria covered
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** a user has submitted a prediction
+    **When** they click the Twitter/X share button
+    **Then** a Twitter compose window opens with pre-filled text:
+
+    **Tweet Template:**
+    ```
+    I predicted GTA 6 will launch on {user_date}. The community median is {median_date}.
+    What do you think? 🎮
+
+    {url}
+    ```
+
+    **And** tweet personalization:
+    - If user = median: "I'm aligned with the community! 🎯"
+    - If user < median: "I'm {X} days more optimistic 🤞"
+    - If user > median: "I'm {X} days more pessimistic 😬"
+
+    **And** URL parameters track source:
+    - URL: `https://gta6predictions.com/?ref=twitter&u={hash}`
+    - `ref=twitter` tracks traffic source (FR42)
+    - `u={hash}` optional unique identifier for virality tracking
+
+    **And** button placement (FR100):
+    - Displayed immediately after submission confirmation
+    - Above-the-fold (no scrolling required)
+    - Prominent visual design (Twitter blue color)
+    - Icon: Twitter/X logo
+
+    **And** share analytics (FR45):
+    - Track: Share button clicks
+    - Track: Click-through from Twitter (URL ref parameter)
+    - Calculate: Share CTR = shares / submissions
+
+    **And** automated tests exist covering main functionality
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>Epic 5 Technical Specification - Social Sharing & Virality</title>
+        <section>X (Twitter) Web Intents API</section>
+        <snippet>Endpoint: https://twitter.com/intent/tweet. Parameters: text (URL-encoded, max 280 chars), url, hashtags, via. Example URL construction with dynamic user/median data for personalized sharing.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-social-sharing-virality.md</path>
+        <title>Epic 5: Social Sharing & Virality</title>
+        <section>Story 5.1: Twitter/X Share Button</section>
+        <snippet>Tweet template with personalization logic based on user vs median comparison. Above-the-fold placement (FR100), share CTR tracking (FR45), URL tracking with ref=twitter (FR42).</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>ShareButtonConfig Interface</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Interface defining platform ('twitter'|'reddit'), text (pre-filled), url (with tracking params), hashtags, via. Used for generating share URLs with proper structure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>Share Analytics Event Interface</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Event structure for tracking: event='share_click', platform='twitter'|'reddit', user_prediction, median_prediction, timestamp. Used for analytics logging.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>public/js/comparison.js</path>
+        <kind>module</kind>
+        <symbol>getComparisonMessage</symbol>
+        <lines>153-176</lines>
+        <reason>Existing social comparison logic that calculates optimistic/pessimistic/aligned messaging - reuse for Twitter share text personalization</reason>
+      </artifact>
+      <artifact>
+        <path>public/js/comparison.js</path>
+        <kind>module</kind>
+        <symbol>formatDelta</symbol>
+        <lines>105-122</lines>
+        <reason>Formats delta as "X days later/earlier" or "X months later/earlier" - needed for share text delta display</reason>
+      </artifact>
+      <artifact>
+        <path>public/js/comparison.js</path>
+        <kind>module</kind>
+        <symbol>calculateDaysDiff</symbol>
+        <lines>36-44</lines>
+        <reason>Calculates days difference between user prediction and median - core logic for personalization</reason>
+      </artifact>
+      <artifact>
+        <path>public/js/submission.js</path>
+        <kind>module</kind>
+        <symbol>showOptimisticConfirmation</symbol>
+        <lines>20-50</lines>
+        <reason>Confirmation display logic where share button should be added - integration point for UI placement</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>file</kind>
+        <symbol>confirmation-display</symbol>
+        <lines>unknown</lines>
+        <reason>Confirmation section in HTML where share buttons will be placed above-the-fold</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>file</kind>
+        <symbol>main application logic</symbol>
+        <lines>all</lines>
+        <reason>Main app entry point - will need to integrate share button logic and event handlers</reason>
+      </artifact>
+      <artifact>
+        <path>public/styles.css</path>
+        <kind>stylesheet</kind>
+        <symbol>Tailwind CSS + DaisyUI</symbol>
+        <lines>all</lines>
+        <reason>Styling framework - will add Twitter button styles with Twitter blue (#1DA1F2) and responsive design</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency>
+          <name>dayjs</name>
+          <version>^1.11.19</version>
+          <purpose>Date formatting for user-friendly share text display</purpose>
+        </dependency>
+        <dependency>
+          <name>tailwindcss</name>
+          <version>^4.0.0</version>
+          <purpose>Responsive styling for share button UI</purpose>
+        </dependency>
+        <dependency>
+          <name>daisyui</name>
+          <version>^5.5.5</version>
+          <purpose>UI component framework for button styling</purpose>
+        </dependency>
+      </node>
+      <external>
+        <api>
+          <name>X (Twitter) Web Intents API</name>
+          <endpoint>https://twitter.com/intent/tweet</endpoint>
+          <purpose>Opens Twitter compose dialog with pre-filled text</purpose>
+          <authentication>None - public API</authentication>
+        </api>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Client-side only implementation (no new API endpoints needed)</constraint>
+    <constraint>Share button must be above-the-fold (no scrolling required)</constraint>
+    <constraint>URL encoding must prevent XSS (use encodeURIComponent() for all user data)</constraint>
+    <constraint>Analytics tracking must be non-blocking (share works even if analytics fails)</constraint>
+    <constraint>Tweet text must respect 280 character limit (including URL shortening)</constraint>
+    <constraint>Must integrate with existing submission confirmation flow (Story 3.3)</constraint>
+    <constraint>Must reuse social comparison logic from Story 3.2 for personalization</constraint>
+    <constraint>Must use existing cookie_id infrastructure for u={hash} parameter (Story 4.5)</constraint>
+    <constraint>Follow ADR-011: Mandatory automated testing (minimum 80% coverage)</constraint>
+    <constraint>Mobile-first responsive design (Tailwind breakpoints: sm, md, lg)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>X Web Intent URL</name>
+      <kind>External API endpoint</kind>
+      <signature>GET https://twitter.com/intent/tweet?text={encoded_text}&url={encoded_url}&hashtags={hashtags}</signature>
+      <path>External - Twitter platform</path>
+    </interface>
+    <interface>
+      <name>generateShareUrl</name>
+      <kind>Function signature (to implement)</kind>
+      <signature>function generateShareUrl(platform: 'twitter'|'reddit', userData: {predicted_date: string}, stats: {median: string}): string</signature>
+      <path>public/js/twitter-share.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>trackShareClick</name>
+      <kind>Function signature (to implement)</kind>
+      <signature>function trackShareClick(platform: 'twitter'|'reddit', eventData: {user_prediction?: string, median_prediction: string}): void</signature>
+      <path>public/js/analytics.js (MODIFY)</path>
+    </interface>
+    <interface>
+      <name>getComparisonMessage</name>
+      <kind>Existing function to reuse</kind>
+      <signature>function getComparisonMessage(userDate: Date|string, medianDate: Date|string): ComparisonResult</signature>
+      <path>public/js/comparison.js</path>
+    </interface>
+    <interface>
+      <name>/api/stats</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/stats -> {data: {median: string, min: string, max: string, total: number}}</signature>
+      <path>src/routes/stats.ts (EXISTING - Story 2.10)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest testing framework with happy-dom for DOM testing. ADR-011 requires minimum 80% code coverage. Unit tests for all JavaScript modules, integration tests for API interactions. Tests should cover all acceptance criteria with specific test cases for edge cases (aligned prediction, very optimistic, very pessimistic). Test execution must complete in under 2 minutes.
+    </standards>
+    <locations>
+      - Unit tests: `tests/unit/twitter-share.test.ts` (NEW)
+      - Frontend module tests: `public/js/*.test.js`
+      - Test config: `vitest.config.unit.ts`
+      - Run: `npm run test:unit`
+    </locations>
+    <ideas>
+      <test ac="Tweet template">
+        - Test generateTweetText() with user=median (aligned case) -> should include "I'm aligned with the community! 🎯"
+        - Test generateTweetText() with user < median (optimistic) -> should include "I'm {X} days more optimistic 🤞"
+        - Test generateTweetText() with user > median (pessimistic) -> should include "I'm {X} days more pessimistic 😬"
+        - Test tweet text includes user_date, median_date, and tracking URL
+        - Test tweet text respects 280 character limit
+      </test>
+      <test ac="URL parameters">
+        - Test URL includes ?ref=twitter parameter
+        - Test URL includes u={hash} parameter (derived from cookie_id)
+        - Test URL encoding prevents XSS (special characters encoded correctly)
+        - Test URL structure: https://gta6predictions.com/?ref=twitter&u={hash}
+      </test>
+      <test ac="Share analytics">
+        - Test share button click triggers trackShareClick event
+        - Test analytics event includes platform='twitter', user_prediction, median_prediction
+        - Test analytics is non-blocking (share works even if tracking fails)
+        - Test share CTR calculation: (share clicks / total submissions) * 100
+      </test>
+      <test ac="Button placement">
+        - Test button renders in confirmation section
+        - Test button has Twitter blue color styling (#1DA1F2)
+        - Test button includes Twitter/X logo icon
+        - Test button is responsive on mobile (Tailwind classes applied)
+      </test>
+      <test ac="Twitter Web Intent">
+        - Test window.open() called with correct URL structure
+        - Test window dimensions set to 550x420
+        - Test URL parameters properly encoded
+        - Test hashtags parameter includes GTA6,Rockstar
+      </test>
+    </ideas>
+  </tests>
+</story-context>

@@ -1,0 +1,320 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.2</storyId>
+    <title>Reddit Share Button with Pre-filled Text</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-2-reddit-share-button-with-pre-filled-text.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to easily share my prediction to Reddit</iWant>
+    <soThat>I can engage with the GTA 6 community</soThat>
+    <tasks>
+      - [ ] Task 1: Implement Reddit post text generation (AC: Reddit post template)
+        - [ ] Create `generateRedditPost(userDate, medianDate)` function
+        - [ ] Generate title: "GTA 6 Launch Date Predictions - What does the community think?"
+        - [ ] Generate body with user prediction + median + comparison
+        - [ ] Calculate delta days between user date and median
+        - [ ] Include URL with tracking parameters
+
+      - [ ] Task 2: Create Reddit share button UI (AC: Button placement)
+        - [ ] Add button next to Twitter share button
+        - [ ] Position in submission confirmation section
+        - [ ] Style with Reddit orange color (#FF4500)
+        - [ ] Add Reddit Snoo logo icon (SVG or icon font)
+        - [ ] Ensure button is responsive on mobile
+
+      - [ ] Task 3: Implement Reddit submit API integration (AC: Reddit post template)
+        - [ ] Use Reddit submit URL: `https://reddit.com/submit?url={url}&title={title}`
+        - [ ] URL-encode title and URL parameters
+        - [ ] Note: Reddit doesn't support pre-filled body text via API
+        - [ ] Open in new window/tab with `window.open()`
+
+      - [ ] Task 4: Add subreddit selection (AC: Subreddit suggestions)
+        - [ ] Default subreddit: r/GTA6
+        - [ ] Allow user to change subreddit in Reddit UI (Reddit's native functionality)
+        - [ ] Document alternative subreddits in UI tooltip/hint
+
+      - [ ] Task 5: Add URL tracking parameters (AC: URL parameters)
+        - [ ] Append `?ref=reddit` to shared URL
+        - [ ] Generate optional `u={hash}` for unique user tracking
+        - [ ] Use cookie_id hash for u parameter (privacy-preserving)
+        - [ ] Validate URL encoding
+
+      - [ ] Task 6: Implement share button click tracking (AC: Share analytics)
+        - [ ] Track button clicks via onclick event
+        - [ ] Log share event before opening Reddit window
+        - [ ] Store share click count (client-side or API)
+        - [ ] Track clicks from Reddit referrer (`ref=reddit` parameter)
+
+      - [ ] Task 7: Write automated tests (ADR-011 Testing Requirements)
+        - [ ] Create `tests/unit/reddit-share.test.ts`
+        - [ ] Test Reddit post text generation with various dates
+        - [ ] Test personalization logic (optimistic/pessimistic)
+        - [ ] Test URL encoding correctness
+        - [ ] Test tracking parameter generation
+        - [ ] Verify test coverage: All acceptance criteria covered
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** a user has submitted a prediction
+    **When** they click the Reddit share button
+    **Then** Reddit submit page opens with pre-filled content:
+
+    **Reddit Post Template:**
+    ```
+    Title: GTA 6 Launch Date Predictions - What does the community think?
+
+    Body:
+    I just submitted my prediction: {user_date}
+    Community median: {median_date}
+
+    I'm {X} days {optimistic/pessimistic} compared to everyone else!
+
+    Check out the full data and add your prediction:
+    {url}
+    ```
+
+    **And** subreddit suggestions:
+    - Default: r/GTA6 (largest community)
+    - Alternative: r/gaming, r/Games, r/rockstar
+    - User can change subreddit before posting
+
+    **And** URL parameters:
+    - URL: `https://gta6predictions.com/?ref=reddit&u={hash}`
+    - Tracks Reddit traffic (FR42)
+
+    **And** button placement (FR100):
+    - Next to Twitter button
+    - Same visual prominence
+    - Icon: Reddit logo (orange)
+
+    **And** automated tests exist covering main functionality
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>Epic 5 Technical Specification - Reddit Submit API</title>
+        <section>Reddit Submit API Integration</section>
+        <snippet>Endpoint: https://reddit.com/submit. Parameters: url (required), title (optional), resubmit=true. Note: Body text cannot be pre-filled via URL parameters. Example: reddit.com/submit?url={encoded_url}&title={encoded_title}&resubmit=true</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-social-sharing-virality.md</path>
+        <title>Epic 5: Social Sharing & Virality</title>
+        <section>Story 5.2: Reddit Share Button</section>
+        <snippet>Reddit post template with personalization. Next to Twitter button with same prominence (FR100). URL tracking with ref=reddit (FR42). Default subreddit r/GTA6 with alternatives.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>ShareButtonConfig Interface</title>
+        <section>Data Models and Contracts</section>
+        <snippet>Interface defining platform ('twitter'|'reddit'), text, url, subreddit (Reddit only). Used for generating share URLs with proper structure.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/stories/5-1-twitter-x-share-button-with-pre-filled-text.context.xml</path>
+        <title>Story 5.1 Context - Twitter Share Patterns</title>
+        <section>Share button implementation</section>
+        <snippet>Reuse share button patterns from Story 5.1: tracking infrastructure, URL parameter logic, share utilities. Consider creating shared share-utils.js module for DRY principle.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>public/js/comparison.js</path>
+        <kind>module</kind>
+        <symbol>getComparisonMessage</symbol>
+        <lines>153-176</lines>
+        <reason>Existing social comparison logic for optimistic/pessimistic/aligned messaging - reuse for Reddit share text personalization</reason>
+      </artifact>
+      <artifact>
+        <path>public/js/comparison.js</path>
+        <kind>module</kind>
+        <symbol>formatDelta</symbol>
+        <lines>105-122</lines>
+        <reason>Formats delta as "X days later/earlier" or "X months later/earlier" - needed for Reddit post body text</reason>
+      </artifact>
+      <artifact>
+        <path>public/js/comparison.js</path>
+        <kind>module</kind>
+        <symbol>calculateDaysDiff</symbol>
+        <lines>36-44</lines>
+        <reason>Calculates days difference between user prediction and median - core logic for personalization</reason>
+      </artifact>
+      <artifact>
+        <path>public/js/submission.js</path>
+        <kind>module</kind>
+        <symbol>showOptimisticConfirmation</symbol>
+        <lines>20-50</lines>
+        <reason>Confirmation display logic where Reddit share button will be added next to Twitter button - integration point</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>file</kind>
+        <symbol>confirmation-display</symbol>
+        <lines>unknown</lines>
+        <reason>Confirmation section in HTML where Reddit share button will be placed next to Twitter button</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>file</kind>
+        <symbol>main application logic</symbol>
+        <lines>all</lines>
+        <reason>Main app entry point - will integrate Reddit share button logic and event handlers</reason>
+      </artifact>
+      <artifact>
+        <path>public/styles.css</path>
+        <kind>stylesheet</kind>
+        <symbol>Tailwind CSS + DaisyUI</symbol>
+        <lines>all</lines>
+        <reason>Styling framework - will add Reddit button styles with Reddit orange (#FF4500) and responsive design</reason>
+      </artifact>
+      <artifact>
+        <path>docs/sprint-artifacts/stories/5-1-twitter-x-share-button-with-pre-filled-text.md</path>
+        <kind>story</kind>
+        <symbol>Twitter share implementation</symbol>
+        <lines>all</lines>
+        <reason>Sister story with similar share button patterns - reuse tracking, URL parameters, and UI placement logic</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency>
+          <name>dayjs</name>
+          <version>^1.11.19</version>
+          <purpose>Date formatting for user-friendly Reddit post text display</purpose>
+        </dependency>
+        <dependency>
+          <name>tailwindcss</name>
+          <version>^4.0.0</version>
+          <purpose>Responsive styling for Reddit share button UI</purpose>
+        </dependency>
+        <dependency>
+          <name>daisyui</name>
+          <version>^5.5.5</version>
+          <purpose>UI component framework for button styling</purpose>
+        </dependency>
+      </node>
+      <external>
+        <api>
+          <name>Reddit Submit API</name>
+          <endpoint>https://reddit.com/submit</endpoint>
+          <purpose>Opens Reddit submit page with pre-filled title and URL</purpose>
+          <authentication>None - public API</authentication>
+          <limitations>Cannot pre-fill body text via URL parameters - user must enter manually</limitations>
+        </api>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Client-side only implementation (no new API endpoints needed)</constraint>
+    <constraint>Reddit button must be next to Twitter button with same visual prominence</constraint>
+    <constraint>URL encoding must prevent XSS (use encodeURIComponent() for all user data)</constraint>
+    <constraint>Analytics tracking must be non-blocking (share works even if analytics fails)</constraint>
+    <constraint>Reddit API limitation: Cannot pre-fill body text (only title and URL supported)</constraint>
+    <constraint>Must integrate with existing submission confirmation flow (Story 3.3)</constraint>
+    <constraint>Must reuse social comparison logic from Story 3.2 for personalization</constraint>
+    <constraint>Must reuse tracking infrastructure from Story 5.1 (Twitter share)</constraint>
+    <constraint>Must use existing cookie_id infrastructure for u={hash} parameter (Story 4.5)</constraint>
+    <constraint>Follow ADR-011: Mandatory automated testing (minimum 80% coverage)</constraint>
+    <constraint>Mobile-first responsive design (Tailwind breakpoints: sm, md, lg)</constraint>
+    <constraint>Consider DRY principle: Share common utilities with Twitter share (Story 5.1)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Reddit Submit URL</name>
+      <kind>External API endpoint</kind>
+      <signature>GET https://reddit.com/submit?url={encoded_url}&title={encoded_title}&resubmit=true</signature>
+      <path>External - Reddit platform</path>
+    </interface>
+    <interface>
+      <name>generateShareUrl</name>
+      <kind>Function signature (to implement or reuse from 5.1)</kind>
+      <signature>function generateShareUrl(platform: 'twitter'|'reddit', userData: {predicted_date: string}, stats: {median: string}): string</signature>
+      <path>public/js/share-utils.js (NEW) or public/js/reddit-share.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>generateRedditPost</name>
+      <kind>Function signature (to implement)</kind>
+      <signature>function generateRedditPost(userDate: string, medianDate: string): {title: string, body: string, url: string}</signature>
+      <path>public/js/reddit-share.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>trackShareClick</name>
+      <kind>Function signature (reuse from 5.1)</kind>
+      <signature>function trackShareClick(platform: 'twitter'|'reddit', eventData: {user_prediction?: string, median_prediction: string}): void</signature>
+      <path>public/js/analytics.js (MODIFY) or public/js/share-utils.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>getComparisonMessage</name>
+      <kind>Existing function to reuse</kind>
+      <signature>function getComparisonMessage(userDate: Date|string, medianDate: Date|string): ComparisonResult</signature>
+      <path>public/js/comparison.js</path>
+    </interface>
+    <interface>
+      <name>/api/stats</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/stats -> {data: {median: string, min: string, max: string, total: number}}</signature>
+      <path>src/routes/stats.ts (EXISTING - Story 2.10)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Vitest testing framework with happy-dom for DOM testing. ADR-011 requires minimum 80% code coverage. Unit tests for all JavaScript modules, integration tests for API interactions. Tests should cover all acceptance criteria with specific test cases for edge cases. Test execution must complete in under 2 minutes. Reuse test patterns from Story 5.1 (Twitter share).
+    </standards>
+    <locations>
+      - Unit tests: `tests/unit/reddit-share.test.ts` (NEW)
+      - Shared utilities tests: `tests/unit/share-utils.test.ts` (NEW if DRY refactor)
+      - Frontend module tests: `public/js/*.test.js`
+      - Test config: `vitest.config.unit.ts`
+      - Run: `npm run test:unit`
+    </locations>
+    <ideas>
+      <test ac="Reddit post template">
+        - Test generateRedditPost() with user=median -> body should include "I'm aligned with the community!"
+        - Test generateRedditPost() with user < median (optimistic) -> body should include "I'm {X} days more optimistic"
+        - Test generateRedditPost() with user > median (pessimistic) -> body should include "I'm {X} days more pessimistic"
+        - Test title generation: "GTA 6 Launch Date Predictions - What does the community think?"
+        - Test post body includes user_date, median_date, delta, and tracking URL
+      </test>
+      <test ac="URL parameters">
+        - Test URL includes ?ref=reddit parameter
+        - Test URL includes u={hash} parameter (derived from cookie_id)
+        - Test URL encoding prevents XSS (special characters encoded correctly)
+        - Test URL structure: https://gta6predictions.com/?ref=reddit&u={hash}
+      </test>
+      <test ac="Share analytics">
+        - Test share button click triggers trackShareClick event
+        - Test analytics event includes platform='reddit', user_prediction, median_prediction
+        - Test analytics is non-blocking (share works even if tracking fails)
+        - Test share CTR calculation same as Twitter (reuse logic from 5.1)
+      </test>
+      <test ac="Button placement">
+        - Test button renders next to Twitter button in confirmation section
+        - Test button has Reddit orange color styling (#FF4500)
+        - Test button includes Reddit Snoo logo icon
+        - Test button is responsive on mobile (Tailwind classes applied)
+        - Test button has same visual prominence as Twitter button
+      </test>
+      <test ac="Reddit Submit API">
+        - Test window.open() called with correct Reddit submit URL
+        - Test URL parameters properly encoded (title, url, resubmit)
+        - Test window dimensions appropriate for Reddit UI
+        - Test title parameter includes expected text
+      </test>
+      <test ac="Subreddit suggestions">
+        - Test default behavior opens Reddit without forcing subreddit (user chooses)
+        - Test UI tooltip/hint mentions r/GTA6, r/gaming, r/Games, r/rockstar
+        - Document that user can change subreddit in Reddit's native UI
+      </test>
+    </ideas>
+  </tests>
+</story-context>

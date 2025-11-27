@@ -36,6 +36,11 @@ id = "c93739a812ea477d8cbba96d4b23e469"  # Replace after creating namespace
 binding = "gta6_capacity"
 id = "35f61412e3ec47c7b1b8c68e7eac995e"
 
+# KV namespace for deletion confirmation tokens (Story 4.6)
+[[kv_namespaces]]
+binding = "gta6_deletion_tokens"
+id = "977c7af3698e48658ecd3730691e83fe"
+
 # Production environment configuration
 [env.production]
 name = "gta6-tracker"
@@ -57,6 +62,10 @@ id = "c93739a812ea477d8cbba96d4b23e469"
 [[env.production.kv_namespaces]]
 binding = "gta6_capacity"
 id = "35f61412e3ec47c7b1b8c68e7eac995e"
+
+[[env.production.kv_namespaces]]
+binding = "gta6_deletion_tokens"
+id = "977c7af3698e48658ecd3730691e83fe"
 
 # Dev environment configuration
 [env.dev]
@@ -80,6 +89,10 @@ id = "c93739a812ea477d8cbba96d4b23e469"
 binding = "gta6_capacity"
 id = "35f61412e3ec47c7b1b8c68e7eac995e"
 
+[[env.dev.kv_namespaces]]
+binding = "gta6_deletion_tokens"
+id = "977c7af3698e48658ecd3730691e83fe"
+
 # Preview environment configuration (for pull requests)
 [env.preview]
 name = "gta6-tracker-preview"
@@ -101,3 +114,7 @@ id = "c93739a812ea477d8cbba96d4b23e469"
 [[env.preview.kv_namespaces]]
 binding = "gta6_capacity"
 id = "35f61412e3ec47c7b1b8c68e7eac995e"
+
+[[env.preview.kv_namespaces]]
+binding = "gta6_deletion_tokens"
+id = "977c7af3698e48658ecd3730691e83fe"

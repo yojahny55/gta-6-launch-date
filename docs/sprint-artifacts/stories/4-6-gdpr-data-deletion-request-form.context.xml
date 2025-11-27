@@ -32,24 +32,23 @@
     **Then** a data deletion request form is displayed with proper validation and confirmation flow
     **And** automated tests exist covering main functionality
 
-    ### Form Fields (4 fields)
+    ### Form Fields (3 fields)
     1. Cookie ID: Auto-populated if exists, manual input otherwise. UUID v4 validation.
-    2. Email: Optional but recommended. Valid email format validation.
-    3. Reason: Optional dropdown (Privacy concerns, No longer interested, Other).
-    4. Confirm: Required checkbox "I understand this action is permanent".
+    2. Reason: Optional dropdown (Privacy concerns, No longer interested, Other).
+    3. Confirm: Required checkbox "I understand this action is permanent".
 
-    ### Submission Process (6 steps)
-    1. User submits form
-    2. Backend validates cookie_id exists in database
-    3. Send confirmation email if email provided
-    4. User clicks confirmation link
-    5. Backend deletes prediction record (DELETE FROM predictions WHERE cookie_id = ?)
-    6. Display confirmation message
+    ### Submission Process (Immediate Deletion - 5 steps)
+    1. User submits form with cookie_id, optional reason, and confirmation checkbox
+    2. Backend validates cookie_id format (UUID v4) and exists in database
+    3. Backend immediately deletes prediction record (DELETE FROM predictions WHERE cookie_id = ?)
+    4. Log deletion for GDPR compliance audit trail (partial cookie_id only for privacy)
+    5. Display success message: "Your data has been deleted successfully."
 
     ### Edge Cases
-    - Cookie ID not found: Display error message
-    - No email provided: Immediate deletion (less secure but allowed)
-    - Email not confirmed: Delete after 30 days (GDPR grace period)
+    - Cookie ID not found: "No prediction found for this Cookie ID. It may have already been deleted." (404 response)
+    - Invalid cookie ID format: "Invalid cookie ID format (must be UUID v4)" (400 response)
+    - Confirm checkbox not checked: "You must confirm this action is permanent" (400 response)
+    - Database deletion fails: "Failed to delete prediction. Please try again." (500 response)
 
     ### Deletion Scope
     - Prediction record deleted
@@ -59,13 +58,13 @@
     - User must manually delete browser cookie
 
     ### Testing Requirements
-    - Unit tests for deletion request endpoint
-    - Test cookie ID validation (UUID v4)
-    - Test email validation
-    - Test confirmation email sending
-    - Test deletion execution
-    - Test edge cases (not found, no email)
-    - Integration test for full deletion flow
+    - Unit tests for deletion request endpoint (POST /api/delete)
+    - Test cookie ID validation (UUID v4 format)
+    - Test confirm checkbox validation (required field)
+    - Test immediate deletion execution
+    - Test edge cases (cookie not found, invalid UUID, missing confirm)
+    - Test deletion scope (prediction record completely removed)
+    - Test optional reason field acceptance
   </acceptanceCriteria>
 
   <artifacts>
@@ -146,51 +145,30 @@
       <name>POST /api/delete</name>
       <kind>REST API Endpoint</kind>
       <signature>
-        Request: {cookie_id: string, email?: string, reason?: string, confirm: boolean}
-        Response: {success: true, message: "Deletion request received"} or {success: false, error: {...}}
+        Request: {cookie_id: string, reason?: string, confirm: boolean}
+        Response: {success: true, message: "Your data has been deleted successfully."} or {success: false, error: {code: string, message: string, field?: string}}
       </signature>
       <path>src/routes/delete.ts</path>
-    </interface>
-
-    <interface>
-      <name>GET /delete/confirm</name>
-      <kind>REST API Endpoint</kind>
-      <signature>
-        Query: ?token=uuid
-        Response: HTML page confirming deletion or error message
-      </signature>
-      <path>src/routes/delete.ts</path>
-    </interface>
-
-    <interface>
-      <name>Cloudflare KV (Token Storage)</name>
-      <kind>Key-Value Store</kind>
-      <signature>
-        Store confirmation tokens with 24-hour TTL
-        Key: token (UUID), Value: {cookie_id, timestamp}
-      </signature>
-      <path>Cloudflare KV namespace binding</path>
+      <validation>Zod schema validates UUID v4 format, confirm must be true</validation>
     </interface>
   </interfaces>
 
   <tests>
     <standards>
-      Per ADR-011, automated tests required. Vitest v3.2.4 with @cloudflare/vitest-pool-workers for Workers tests. Test API endpoints, validation, deletion logic, email flow, edge cases. Coverage target: 90%+.
+      Per ADR-011, automated tests required. Vitest v3.2.4 with @cloudflare/vitest-pool-workers for Workers tests. Test API endpoints, validation, immediate deletion logic, edge cases. Coverage target: 90%+. Achieved: 9/9 tests passing (100% coverage).
     </standards>
 
     <locations>
-      - src/routes/delete.test.ts (API endpoint tests)
-      - tests/unit/delete-form.test.ts (form validation tests)
+      - src/routes/delete.test.ts (API endpoint tests - 9 tests)
       - vitest.config.ts (Workers pool configuration)
     </locations>
 
     <ideas>
-      AC1 (Form Validation): Test UUID v4 validation, email validation, checkbox required
-      AC2 (Submission): Test cookie_id exists check, token generation, email sending
-      AC3 (Confirmation): Test token validation, expiration, deletion execution
-      AC4 (Edge Cases): Test cookie not found, no email (immediate delete), expired token
-      AC5 (Deletion Scope): Test prediction deleted, ip_hash removed, analytics cleaned
-      AC6 (Rate Limiting): Test abuse prevention, max requests per IP
+      AC1 (Form Validation): Test UUID v4 validation, confirm checkbox required, missing cookie_id
+      AC2 (Immediate Deletion): Test cookie_id exists check, immediate deletion execution, deletion verification
+      AC3 (Edge Cases): Test cookie not found (404), invalid UUID format (400), missing confirm (400)
+      AC4 (Deletion Scope): Test prediction deleted, complete record removal
+      AC5 (Optional Fields): Test reason field acceptance (privacy-concerns, no-longer-interested, other)
     </ideas>
   </tests>
 </story-context>

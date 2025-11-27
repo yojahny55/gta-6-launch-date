@@ -1,0 +1,144 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.6</storyId>
+    <title>Performance Optimization for Fast Load Times</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-6-performance-optimization-for-fast-load-times.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>the site to load instantly</iWant>
+    <soThat>I don't abandon it due to slow performance</soThat>
+    <tasks>Optimize for &lt;2s desktop, &lt;3s mobile 3G load times (FR40). Achieve Lighthouse Performance &gt;90 (FR94). Techniques: minify HTML/CSS/JS, inline critical CSS, defer non-critical JS, lazy load chart library, WebP images with srcset, system fonts or font-display:swap, Cloudflare CDN caching (1-year static assets), stats API 5-min cache, minimize API calls. Monitor Core Web Vitals (LCP, FID, CLS) via Cloudflare Analytics (FR102).</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    Load times: Desktop &lt;2s, Mobile 3G &lt;3s (FR40). Lighthouse scores all &gt;90 (Performance, Accessibility, Best Practices, SEO - FR94). Optimizations: Minified HTML/CSS/JS, inline critical CSS, deferred non-critical JS, lazy loaded chart library, WebP images, system fonts or font-display:swap, Cloudflare CDN with 1-year cache headers for static assets, 5-min stats API cache. Monitoring: Core Web Vitals tracked (LCP, FID, CLS), Cloudflare Analytics, alert if p95 &gt;3s (FR102).
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>PerformanceOptimizationService</title>
+        <section>Services and Modules</section>
+        <snippet>Bundle optimization, lazy loading, caching via Vite build + Workers cache. Inputs: Static assets, API responses. Outputs: Optimized bundles, cached responses. Targets: &lt;2s desktop, &lt;3s mobile, Lighthouse &gt;90.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-social-sharing-virality.md</path>
+        <title>Story 5.6: Performance</title>
+        <section>Performance targets and optimization techniques</section>
+        <snippet>FR40 (&lt;2s desktop, &lt;3s mobile), FR94 (Lighthouse &gt;90), FR102 (performance monitoring). Techniques: minification, critical CSS, deferred JS, lazy loading, WebP, CDN caching, API caching.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>vite.config.ts</path>
+        <kind>config</kind>
+        <symbol>Vite build configuration</symbol>
+        <lines>all</lines>
+        <reason>Vite handles build optimization - minification, tree-shaking, code splitting, bundle analysis</reason>
+      </artifact>
+      <artifact>
+        <path>package.json</path>
+        <kind>config</kind>
+        <symbol>Build scripts</symbol>
+        <lines>6-20</lines>
+        <reason>Build scripts (npm run build) - runs Tailwind CSS build + Vite optimization + TypeScript compilation</reason>
+      </artifact>
+      <artifact>
+        <path>wrangler.toml</path>
+        <kind>config</kind>
+        <symbol>Cloudflare Workers configuration</symbol>
+        <lines>all</lines>
+        <reason>Workers deployment config - cache headers, asset serving, CDN configuration</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>file</kind>
+        <symbol>HTML with script/link tags</symbol>
+        <lines>all</lines>
+        <reason>HTML where critical CSS inline, defer attributes, lazy loading attributes will be applied</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency>
+          <name>vite</name>
+          <version>^5.0.0</version>
+          <purpose>Build tool for minification, tree-shaking, code splitting, bundle optimization</purpose>
+        </dependency>
+        <dependency>
+          <name>tailwindcss</name>
+          <version>^4.0.0</version>
+          <purpose>CSS framework with tree-shaking (removes unused classes in production build)</purpose>
+        </dependency>
+      </node>
+      <cloudflare>
+        <dependency>
+          <name>Cloudflare Pages CDN</name>
+          <purpose>Global CDN for static asset caching and delivery</purpose>
+        </dependency>
+        <dependency>
+          <name>Cloudflare Workers Cache API</name>
+          <purpose>5-minute cache for /api/stats to reduce D1 queries</purpose>
+        </dependency>
+        <dependency>
+          <name>Cloudflare Web Analytics</name>
+          <purpose>Track Core Web Vitals (LCP, FID, CLS) and load times (FR102)</purpose>
+        </dependency>
+      </cloudflare>
+      <external>
+        <api>
+          <name>Google Lighthouse CI</name>
+          <endpoint>https://github.com/GoogleChrome/lighthouse-ci</endpoint>
+          <purpose>Automated Lighthouse performance testing in CI/CD pipeline</purpose>
+        </api>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Desktop load time target: &lt;2 seconds (FR40)</constraint>
+    <constraint>Mobile 3G load time target: &lt;3 seconds (FR40)</constraint>
+    <constraint>Lighthouse Performance score: &gt;90 (FR94)</constraint>
+    <constraint>Lighthouse Accessibility score: &gt;90 (FR94)</constraint>
+    <constraint>Lighthouse Best Practices score: &gt;90 (FR94)</constraint>
+    <constraint>Lighthouse SEO score: &gt;90 (FR94)</constraint>
+    <constraint>Core Web Vitals: LCP &lt;2.5s, FID &lt;100ms, CLS &lt;0.1 (p75)</constraint>
+    <constraint>Total page weight: &lt;200KB (including HTML, CSS, JS, images)</constraint>
+    <constraint>JavaScript bundle: &lt;30KB gzipped</constraint>
+    <constraint>CSS bundle: &lt;10KB gzipped (Tailwind tree-shaken)</constraint>
+    <constraint>HTML: &lt;20KB gzipped</constraint>
+    <constraint>OG image: &lt;300KB (1200x630px WebP)</constraint>
+    <constraint>Static assets cache: 1 year (immutable, cache-busting via hash)</constraint>
+    <constraint>HTML cache: No cache (always fresh for crawlers)</constraint>
+    <constraint>Chart.js lazy loaded only on user click (code splitting)</constraint>
+    <constraint>Monitor and alert if p95 load time &gt;3s (FR102)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Vite Build Configuration</name>
+      <kind>Build config</kind>
+      <signature>vite.config.ts with build.minify, build.rollupOptions, build.target</signature>
+      <path>vite.config.ts</path>
+    </interface>
+    <interface>
+      <name>Cloudflare Cache Headers</name>
+      <kind>HTTP headers</kind>
+      <signature>Cache-Control: public, max-age=31536000, immutable (for static assets)</signature>
+      <path>Cloudflare Pages automatic caching</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Lighthouse CI automated tests in GitHub Actions. Bundle size tests to ensure &lt;30KB JS, &lt;10KB CSS. Load time tests with Lighthouse throttled 3G. Core Web Vitals monitoring via Cloudflare RUM.</standards>
+    <locations>Lighthouse CI: .github/workflows/lighthouse-ci.yml (NEW), Bundle size: npm run build validation, Load time: Lighthouse automated tests</locations>
+    <ideas>Test Lighthouse Performance &gt;90 on desktop. Test Lighthouse mobile 3G &gt;90. Test bundle sizes: JS &lt;30KB, CSS &lt;10KB, HTML &lt;20KB. Test static assets have 1-year cache headers. Test critical CSS inlined in HTML. Test non-critical JS deferred (defer attribute). Test chart library lazy loaded on click. Test Core Web Vitals: LCP &lt;2.5s, FID &lt;100ms, CLS &lt;0.1.</ideas>
+  </tests>
+</story-context>

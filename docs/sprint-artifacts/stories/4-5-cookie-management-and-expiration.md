@@ -1,6 +1,6 @@
 # Story 4.5: Cookie Management and Expiration
 
-Status: review
+Status: done
 
 ## Story
 

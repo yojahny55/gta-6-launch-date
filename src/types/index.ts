@@ -200,4 +200,5 @@ export interface Env {
   gta6_rate_limit?: KVNamespace; // Cloudflare KV for rate limiting (Story 2.6)
   gta6_stats_cache?: KVNamespace; // Cloudflare KV for statistics caching (Story 2.10)
   gta6_capacity?: KVNamespace; // Cloudflare KV for capacity monitoring and queue (Story 3.7)
+  gta6_deletion_tokens?: KVNamespace; // Cloudflare KV for deletion confirmation tokens (Story 4.6)
 }
