@@ -190,6 +190,32 @@ export interface QueuedSubmission {
 }
 
 // Cloudflare Workers Environment
+/**
+ * Open Graph meta tags interface (Story 5.3)
+ * Defines all meta tags for rich social previews
+ */
+export interface OpenGraphMetaTags {
+  'og:title': string;
+  'og:description': string;
+  'og:image': string;
+  'og:url': string;
+  'og:type': 'website';
+  'twitter:card': 'summary_large_image';
+  'twitter:title': string;
+  'twitter:description': string;
+  'twitter:image': string;
+}
+
+/**
+ * Personalized meta tag data (Story 5.3 - FR23)
+ * Used when ?u={hash} parameter is present
+ */
+export interface PersonalizedMetaData {
+  userDate: string; // User's predicted date (ISO 8601)
+  deltaDays: number; // Difference from median
+  sentiment: 'optimistic' | 'pessimistic' | 'aligned';
+}
+
 export interface Env {
   DB: D1Database; // D1 database binding (Story 1.2)
   IP_HASH_SALT: string; // Legacy salt (deprecated - use SALT_V1)

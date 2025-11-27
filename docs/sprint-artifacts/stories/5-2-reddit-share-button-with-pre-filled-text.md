@@ -1,6 +1,6 @@
 # Story 5.2: Reddit Share Button with Pre-filled Text
 
-Status: ready-for-dev
+Status: review
 
 ## Story
 
@@ -54,50 +54,50 @@ Check out the full data and add your prediction:
 
 ## Tasks / Subtasks
 
-- [ ] Task 1: Implement Reddit post text generation (AC: Reddit post template)
-  - [ ] Create `generateRedditPost(userDate, medianDate)` function
-  - [ ] Generate title: "GTA 6 Launch Date Predictions - What does the community think?"
-  - [ ] Generate body with user prediction + median + comparison
-  - [ ] Calculate delta days between user date and median
-  - [ ] Include URL with tracking parameters
+- [x] Task 1: Implement Reddit post text generation (AC: Reddit post template)
+  - [x] Create `generateRedditPost(userDate, medianDate)` function
+  - [x] Generate title: "GTA 6 Launch Date Predictions - What does the community think?"
+  - [x] Generate body with user prediction + median + comparison
+  - [x] Calculate delta days between user date and median
+  - [x] Include URL with tracking parameters
 
-- [ ] Task 2: Create Reddit share button UI (AC: Button placement)
-  - [ ] Add button next to Twitter share button
-  - [ ] Position in submission confirmation section
-  - [ ] Style with Reddit orange color (#FF4500)
-  - [ ] Add Reddit Snoo logo icon (SVG or icon font)
-  - [ ] Ensure button is responsive on mobile
+- [x] Task 2: Create Reddit share button UI (AC: Button placement)
+  - [x] Add button next to Twitter share button
+  - [x] Position in submission confirmation section
+  - [x] Style with Reddit orange color (#FF4500)
+  - [x] Add Reddit Snoo logo icon (SVG or icon font)
+  - [x] Ensure button is responsive on mobile
 
-- [ ] Task 3: Implement Reddit submit API integration (AC: Reddit post template)
-  - [ ] Use Reddit submit URL: `https://reddit.com/submit?url={url}&title={title}`
-  - [ ] URL-encode title and URL parameters
-  - [ ] Note: Reddit doesn't support pre-filled body text via API
-  - [ ] Open in new window/tab with `window.open()`
+- [x] Task 3: Implement Reddit submit API integration (AC: Reddit post template)
+  - [x] Use Reddit submit URL: `https://reddit.com/submit?url={url}&title={title}`
+  - [x] URL-encode title and URL parameters
+  - [x] Note: Reddit doesn't support pre-filled body text via API
+  - [x] Open in new window/tab with `window.open()`
 
-- [ ] Task 4: Add subreddit selection (AC: Subreddit suggestions)
-  - [ ] Default subreddit: r/GTA6
-  - [ ] Allow user to change subreddit in Reddit UI (Reddit's native functionality)
-  - [ ] Document alternative subreddits in UI tooltip/hint
+- [x] Task 4: Add subreddit selection (AC: Subreddit suggestions)
+  - [x] Default subreddit: r/GTA6
+  - [x] Allow user to change subreddit in Reddit UI (Reddit's native functionality)
+  - [x] Document alternative subreddits in UI tooltip/hint
 
-- [ ] Task 5: Add URL tracking parameters (AC: URL parameters)
-  - [ ] Append `?ref=reddit` to shared URL
-  - [ ] Generate optional `u={hash}` for unique user tracking
-  - [ ] Use cookie_id hash for u parameter (privacy-preserving)
-  - [ ] Validate URL encoding
+- [x] Task 5: Add URL tracking parameters (AC: URL parameters)
+  - [x] Append `?ref=reddit` to shared URL
+  - [x] Generate optional `u={hash}` for unique user tracking
+  - [x] Use cookie_id hash for u parameter (privacy-preserving)
+  - [x] Validate URL encoding
 
-- [ ] Task 6: Implement share button click tracking (AC: Share analytics)
-  - [ ] Track button clicks via onclick event
-  - [ ] Log share event before opening Reddit window
-  - [ ] Store share click count (client-side or API)
-  - [ ] Track clicks from Reddit referrer (`ref=reddit` parameter)
+- [x] Task 6: Implement share button click tracking (AC: Share analytics)
+  - [x] Track button clicks via onclick event
+  - [x] Log share event before opening Reddit window
+  - [x] Store share click count (client-side or API)
+  - [x] Track clicks from Reddit referrer (`ref=reddit` parameter)
 
-- [ ] Task 7: Write automated tests (ADR-011 Testing Requirements)
-  - [ ] Create `tests/unit/reddit-share.test.ts`
-  - [ ] Test Reddit post text generation with various dates
-  - [ ] Test personalization logic (optimistic/pessimistic)
-  - [ ] Test URL encoding correctness
-  - [ ] Test tracking parameter generation
-  - [ ] Verify test coverage: All acceptance criteria covered
+- [x] Task 7: Write automated tests (ADR-011 Testing Requirements)
+  - [x] Create `tests/unit/reddit-share.test.ts`
+  - [x] Test Reddit post text generation with various dates
+  - [x] Test personalization logic (optimistic/pessimistic)
+  - [x] Test URL encoding correctness
+  - [x] Test tracking parameter generation
+  - [x] Verify test coverage: All acceptance criteria covered
 
 ## Dev Notes
 
@@ -242,10 +242,76 @@ tests/
 
 ### Agent Model Used
 
-{{agent_model_name_version}}
+claude-sonnet-4-5-20250929
 
 ### Debug Log References
 
+**Implementation Plan:**
+- Reused patterns from Story 5.1 (Twitter share) for consistency
+- Created reddit-share.js module following same architecture as twitter-share.js
+- Implemented generateRedditPost() with personalized text generation
+- Added Reddit Submit API integration (URL + title only, no body support)
+- Implemented URL tracking with ref=reddit and u={hash} parameters
+- Created comprehensive test suite with 27 tests covering all ACs
+
+**Architecture Decisions:**
+- Pure frontend implementation (zero backend changes)
+- Shared trackShareClick() function between Twitter and Reddit
+- URL encoding via URLSearchParams (uses + for spaces, valid per RFC)
+- Window dimensions: 800x600 for Reddit submit page (responsive)
+
 ### Completion Notes List
 
+**✅ Implementation Complete (2025-11-27):**
+- Created `/public/js/reddit-share.js` module with all functions
+- Added Reddit share button to HTML (next to Twitter button)
+- Wired up click handler in app.js
+- Implemented all 6 functional tasks successfully
+- Wrote 27 comprehensive unit tests (all passing)
+
+**Test Coverage:**
+- 27/27 tests passing ✓
+- Coverage includes: post generation, URL encoding, tracking, error handling
+- Edge cases tested: leap years, year boundaries, missing dates
+- Integration tests verify full share flow
+
+**Key Features Implemented:**
+1. Reddit post text generation with personalization (optimistic/pessimistic/aligned)
+2. Reddit share button UI with Reddit orange (#FF4500) and Snoo logo
+3. Reddit Submit API integration with proper URL encoding
+4. Subreddit suggestions via tooltip (r/GTA6, r/gaming, r/Games, r/rockstar)
+5. URL tracking with ref=reddit and privacy-preserving u={hash} parameter
+6. Share button click tracking with non-blocking analytics
+
+**Reused from Story 5.1:**
+- Share button architecture and patterns
+- Date formatting logic (formatDateForReddit)
+- Delta calculation (calculateDaysDifference)
+- Cookie ID hashing for u parameter
+- Error handling patterns
+
+**Zero Breaking Changes:**
+- All existing tests still passing (1090+ total tests)
+- No API changes required
+- Pure frontend feature
+
 ### File List
+
+**New Files:**
+- `public/js/reddit-share.js` - Reddit share module (210 lines)
+- `tests/unit/reddit-share.test.ts` - Comprehensive test suite (27 tests)
+
+**Modified Files:**
+- `public/index.html` - Added Reddit share button UI
+- `public/app.js` - Added Reddit share handler integration
+- `docs/sprint-artifacts/stories/5-2-reddit-share-button-with-pre-filled-text.md` - Story completion tracking
+
+### Change Log
+
+**2025-11-27** - Story 5.2 implementation complete (all 7 tasks done, 27/27 tests passing)
+- Created reddit-share.js module with Reddit post generation and Submit API integration
+- Added Reddit share button to HTML next to Twitter button (Reddit orange #FF4500)
+- Implemented URL tracking with ref=reddit and u={hash} parameters
+- Added comprehensive test suite (27 tests, all passing)
+- Zero backend changes required (pure frontend feature)
+- Reused patterns from Story 5.1 for consistency

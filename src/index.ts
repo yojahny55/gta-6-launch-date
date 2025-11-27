@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import type { Env } from './types';
 import { rateLimitMiddleware } from './middleware/rate-limiter';
 import { securityHeadersMiddleware } from './middleware/security-headers';
+import { metaInjectionMiddleware } from './middleware/meta-injection';
 import { createPredictRoutes } from './routes/predict';
 import { createStatsRoutes } from './routes/stats';
 import { createPredictionsRoutes } from './routes/predictions';
@@ -10,6 +11,10 @@ import { createDeleteRoutes } from './routes/delete';
 import { runDailyCleanup, generateCleanupReportSummary } from './services/cleanup.service';
 
 const app = new Hono<{ Bindings: Env }>();
+
+// Apply meta injection middleware to all routes (Story 5.3)
+// Must be applied BEFORE other middleware to intercept HTML responses
+app.use('*', metaInjectionMiddleware);
 
 // Apply security headers middleware to all routes (Story 3.5 follow-up)
 app.use('*', securityHeadersMiddleware);
@@ -32,8 +37,26 @@ app.route('/', createDegradationRoutes());
 // Register delete routes (Story 4.6)
 app.route('/', createDeleteRoutes());
 
+// Health check endpoint
 app.get('/health', (c) => {
   return c.json({ status: 'healthy', timestamp: new Date().toISOString() });
+});
+
+// Serve HTML files with meta injection (Story 5.3)
+// Handle index.html requests to inject dynamic meta tags
+app.get('/', async (c) => {
+  // Fetch the HTML file from Assets
+  const response = await c.env.ASSETS.fetch(new Request('https://dummy.com/index.html'));
+
+  if (!response.ok) {
+    return c.notFound();
+  }
+
+  // Clone response to read body
+  const html = await response.text();
+
+  // Return HTML response (meta injection middleware will process it)
+  return c.html(html);
 });
 
 // Database connection test endpoint (Story 1.2 - Task 5)

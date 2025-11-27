@@ -92,8 +92,8 @@ development_status:
   # Epic 5: Social Sharing & Virality
   epic-5: contexted  # Tech spec created 2025-11-26
   5-1-twitter-x-share-button-with-pre-filled-text: done  # Implementation completed 2025-11-27 (all 7 tasks done, 28/28 tests passing, pure frontend feature with zero backend changes). CODE REVIEW APPROVED 2025-11-27 (6/6 ACs implemented, 43/43 tasks verified, exemplary quality with modular design and comprehensive security, ZERO blocking issues, production ready)
-  5-2-reddit-share-button-with-pre-filled-text: ready-for-dev
-  5-3-open-graph-meta-tags-for-rich-previews: ready-for-dev
+  5-2-reddit-share-button-with-pre-filled-text: review  # Implementation completed 2025-11-27 (all 7 tasks done, 27/27 tests passing, pure frontend feature reusing Twitter share patterns)
+  5-3-open-graph-meta-tags-for-rich-previews: review  # Implementation completed 2025-11-27 (all 8 tasks done except optional Task 6, 21/21 tests passing, dynamic OG tags with 5-min cache, personalized meta tags with ?u={hash} parameter, SVG OG image created)
   5-4-seo-meta-tags-and-structured-data: ready-for-dev
   5-5-mobile-responsive-design: ready-for-dev
   5-6-performance-optimization-for-fast-load-times: ready-for-dev

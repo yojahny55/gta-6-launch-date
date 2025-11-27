@@ -1049,7 +1049,8 @@ let shareButtonsElements = null;
 function initShareButtonsElements() {
   shareButtonsElements = {
     container: document.getElementById('share-buttons-section'),
-    twitterBtn: document.getElementById('twitter-share-btn')
+    twitterBtn: document.getElementById('twitter-share-btn'),
+    redditBtn: document.getElementById('reddit-share-btn')
   };
 }
 
@@ -1139,6 +1140,42 @@ async function handleTwitterShareClick() {
 }
 
 /**
+ * Handle Reddit share button click (Story 5.2)
+ * AC: Opens Reddit Submit page with pre-filled title and URL
+ */
+async function handleRedditShareClick() {
+  try {
+    // Import reddit-share module dynamically
+    const { openRedditShare, trackShareClick } = await import('/js/reddit-share.js');
+
+    // Get user's cookie ID for tracking parameter
+    const cookieId = getCookieID();
+
+    // Track share button click event (AC: Share analytics)
+    trackShareClick('reddit', {
+      user_prediction: latestPrediction.userDate,
+      median_prediction: latestPrediction.medianDate
+    });
+
+    // Open Reddit share dialog
+    const success = openRedditShare(
+      latestPrediction.userDate,
+      latestPrediction.medianDate,
+      cookieId
+    );
+
+    if (!success) {
+      console.error('Failed to open Reddit share dialog');
+      // Show user-friendly error message
+      alert('Unable to open Reddit share. Please try again.');
+    }
+  } catch (error) {
+    console.error('Error handling Reddit share click:', error);
+    alert('Unable to open Reddit share. Please try again.');
+  }
+}
+
+/**
  * Application Initialization
  * Runs on page load to set up cookie tracking, form handling, and stats display
  */
@@ -1176,9 +1213,15 @@ document.addEventListener('DOMContentLoaded', function() {
     twitterShareBtn.addEventListener('click', handleTwitterShareClick);
   }
 
+  // Set up Reddit share button handler (Story 5.2)
+  const redditShareBtn = document.getElementById('reddit-share-btn');
+  if (redditShareBtn) {
+    redditShareBtn.addEventListener('click', handleRedditShareClick);
+  }
+
   console.log('Date picker initialized with validation');
   console.log('Stats display initialized');
-  console.log('Share buttons initialized');
+  console.log('Share buttons initialized (Twitter + Reddit)');
 });
 
 // Export functions for testing and future use
