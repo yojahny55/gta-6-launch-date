@@ -315,10 +315,11 @@ describe('Predictions Aggregation Service', () => {
 
       await invalidateAllCaches(mockKV);
 
-      expect(mockKV.delete).toHaveBeenCalledTimes(2);
-      // Should delete both cache keys
+      expect(mockKV.delete).toHaveBeenCalledTimes(3);
+      // Should delete all cache keys including sentiment (Story 10.1)
       expect(mockKV.delete).toHaveBeenCalledWith('stats:latest');
       expect(mockKV.delete).toHaveBeenCalledWith('predictions:aggregated');
+      expect(mockKV.delete).toHaveBeenCalledWith('sentiment:score');
     });
 
     it('should handle KV not available gracefully', async () => {
