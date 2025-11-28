@@ -679,20 +679,16 @@ let statsElements = null;
 /**
  * Initialize stats DOM element references
  * Caches DOM lookups for performance
+ * Updated for new dashboard grid layout (Story 3.1b)
  */
 function initStatsElements() {
   statsElements = {
-    loading: document.getElementById('stats-loading'),
-    content: document.getElementById('stats-content'),
-    threshold: document.getElementById('stats-threshold'),
-    error: document.getElementById('stats-error'),
+    // New dashboard card elements
     median: document.getElementById('stats-median'),
+    medianSubtext: document.getElementById('stats-median-subtext'),
     count: document.getElementById('stats-count-value'),
-    min: document.getElementById('stats-min'),
-    max: document.getElementById('stats-max'),
-    errorMessage: document.getElementById('stats-error-message'),
-    retryBtn: document.getElementById('stats-retry-btn'),
-    thresholdCount: document.getElementById('stats-threshold-count'),
+    // Min/max removed from new dashboard (not displayed in cards)
+    // State management elements removed (new dashboard has simpler display)
   };
 }
 
@@ -748,29 +744,8 @@ function formatStats(stats) {
   };
 }
 
-/**
- * Show specific stats display state (loading, content, threshold, error)
- * Hides all states except the specified one
- *
- * @param {'loading' | 'content' | 'threshold' | 'error'} state - State to show
- */
-function showStatsState(state) {
-  if (!statsElements) return;
-
-  const states = ['loading', 'content', 'threshold', 'error'];
-
-  states.forEach((s) => {
-    // Try cached element first, fallback to direct DOM query if null
-    const element = statsElements[s] || document.getElementById(`stats-${s}`);
-    if (element) {
-      if (s === state) {
-        element.classList.remove('hidden');
-      } else {
-        element.classList.add('hidden');
-      }
-    }
-  });
-}
+// showStatsState() function removed - new dashboard doesn't use state management divs
+// Dashboard cards show "--" by default and are updated directly via renderStats()
 
 /**
  * Announce message to screen readers via ARIA live region
@@ -807,76 +782,42 @@ function renderStats(stats) {
   const formatted = formatStats(stats);
 
   // FR99: Check threshold (< 50 predictions)
+  // If below threshold, show placeholder values in dashboard cards
   if (formatted.rawCount < STATS_THRESHOLD) {
-    // Show threshold message
-    if (statsElements.thresholdCount) {
-      statsElements.thresholdCount.textContent = formatted.rawCount.toString();
+    if (statsElements.median) {
+      statsElements.median.textContent = '--';
     }
-    showStatsState('threshold');
-    announceToScreenReader(`${formatted.rawCount} of 50 predictions submitted. Need more predictions to show community median.`);
+    if (statsElements.medianSubtext) {
+      statsElements.medianSubtext.textContent = 'Need at least 50 predictions';
+    }
+    if (statsElements.count) {
+      statsElements.count.textContent = formatted.rawCount.toString();
+    }
+    console.log(`Below threshold: ${formatted.rawCount} of 50 predictions`);
     return;
   }
 
-  // Update DOM elements with formatted stats
+  // Update dashboard card elements with formatted stats
   if (statsElements.median) {
     statsElements.median.textContent = formatted.median;
+  }
+  if (statsElements.medianSubtext) {
+    statsElements.medianSubtext.textContent = 'The "Wisdom of Crowds"';
   }
   if (statsElements.count) {
     statsElements.count.textContent = formatted.count;
   }
-  if (statsElements.min) {
-    statsElements.min.textContent = formatted.min;
-  }
-  if (statsElements.max) {
-    statsElements.max.textContent = formatted.max;
+
+  // Update My Prediction card delta if card is visible (Story 10.3)
+  if (typeof updateMyPredictionDelta === 'function') {
+    updateMyPredictionDelta(stats);
   }
 
-  showStatsState('content');
-
-  // Announce stats loaded to screen readers
-  announceToScreenReader(`Statistics loaded. Community median prediction: ${formatted.median}. ${formatted.count} predictions submitted.`);
+  console.log('Stats rendered:', formatted);
 }
 
-/**
- * Show error state with message and retry button
- * AC: FR59 - User-friendly error messages
- *
- * @param {string} message - Error message to display
- */
-function showStatsError(message) {
-  if (!statsElements) {
-    // Fallback: Try to show error directly if statsElements not initialized
-    const loadingDiv = document.getElementById('stats-loading');
-    const contentDiv = document.getElementById('stats-content');
-    const thresholdDiv = document.getElementById('stats-threshold');
-    const errorDiv = document.getElementById('stats-error');
-    const errorMessage = document.getElementById('stats-error-message');
-
-    // Hide all other states
-    if (loadingDiv) loadingDiv.classList.add('hidden');
-    if (contentDiv) contentDiv.classList.add('hidden');
-    if (thresholdDiv) thresholdDiv.classList.add('hidden');
-
-    // Show error state
-    if (errorDiv) errorDiv.classList.remove('hidden');
-    if (errorMessage) errorMessage.textContent = message || 'Unable to load statistics';
-    return;
-  }
-
-  // Refresh error elements if they're null (defensive coding for test environments)
-  if (!statsElements.error) {
-    statsElements.error = document.getElementById('stats-error');
-  }
-  if (!statsElements.errorMessage) {
-    statsElements.errorMessage = document.getElementById('stats-error-message');
-  }
-
-  if (statsElements.errorMessage) {
-    statsElements.errorMessage.textContent = message || 'Unable to load statistics';
-  }
-
-  showStatsState('error');
-}
+// showStatsError() function removed - new dashboard doesn't have error state divs
+// Errors are logged to console; dashboard cards keep showing "--" placeholder
 
 /**
  * Fetch statistics from API with retry logic and fallback (Story 3.5)
@@ -963,16 +904,23 @@ async function fetchStats(retryCount = 0, bypassCache = false) {
  * @param {boolean} bypassCache - Force fresh fetch, bypassing browser cache
  */
 async function loadStats(bypassCache = false) {
-  // Show loading state
-  showStatsState('loading');
+  // Simplified for new dashboard - no loading states needed
+  // Dashboard cards show "--" by default in HTML
 
   try {
     const stats = await fetchStats(0, bypassCache);
     renderStats(stats);
+
+    // Initialize My Prediction card after first stats load (Story 10.3)
+    // Only initialize once (check if initMyPrediction function exists)
+    if (typeof initMyPrediction === 'function' && !window.myPredictionInitialized) {
+      initMyPrediction(stats);
+      window.myPredictionInitialized = true;
+    }
   } catch (error) {
     console.error('Failed to load stats after retries:', error.message);
-    // AC10: If stats fetch fails completely, show placeholder
-    showStatsError('Unable to load statistics. Please try again.');
+    // Show error in console, cards will keep showing "--" placeholder
+    // Could optionally show toast notification here in future
   }
 }
 
@@ -987,19 +935,140 @@ function handleStatsRetry() {
 
 /**
  * Initialize stats display module
- * Sets up DOM references, event listeners, and triggers initial load
+ * Sets up DOM references and triggers initial load
+ * Simplified for new dashboard layout (Story 3.1b)
  */
 function initStatsDisplay() {
   // Cache DOM elements
   initStatsElements();
 
-  // Set up retry button handler
-  if (statsElements && statsElements.retryBtn) {
-    statsElements.retryBtn.addEventListener('click', handleStatsRetry);
-  }
-
   // Initial stats load
   loadStats();
+}
+
+// ============================================================================
+// Optimism Score Display (Story 10.1)
+// ============================================================================
+
+/**
+ * DOM elements for optimism score
+ */
+let optimismScoreElements = null;
+
+/**
+ * Initialize and cache optimism score DOM elements
+ */
+function initOptimismScoreElements() {
+  optimismScoreElements = {
+    value: document.getElementById('optimism-score-value'),
+    subtext: document.getElementById('optimism-score-subtext'),
+    icon: document.getElementById('optimism-score-icon'),
+  };
+}
+
+/**
+ * Fetch optimism score from API
+ * @returns {Promise<object>} Sentiment data or null on error
+ */
+async function fetchOptimismScore() {
+  try {
+    const response = await fetch('/api/sentiment');
+
+    if (!response.ok) {
+      console.error('Failed to fetch optimism score:', response.status);
+      return null;
+    }
+
+    const result = await response.json();
+
+    if (result.success && result.data) {
+      return result.data;
+    }
+
+    return null;
+  } catch (error) {
+    console.error('Error fetching optimism score:', error);
+    return null;
+  }
+}
+
+/**
+ * Render optimism score with color coding (Story 10.1 - AC6)
+ * Color Coding:
+ * - > 50%: Green (optimistic community)
+ * - 40-50%: Yellow (neutral community)
+ * - < 40%: Red (skeptical community)
+ */
+function renderOptimismScore(data) {
+  if (!optimismScoreElements || !optimismScoreElements.value) {
+    return;
+  }
+
+  // Check for below threshold (FR99)
+  if (data.optimism_score === null) {
+    optimismScoreElements.value.textContent = '--';
+    if (optimismScoreElements.subtext) {
+      optimismScoreElements.subtext.textContent = 'Need at least 50 predictions';
+    }
+    console.log('Optimism score below threshold');
+    return;
+  }
+
+  // Update value
+  optimismScoreElements.value.textContent = `${data.optimism_score}%`;
+
+  // Update subtext to default message
+  if (optimismScoreElements.subtext) {
+    optimismScoreElements.subtext.textContent = 'Believe it hits before \'27';
+  }
+
+  // Update icon color based on score (AC6: Color Coding)
+  if (optimismScoreElements.icon) {
+    const score = data.optimism_score;
+
+    // Remove existing color classes
+    optimismScoreElements.icon.classList.remove('text-green-500', 'text-amber-400', 'text-red-500', 'text-gray-500');
+
+    // Add appropriate color class
+    if (score > 50) {
+      optimismScoreElements.icon.classList.add('text-green-500'); // Optimistic
+    } else if (score >= 40 && score <= 50) {
+      optimismScoreElements.icon.classList.add('text-amber-400'); // Neutral
+    } else {
+      optimismScoreElements.icon.classList.add('text-red-500'); // Skeptical
+    }
+  }
+
+  console.log('Optimism score rendered:', `${data.optimism_score}%`, {
+    optimistic: data.optimistic_count,
+    pessimistic: data.pessimistic_count,
+    total: data.total_count,
+  });
+}
+
+/**
+ * Load optimism score from API and render
+ */
+async function loadOptimismScore() {
+  const data = await fetchOptimismScore();
+
+  if (data) {
+    renderOptimismScore(data);
+  } else {
+    // Keep showing "--" placeholder on error
+    console.log('Optimism score unavailable');
+  }
+}
+
+/**
+ * Initialize optimism score display
+ */
+function initOptimismScoreDisplay() {
+  // Cache DOM elements
+  initOptimismScoreElements();
+
+  // Initial load
+  loadOptimismScore();
 }
 
 // ============================================================================
@@ -1286,44 +1355,58 @@ async function checkExistingPrediction() {
 }
 
 /**
- * Display user's current prediction in the UI
+ * Display user's current prediction in the "My Prediction" card (Story 3.3b)
  * @param {Object} data - Prediction data from API
  */
 function displayCurrentPrediction(data) {
-  const section = document.getElementById('current-prediction-section');
-  const dateElement = document.getElementById('current-prediction-date');
-  const updatedElement = document.getElementById('current-prediction-updated');
+  const card = document.getElementById('my-prediction-card');
+  const dateElement = document.getElementById('my-prediction-date');
+  const deltaElement = document.getElementById('my-prediction-delta');
 
-  if (!section || !dateElement || !updatedElement) {
-    console.warn('Current prediction UI elements not found');
+  if (!card || !dateElement || !deltaElement) {
+    console.warn('My Prediction card elements not found');
     return;
   }
 
-  // FIX: Parse date as local date to avoid timezone shift
-  // "2026-03-15" should display as March 15, not March 14
-  const [year, month, day] = data.predicted_date.split('-').map(Number);
-  const predictionDate = new Date(year, month - 1, day); // month is 0-indexed
-
-  const formattedDate = predictionDate.toLocaleDateString('en-US', {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric',
-  });
-
-  // Format the updated timestamp
-  const updatedDate = new Date(data.updated_at || data.submitted_at);
-  const formattedUpdated = updatedDate.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-  });
-
-  // Update UI
+  // Format the predicted date
+  const formattedDate = formatDateForDisplay(data.predicted_date);
   dateElement.textContent = formattedDate;
-  updatedElement.textContent = `Last updated: ${formattedUpdated}`;
-  section.classList.remove('hidden');
+
+  // Calculate and show delta from median (if stats are available)
+  updatePredictionDelta(data.predicted_date);
+
+  // Show the card
+  card.classList.remove('hidden');
+
+  console.log('My Prediction card displayed:', formattedDate);
+}
+
+/**
+ * Update the delta message in "My Prediction" card with comparison to median
+ * @param {string} predictedDate - User's predicted date (ISO format)
+ */
+async function updatePredictionDelta(predictedDate) {
+  const deltaElement = document.getElementById('my-prediction-delta');
+  if (!deltaElement) return;
+
+  try {
+    // Fetch current stats to get median
+    const stats = await fetchStats(0, false);
+
+    if (stats && stats.median) {
+      // Use comparison.js to calculate delta
+      const comparison = getComparisonMessage(predictedDate, stats.median);
+
+      if (comparison) {
+        deltaElement.textContent = `${comparison.formattedDelta} vs median`;
+      }
+    } else {
+      deltaElement.textContent = 'Median not yet available';
+    }
+  } catch (error) {
+    console.error('Failed to calculate prediction delta:', error);
+    deltaElement.textContent = 'Comparing to community...';
+  }
 }
 
 /**
@@ -1355,6 +1438,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Initialize stats display (Story 3.1)
   initStatsDisplay();
 
+  // Initialize optimism score display (Story 10.1)
+  initOptimismScoreDisplay();
+
+  // Initialize My Prediction card (Story 10.3)
+  // Note: Will be initialized after first stats load completes
+  // See modified loadStats() which calls initMyPrediction()
+
   // Check for existing prediction (UX Enhancement)
   checkExistingPrediction();
 
@@ -1373,9 +1463,13 @@ document.addEventListener('DOMContentLoaded', function() {
     redditShareBtn.addEventListener('click', handleRedditShareClick);
   }
 
+  // Note: "Update Prediction" button handler is now in my-prediction.js (Story 10.3)
+  // No duplicate handler needed here
+
   console.log('Date picker initialized with validation');
   console.log('Stats display initialized');
   console.log('Share buttons initialized (Twitter + Reddit)');
+  console.log('My Prediction card initialized');
 });
 
 // Export functions for testing and future use

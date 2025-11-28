@@ -43,14 +43,8 @@ export function showOptimisticConfirmation(predictedDate) {
       confirmationDateElement.textContent = formatDateForDisplay(predictedDate);
     }
 
-    // Show optimistic ranking (will be updated with actual from API)
-    const confirmationRankElement = document.getElementById('confirmation-rank');
-    if (confirmationRankElement && statsCountElement) {
-      const currentCount = parseInt(statsCountElement.textContent.replace(/,/g, ''), 10);
-      if (!isNaN(currentCount)) {
-        confirmationRankElement.textContent = currentCount.toLocaleString();
-      }
-    }
+    // New dashboard doesn't show confirmation-rank element
+    // Comparison message will be updated when API returns (in updateConfirmationWithActual)
 
     // Apply animation class for success (AC8: Micro-animation)
     applySuccessAnimation();
@@ -69,23 +63,41 @@ export function showOptimisticConfirmation(predictedDate) {
  * @param {Object} apiResponse.stats - Stats object with count, median, etc.
  */
 export function updateConfirmationWithActual(apiResponse) {
-  // Update ranking with actual prediction_id from API (AC4)
-  const confirmationRankElement = document.getElementById('confirmation-rank');
-  if (confirmationRankElement && apiResponse.prediction_id) {
-    confirmationRankElement.textContent = apiResponse.prediction_id.toLocaleString();
-  }
-
   // Update stats count with actual count from API
   const statsCountElement = document.getElementById('stats-count-value');
   if (statsCountElement && apiResponse.stats?.count) {
     statsCountElement.textContent = apiResponse.stats.count.toLocaleString();
   }
 
-  // Prepare screen reader announcement (AC9: FR70)
+  // Check if we've crossed the 50 prediction threshold to show chart
+  const totalPredictions = apiResponse.stats?.total || apiResponse.stats?.count || 0;
+  if (totalPredictions >= 50) {
+    const chartContainer = document.getElementById('chart-container');
+    if (chartContainer && chartContainer.classList.contains('hidden')) {
+      console.log('Threshold reached! Showing chart...');
+      chartContainer.classList.remove('hidden');
+      // Trigger chart initialization if not already loaded
+      if (window.initChart && typeof window.initChart === 'function') {
+        window.initChart();
+      }
+    }
+  }
+
+  // Update comparison message with social comparison (Story 3.2b)
   const predictedDate = apiResponse.predicted_date;
   const medianDate = apiResponse.stats?.median;
 
   if (predictedDate && medianDate) {
+    // Generate comparison message using comparison.js module
+    const comparison = getComparisonMessage(predictedDate, medianDate);
+
+    // Update comparison message in confirmation display
+    const comparisonMessageElement = document.getElementById('comparison-message');
+    if (comparisonMessageElement && comparison) {
+      comparisonMessageElement.textContent = `${comparison.emoji} ${comparison.message} (${comparison.formattedDelta})`;
+    }
+
+    // Prepare screen reader announcement (AC9: FR70)
     announceToScreenReader(predictedDate, medianDate);
   }
 }

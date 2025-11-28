@@ -1,423 +1,310 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
-
-  <!-- Story 5.5: Mobile-Responsive Meta Tags (FR93, FR87) -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="theme-color" content="#1e293b" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+  <title>GTA 6 Launch Truth - Community Sentiment Tracker</title>
 
-  <!-- SEO Meta Tags (Story 5.4: FR35, FR36) - Will be replaced by server-side injection -->
-  <title>GTA 6 Launch Date Predictions - Community Sentiment Tracker</title>
-  <meta name="description" content="Track community predictions for GTA 6's launch date. Submit your prediction and see what the community thinks!">
-  <meta name="keywords" content="GTA 6, launch date, predictions, community, Rockstar, Grand Theft Auto 6">
-
-  <!-- Canonical URL (Story 5.4: FR38) - Will be replaced by server-side injection -->
-  <link rel="canonical" href="https://gta6predictions.com/">
-
-  <!-- Favicon and App Icons (Story 5.4) -->
-  <!-- Story 5.6: Preload favicon for faster icon load -->
+  <!-- Favicon -->
   <link rel="icon" type="image/x-icon" href="/images/favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="/images/icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="/images/icon-512.png">
 
-  <!-- Story 5.6: Load stylesheet normally (preload trick had compatibility issues) -->
+  <!-- Styles -->
   <link rel="stylesheet" href="/styles.built.css">
 
-  <!-- Cloudflare Turnstile (Story 2.5B) -->
-  <!-- Load asynchronously to avoid blocking page load -->
+  <!-- Cloudflare Turnstile -->
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
-<body class="min-h-screen bg-base-200">
-  <div id="app" class="container mx-auto px-4 py-8 max-w-2xl">
-    <!-- Headline Section (AC1: Above-the-fold) -->
-    <header class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-base-content mb-3">
-        When Will GTA 6 Actually Launch?
-      </h1>
-      <p class="text-base md:text-lg text-base-content/70">
-        Rockstar says <span class="font-semibold text-primary">November 19, 2026</span>. What does the community think?
-      </p>
-    </header>
 
-    <!-- Stats Display Section (AC2: Community Statistics - largest element) -->
-    <section id="stats-display" class="mb-8" aria-labelledby="stats-heading" aria-live="polite">
-      <h2 id="stats-heading" class="sr-only">Community Prediction Statistics</h2>
+<body
+  class="min-h-screen bg-gta-dark font-sans text-slate-100 selection:bg-gta-pink selection:text-white flex flex-col">
 
-      <!-- Loading Skeleton State -->
-      <div id="stats-loading" class="card bg-base-100 shadow-xl">
-        <div class="card-body items-center text-center animate-pulse">
-          <div class="h-4 bg-base-300 rounded w-32 mb-4"></div>
-          <div class="h-16 bg-base-300 rounded w-48 mb-4"></div>
-          <div class="h-4 bg-base-300 rounded w-40 mb-2"></div>
-          <div class="h-3 bg-base-300 rounded w-56"></div>
-        </div>
+  <!-- Header -->
+  <header
+    class="w-full py-2 px-4 md:px-8 flex items-center justify-between border-b border-gray-800/50 bg-gta-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <div class="p-2 bg-gradient-to-br from-gta-pink to-gta-purple rounded-lg shadow-lg shadow-gta-pink/20">
+        <!-- Activity Icon SVG -->
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+          class="text-white w-6 h-6">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </svg>
       </div>
-
-      <!-- Stats Content (hidden until loaded) -->
-      <div id="stats-content" class="hidden card bg-base-100 shadow-xl">
-        <div class="card-body items-center text-center">
-          <p class="text-sm uppercase tracking-wider text-base-content/60 mb-2">Community Median Prediction</p>
-          <!-- Median: LARGEST element (AC4: 2-3x normal text) -->
-          <p id="stats-median" class="text-4xl md:text-5xl lg:text-6xl font-bold text-primary font-mono tabular-nums" aria-label="Community median prediction date">
-            --
-          </p>
-          <!-- Total count with commas (AC2) -->
-          <p id="stats-count" class="text-lg text-base-content/80 mt-2">
-            <span id="stats-count-value" class="font-semibold">--</span> predictions
-          </p>
-          <!-- Min/Max range (AC4: tertiary information) -->
-          <p id="stats-range" class="text-sm text-base-content/50 mt-1">
-            Earliest: <span id="stats-min">--</span> | Latest: <span id="stats-max">--</span>
-          </p>
-        </div>
+      <div>
+        <h1
+          class="font-display text-lg tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 uppercase italic">
+          Launch<span class="text-gta-pink">Truth</span>
+        </h1>
+        <p class="text-xs text-gray-400 font-sans tracking-widest uppercase">Community Sentiment Tracker</p>
       </div>
+    </div>
+    <div class="hidden md:block">
+      <span
+        class="px-3 py-1 rounded-full border border-gta-blue/30 text-gta-blue text-xs font-bold uppercase tracking-wider bg-gta-blue/10">
+        Status: Delay Likely
+      </span>
+    </div>
+  </header>
 
-      <!-- Threshold Message (AC: FR99 - count < 50) -->
-      <div id="stats-threshold" class="hidden card bg-base-100 shadow-xl">
-        <div class="card-body items-center text-center">
-          <p class="text-lg text-base-content/80 mb-2">
-            Need <span class="font-semibold">50 predictions</span> to show community median.
-          </p>
-          <p class="text-base-content/60">Be one of the first!</p>
-          <p id="stats-threshold-progress" class="text-sm text-primary font-semibold mt-2">
-            <span id="stats-threshold-count">--</span> / 50 predictions submitted
-          </p>
+  <main class="flex-grow flex flex-col items-center w-full">
+
+    <!-- Voting Section (Hero) -->
+    <div id="voting-section" class="w-full max-w-4xl mx-auto my-12 px-4 animate-fade-in-up">
+      <div
+        class="bg-gta-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50 relative overflow-hidden group">
+
+        <!-- Background decorative glow -->
+        <div
+          class="absolute -top-24 -right-24 w-64 h-64 bg-gta-purple/20 rounded-full blur-3xl group-hover:bg-gta-purple/30 transition-all duration-1000">
         </div>
-      </div>
-
-      <!-- Error State (AC: FR59 - graceful error handling) -->
-      <div id="stats-error" class="hidden card bg-error/10 shadow-xl border border-error/20">
-        <div class="card-body items-center text-center">
-          <svg class="w-12 h-12 text-error mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-          </svg>
-          <p id="stats-error-message" class="text-error font-medium">Unable to load statistics</p>
-          <button id="stats-retry-btn" class="btn btn-outline btn-error btn-sm mt-3" aria-label="Retry loading statistics">
-            Try Again
-          </button>
+        <div
+          class="absolute -bottom-24 -left-24 w-64 h-64 bg-gta-blue/20 rounded-full blur-3xl group-hover:bg-gta-blue/30 transition-all duration-1000">
         </div>
-      </div>
-    </section>
 
-    <!-- Chart Visualization Section (Story 3.4: Optional Chart Visualization Toggle) -->
-    <!-- AC: Hidden by default (FR19), toggle button visible -->
-    <!-- POSITIONING: Above prediction form as specified in Task 1d -->
-    <section id="chart-section" class="mb-8" aria-labelledby="chart-heading">
-      <h2 id="chart-heading" class="sr-only">Prediction Distribution Chart</h2>
-
-      <!-- Toggle Button (AC: Visible, triggers chart display) -->
-      <div class="text-center mb-4">
-        <button
-          id="chart-toggle-btn"
-          type="button"
-          class="btn btn-outline btn-primary"
-          aria-expanded="false"
-          aria-controls="chart-container"
-          aria-label="Show prediction distribution chart"
-        >
-          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-          </svg>
-          <span id="chart-toggle-text">Show Prediction Distribution</span>
-        </button>
-      </div>
-
-      <!-- Chart Container (AC: Collapsed by default, expands on toggle) -->
-      <div id="chart-container" class="hidden" role="region" aria-live="polite" aria-label="Prediction distribution histogram">
-        <div class="card bg-base-100 shadow-xl">
-          <div class="card-body">
-            <!-- Loading Indicator (AC: Shown while Chart.js loads) -->
-            <div id="chart-loading" class="text-center py-8">
-              <div class="loading loading-spinner loading-lg text-primary"></div>
-              <p class="text-sm text-base-content/60 mt-2">Loading chart...</p>
-            </div>
-
-            <!-- Chart Canvas (AC: Rendered by Chart.js) -->
-            <canvas id="prediction-chart" class="hidden" aria-label="Histogram showing distribution of community predictions over time"></canvas>
-
-            <!-- Accessible Data Table (AC: Alternative for screen readers) -->
-            <div id="chart-data-table" class="sr-only" role="table" aria-label="Prediction distribution data table">
-              <!-- Table will be populated dynamically -->
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Current Prediction Display (UX Enhancement) -->
-    <section id="current-prediction-section" class="mb-6 hidden" aria-labelledby="current-prediction-heading">
-      <div class="card bg-info/10 border border-info/20 shadow-lg">
-        <div class="card-body py-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <h3 id="current-prediction-heading" class="text-sm font-medium text-base-content/70 mb-1">Your Current Prediction</h3>
-              <p id="current-prediction-date" class="text-2xl font-bold text-info">Loading...</p>
-              <p id="current-prediction-updated" class="text-xs text-base-content/60 mt-1">Last updated: --</p>
-            </div>
-            <svg class="w-12 h-12 text-info/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Prediction Form Section (AC3: Primary CTA, visible above-the-fold) -->
-    <section class="mb-8" aria-labelledby="form-heading">
-      <h2 id="form-heading" class="sr-only">Submit Your Prediction</h2>
-
-      <form id="prediction-form" class="card bg-base-100 shadow-xl">
-        <div class="card-body">
-          <div class="form-control w-full">
-            <label for="predicted-date" class="label">
-              <span class="label-text text-lg font-medium">When do you think GTA 6 will launch?</span>
-            </label>
-            <input
-              type="date"
-              id="predicted-date"
-              name="predicted-date"
-              class="input input-bordered w-full text-base"
-              min="2025-01-01"
-              max="2125-12-31"
-              required
-              aria-label="Predicted launch date for GTA 6"
-              aria-describedby="date-help"
-            />
-            <label class="label">
-              <span id="date-help" class="label-text-alt">Select a date between Jan 1, 2025 and Dec 31, 2125</span>
-            </label>
-          </div>
-
-          <div id="validation-message" class="hidden" role="alert" aria-live="polite"></div>
-
-          <!-- Turnstile widget container (invisible managed mode) -->
-          <div id="turnstile-container"></div>
-
-          <button
-            type="submit"
-            class="btn btn-primary w-full text-lg mt-4"
-            aria-label="Add my prediction to the community"
-          >
-            Add My Prediction
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <!-- Error Display Section (Story 3.5: Error Handling with Retry Mechanisms) -->
-    <!-- AC8: Red/orange color scheme, retry/dismiss buttons, clear next steps -->
-    <section id="error-container" class="hidden mb-8" role="alert" aria-live="assertive" aria-atomic="true">
-      <!-- Error content will be dynamically injected by errors.js -->
-    </section>
-
-    <!-- Submission Confirmation Section (Story 3.3: Submission Confirmation with Visual Feedback) -->
-    <section id="confirmation-display" class="hidden mb-8" role="status" aria-live="polite" aria-labelledby="confirmation-heading">
-      <h2 id="confirmation-heading" class="sr-only">Submission Confirmation</h2>
-
-      <div class="card bg-success/10 shadow-xl border border-success/20">
-        <div class="card-body items-center text-center">
-          <!-- Success Icon (AC1: Green checkmark or celebration animation) -->
-          <div id="confirmation-icon" class="mb-3" aria-hidden="true">
-            <svg class="w-16 h-16 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-          </div>
-
-          <!-- Primary Message (AC2) -->
-          <p id="confirmation-primary" class="text-xl md:text-2xl font-bold text-success mb-2">
-            Your prediction has been recorded!
-          </p>
-
-          <!-- Prediction Echo (AC3) -->
-          <p id="confirmation-echo" class="text-base md:text-lg text-base-content mb-2">
-            You predicted: <span id="confirmation-date" class="font-semibold">--</span>
-          </p>
-
-          <!-- Ranking Display (AC4) -->
-          <p id="confirmation-ranking" class="text-base md:text-lg text-primary font-semibold">
-            Your prediction #<span id="confirmation-rank">--</span>!
-          </p>
-        </div>
-      </div>
-
-      <!-- ARIA Live Region for Screen Reader Announcement (AC9: FR70) -->
-      <div id="confirmation-announcement" class="sr-only" aria-live="assertive" aria-atomic="true"></div>
-    </section>
-
-    <!-- Social Comparison Section (Story 3.2: Social Comparison Messaging) -->
-    <!-- AC7: Positioned above share buttons (future) -->
-    <section id="comparison-display" class="hidden mb-8" aria-labelledby="comparison-heading" aria-live="polite">
-      <h2 id="comparison-heading" class="sr-only">How Your Prediction Compares</h2>
-
-      <div class="card bg-gradient-to-br from-primary/5 to-secondary/5 shadow-xl border border-primary/10">
-        <div class="card-body items-center text-center">
-          <!-- Direction Emoji (AC3) -->
-          <div id="comparison-emoji" class="text-5xl mb-2" aria-hidden="true">
-            🎯
-          </div>
-
-          <!-- Primary Comparison Message (AC2) -->
-          <p id="comparison-message" class="text-xl md:text-2xl font-bold text-base-content mb-2">
-            You're exactly aligned with the community!
-          </p>
-
-          <!-- Personality Message (AC4) -->
-          <p id="comparison-personality" class="text-base md:text-lg text-primary font-medium mb-3">
-            Great minds think alike!
-          </p>
-
-          <!-- Quantified Delta (AC5, FR18) -->
-          <p id="comparison-delta" class="text-sm text-base-content/70 mb-3">
-            <span class="font-semibold">0 days</span> difference
-          </p>
-
-          <!-- Date Clarity (AC6: Both user date and median shown) -->
-          <div class="divider text-xs text-base-content/40 my-2">Details</div>
-          <div class="grid grid-cols-2 gap-4 w-full max-w-md text-sm">
-            <div class="text-right">
-              <p class="text-base-content/50 text-xs mb-1">Your Prediction</p>
-              <p id="comparison-user-date" class="font-semibold text-base-content font-mono">--</p>
-            </div>
-            <div class="text-left">
-              <p class="text-base-content/50 text-xs mb-1">Community Median</p>
-              <p id="comparison-median-date" class="font-semibold text-base-content font-mono">--</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Social Share Buttons Section (Story 5.1: Twitter/X Share Button) -->
-    <!-- AC: Displayed after submission confirmation, above-the-fold, prominent placement -->
-    <section id="share-buttons-section" class="hidden mb-8" aria-labelledby="share-heading">
-      <h2 id="share-heading" class="sr-only">Share Your Prediction</h2>
-
-      <div class="card bg-base-100 shadow-xl">
-        <div class="card-body items-center text-center">
-          <!-- Share Heading -->
-          <p class="text-lg font-semibold text-base-content mb-4">
-            Share your prediction with friends!
-          </p>
-
-          <!-- Share Buttons Container -->
-          <div class="flex flex-col sm:flex-row gap-3 w-full max-w-md">
-            <!-- Twitter/X Share Button (AC: Twitter blue color #1DA1F2, prominent) -->
-            <button
-              id="twitter-share-btn"
-              type="button"
-              class="btn btn-lg flex-1 text-white hover:opacity-90"
-              style="background-color: #1DA1F2; border-color: #1DA1F2;"
-              aria-label="Share your prediction on Twitter/X"
-            >
-              <!-- Twitter/X Logo SVG Icon -->
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
-              </svg>
-              <span class="ml-2">Share on X</span>
-            </button>
-
-            <!-- Reddit Share Button (Story 5.2: AC - Reddit orange color #FF4500, same prominence) -->
-            <button
-              id="reddit-share-btn"
-              type="button"
-              class="btn btn-lg flex-1 text-white hover:opacity-90"
-              style="background-color: #FF4500; border-color: #FF4500;"
-              aria-label="Share your prediction on Reddit"
-              title="Share to r/GTA6, r/gaming, or other subreddits"
-            >
-              <!-- Reddit Snoo Logo SVG Icon -->
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"></path>
-              </svg>
-              <span class="ml-2">Share on Reddit</span>
-            </button>
-          </div>
-
-          <!-- Share CTR Info (Optional, subtle) -->
-          <p class="text-xs text-base-content/50 mt-3">
-            Help others discover the community predictions!
-          </p>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <!-- Cookie Consent Banner (Story 4.1: GDPR Cookie Consent Banner) -->
-  <!-- AC: Bottom position, non-intrusive, two buttons, privacy link -->
-  <aside id="cookie-consent-banner" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-base-100 border-t-2 border-primary shadow-2xl" role="dialog" aria-labelledby="cookie-consent-heading" aria-describedby="cookie-consent-description" aria-live="polite">
-    <div class="container mx-auto px-4 py-4 max-w-4xl">
-      <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-        <!-- Content Section -->
-        <div class="flex-1">
-          <h2 id="cookie-consent-heading" class="text-lg font-bold text-base-content mb-2">
-            We use cookies
+        <div class="relative z-10 text-center">
+          <h2 class="font-display text-3xl md:text-4xl text-white mb-4 italic uppercase">
+            When does GTA VI <span class="text-gta-pink">ACTUALLY</span> drop?
           </h2>
-          <p id="cookie-consent-description" class="text-sm text-base-content/80">
-            We use functional cookies to save your prediction and analytics cookies to understand usage. You can opt out of analytics.
-            <a href="/privacy.html" class="link link-primary ml-1" aria-label="Learn more about our privacy policy">Learn more</a>
+          <p class="text-gray-400 mb-8 font-light">
+            Rockstar says November 19th, 2026. What does your gut tell you?
+            Vote to see the community truth.
+          </p>
+
+          <form id="prediction-form" class="flex flex-col gap-6 justify-center items-center">
+            <div class="flex flex-col sm:flex-row gap-4 w-full justify-center items-center">
+              <div class="relative w-full sm:w-auto">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <!-- Calendar Icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="text-gray-400">
+                    <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
+                    <line x1="16" x2="16" y1="2" y2="6" />
+                    <line x1="8" x2="8" y1="2" y2="6" />
+                    <line x1="3" x2="21" y1="10" y2="10" />
+                  </svg>
+                </div>
+                <input type="date" id="predicted-date" name="predicted-date" min="2025-01-01" max="2029-12-31" required
+                  class="block w-full pl-10 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gta-pink focus:border-transparent transition-all" />
+              </div>
+
+              <button type="submit"
+                class="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-gta-pink to-gta-purple hover:from-pink-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg border border-white/20 transform transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 uppercase tracking-wider whitespace-nowrap">
+                Lock In Prediction
+                <!-- Arrow Right Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Turnstile Container (Placed below inputs to avoid layout breakage) -->
+            <div id="turnstile-container" class="min-h-[65px]"></div>
+          </form>
+          <div id="validation-message" class="hidden text-red-400 mt-2 text-sm" role="alert"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation / AI Analysis Section (Hidden by default) -->
+    <div id="confirmation-display" class="hidden w-full max-w-4xl mx-auto mb-8 px-4 animate-fade-in">
+      <div class="bg-gta-card border border-gta-pink/30 rounded-2xl p-6 shadow-lg shadow-gta-pink/10">
+        <div class="flex items-start gap-4">
+          <div class="p-3 bg-gta-pink/10 rounded-full">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-gta-pink">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white mb-1">Prediction Locked</h3>
+            <p class="text-gray-300 text-sm">
+              You predicted <span id="confirmation-date" class="text-gta-pink font-bold">--</span>.
+              <span id="comparison-message">Analyzing community alignment...</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- My Prediction Card (Hidden by default, shown for returning users) -->
+    <div id="my-prediction-card" class="hidden w-full max-w-4xl mx-auto mb-8 px-4 animate-fade-in">
+      <div class="bg-gta-card border border-gta-purple/30 rounded-2xl p-6 shadow-lg shadow-gta-purple/10">
+        <div>
+          <h3 class="text-lg font-bold text-white mb-1">My Prediction</h3>
+          <p class="text-gray-300 text-sm mb-2">
+            You predicted <span id="my-prediction-date" class="text-gta-purple font-bold">--</span>
+          </p>
+          <p id="my-prediction-delta" class="text-xs text-gray-400 mb-2">
+            Calculating difference from median...
+          </p>
+          <p class="text-xs text-gray-500 italic">
+            Scroll up to update your prediction
           </p>
         </div>
+      </div>
+    </div>
 
-        <!-- Action Buttons -->
-        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <button
-            id="cookie-accept-all"
-            type="button"
-            class="btn btn-primary btn-sm"
-            aria-label="Accept all cookies including analytics"
-          >
-            Accept All
+    <!-- Dashboard Section -->
+    <div id="dashboard-section" class="w-full max-w-4xl mx-auto px-4 pb-20 animate-fade-in">
+
+      <!-- Key Metrics Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+
+        <!-- Total Votes -->
+        <div class="bg-gta-card border border-gray-700 p-6 rounded-xl">
+          <div class="flex justify-between items-start mb-2">
+            <p class="text-gray-400 text-xs uppercase tracking-wider font-bold">Total Predictions</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-gta-blue">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+              <circle cx="9" cy="7" r="4" />
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+            </svg>
+          </div>
+          <h3 id="stats-count-value" class="text-3xl font-display font-normal text-white leading-tight">--</h3>
+          <p class="text-xs text-gray-500 mt-2">Verified gamers</p>
+        </div>
+
+        <!-- The "Real" Date (Median) -->
+        <div class="bg-gta-card border border-gta-pink/30 p-6 rounded-xl">
+          <div class="flex justify-between items-start mb-2">
+            <p class="text-gta-pink text-xs uppercase tracking-wider font-bold">Community Median</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-gta-pink">
+              <circle cx="12" cy="12" r="10" />
+              <circle cx="12" cy="12" r="6" />
+              <circle cx="12" cy="12" r="2" />
+            </svg>
+          </div>
+          <h3 id="stats-median" class="text-3xl font-display font-normal text-white leading-tight">--</h3>
+          <p id="stats-median-subtext" class="text-xs text-gray-500 mt-2">The "Wisdom of Crowds"</p>
+        </div>
+
+        <!-- Official Date Comparison -->
+        <div class="bg-gta-card border border-gray-700 p-6 rounded-xl opacity-70 hover:opacity-100 transition-opacity">
+          <div class="flex justify-between items-start mb-2">
+            <p class="text-gray-400 text-xs uppercase tracking-wider font-bold">Official Target</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-yellow-500">
+              <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+              <path d="M12 9v4" />
+              <path d="M12 17h.01" />
+            </svg>
+          </div>
+          <h3 class="text-3xl font-display font-normal text-white leading-tight">Late 2026</h3>
+          <p class="text-xs text-gray-500 mt-2">Subject to delays</p>
+        </div>
+
+        <!-- Sentiment (Placeholder for now) -->
+        <div class="bg-gta-card border border-gray-700 p-6 rounded-xl">
+          <div class="flex justify-between items-start mb-2">
+            <p class="text-gray-400 text-xs uppercase tracking-wider font-bold">Optimism Score</p>
+            <svg id="optimism-score-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+              class="text-gray-500">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+              <polyline points="16 7 22 7 22 13" />
+            </svg>
+          </div>
+          <h3 id="optimism-score-value" class="text-3xl font-display font-normal text-white leading-tight">--</h3>
+          <p id="optimism-score-subtext" class="text-xs text-gray-500 mt-2">Believe it hits before '27</p>
+        </div>
+      </div>
+
+      <!-- Main Chart -->
+      <div id="chart-container" class="hidden bg-gta-card border border-gray-800 rounded-2xl p-6 md:p-8 mb-8">
+        <div class="mb-6">
+          <h3 class="text-xl font-display text-white uppercase italic">Prediction Distribution</h3>
+          <p class="text-sm text-gray-400">Quarterly breakdown of community expectations</p>
+        </div>
+
+        <!-- Chart Canvas -->
+        <div class="h-[300px] w-full relative">
+          <canvas id="prediction-chart" class="w-full h-full hidden"></canvas>
+          <div id="chart-loading" class="absolute inset-0 flex items-center justify-center bg-gta-card/50">
+            <div class="text-gray-400">Loading chart...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Share Buttons (Hidden by default) -->
+      <div id="share-buttons-section" class="hidden text-center">
+        <p class="text-gray-400 mb-4">Share your prediction</p>
+        <div class="flex justify-center gap-4">
+          <button id="twitter-share-btn"
+            class="px-6 py-3 bg-[#1DA1F2] text-white rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z">
+              </path>
+            </svg>
+            Share on X
           </button>
-          <button
-            id="cookie-functional-only"
-            type="button"
-            class="btn btn-outline btn-sm"
-            aria-label="Accept only functional cookies, opt out of analytics"
-          >
-            Functional Only
+          <button id="reddit-share-btn"
+            class="px-6 py-3 bg-[#FF4500] text-white rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path
+                d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z">
+              </path>
+            </svg>
+            Share on Reddit
           </button>
         </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-8 border-t border-gray-800 mt-auto bg-black/40">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-gray-600 text-sm">
+        &copy; 2025 GTA 6 Launch Truth. Fan made. Not affiliated with Rockstar Games.
+      </p>
+      <div class="flex gap-4 text-sm text-gray-500">
+        <a href="/privacy.html" class="hover:text-gta-pink transition-colors">Privacy</a>
+        <a href="/terms.html" class="hover:text-gta-pink transition-colors">Terms</a>
+        <a href="#" class="hover:text-gta-pink transition-colors">Twitter</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Cookie Consent (Hidden) -->
+  <aside id="cookie-consent-banner"
+    class="hidden fixed bottom-0 left-0 right-0 z-50 bg-gta-card border-t border-gta-pink/30 shadow-[0_-10px_40px_rgba(0,0,0,0.5)] p-4">
+    <div class="max-w-4xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <p class="text-sm text-gray-300">We use cookies to save your prediction. <a href="/privacy.html"
+          class="text-gta-pink hover:underline">Learn more</a>.</p>
+      <div class="flex gap-2">
+        <button id="cookie-accept-all"
+          class="px-4 py-2 bg-gta-pink text-white rounded-lg text-sm font-bold hover:bg-pink-600">Accept</button>
+        <button id="cookie-functional-only"
+          class="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg text-sm hover:bg-gray-800">Functional
+          Only</button>
       </div>
     </div>
   </aside>
 
-  <!-- Footer Navigation -->
-  <footer class="mt-12 pt-6 border-t border-base-300 text-center">
-    <nav aria-label="Footer navigation">
-      <ul class="flex flex-wrap justify-center gap-4 text-sm text-base-content/70">
-        <li><a href="/" class="link hover:link-primary" aria-current="page">Home</a></li>
-        <li><a href="/privacy.html" class="link hover:link-primary">Privacy Policy</a></li>
-        <li><a href="/terms.html" class="link hover:link-primary">Terms of Service</a></li>
-        <li><a href="/about.html" class="link hover:link-primary">About</a></li>
-      </ul>
-    </nav>
-    <p class="mt-4 text-xs text-base-content/50">
-      Protected by <a href="https://www.cloudflare.com/products/turnstile/" class="underline hover:text-primary" target="_blank" rel="noopener noreferrer">Cloudflare Turnstile</a>
-    </p>
-  </footer>
-
-  <!-- Story 5.6: Optimized JavaScript Loading - Critical scripts first, non-critical deferred -->
-  <!-- Critical: Main app logic (needed for form submission) -->
-  <script src="/app.js?v=3.7.1" defer></script>
+  <!-- Scripts -->
+  <script src="/app.js?v=4.0.0" defer></script>
   <script src="/js/submission.js" type="module" defer></script>
   <script src="/js/cookie-consent.js" defer></script>
-
-  <!-- Non-critical: Features that load after LCP (lazy loaded) -->
   <script src="/js/comparison.js" defer></script>
+  <script src="/js/my-prediction.js" defer></script>
   <script src="/js/twitter-share.js" type="module" defer></script>
   <script src="/js/reddit-share.js" type="module" defer></script>
-  <script src="/js/degradation.js" defer></script>
-  <script src="/js/responsive-utils.js" type="module" defer></script>
-
-  <!-- Lowest priority: Chart visualization (only loaded when user clicks toggle) -->
   <script src="/js/chart.js" type="module" defer></script>
 
-  <!-- Story 5.6: Core Web Vitals Monitoring (FR102) -->
-  <script src="/js/web-vitals.js" defer></script>
 </body>
+
 </html>

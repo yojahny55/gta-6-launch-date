@@ -5,6 +5,7 @@ import { securityHeadersMiddleware } from './middleware/security-headers';
 import { metaInjectionMiddleware } from './middleware/meta-injection';
 import { createPredictRoutes } from './routes/predict';
 import { createStatsRoutes } from './routes/stats';
+import { createSentimentRoutes } from './routes/sentiment';
 import { createPredictionsRoutes } from './routes/predictions';
 import { createDegradationRoutes } from './routes/degradation';
 import { createDeleteRoutes } from './routes/delete';
@@ -27,6 +28,9 @@ app.route('/', createPredictRoutes());
 
 // Register statistics routes (Story 2.10)
 app.route('/', createStatsRoutes());
+
+// Register sentiment routes (Story 10.1)
+app.route('/', createSentimentRoutes());
 
 // Register predictions data routes (Story 3.4b)
 app.route('/', createPredictionsRoutes());

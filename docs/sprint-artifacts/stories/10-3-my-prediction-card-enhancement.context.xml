@@ -1,0 +1,281 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>10</epicId>
+    <storyId>3</storyId>
+    <title>My Prediction Card Enhancement</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-27</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/var/www/html/others/gta-6-launch-date/docs/sprint-artifacts/stories/10-3-my-prediction-card-enhancement.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a returning user</asA>
+    <iWant>to see my prediction prominently in the dashboard</iWant>
+    <soThat>I can quickly review what I predicted and see how it compares to the community</soThat>
+    <tasks>
+      - Task 1: Frontend - Add "My Prediction" section HTML (AC: #1, #2)
+        - Create card HTML structure below main dashboard grid
+        - Add semantic HTML with proper ARIA labels
+        - Style with bg-gta-card border border-gray-700 rounded-xl (consistent with theme)
+        - Implement responsive layout (mobile stacking)
+      - Task 2: Frontend - Cookie/localStorage detection logic (AC: #3)
+        - Check for gta6_user_id cookie
+        - Fallback to localStorage if cookie not found
+        - Handle missing data gracefully
+      - Task 3: Frontend - Fetch prediction data (AC: #3)
+        - Option A: Call GET /api/predict/:cookie_id to fetch fresh data
+        - Option B: Use cached data from submission (localStorage)
+        - Decide based on performance trade-offs
+      - Task 4: Frontend - Calculate and display delta from median (AC: #2)
+        - Fetch current median from /api/stats
+        - Calculate difference in months/days
+        - Format as "+3 months from median" or "-2 weeks from median"
+      - Task 5: Frontend - Wire "Update Prediction" button (AC: #2)
+        - Link to prediction form (scroll to top)
+        - Or implement inline edit modal (if UX prefers)
+        - Pre-fill form with current prediction
+      - Task 6: Frontend - Implement show/hide logic (AC: #4)
+        - Show card only if prediction exists
+        - Hide card if no prediction found
+        - No empty state messaging
+      - Task 7: Testing - Write automated tests (AC: #7)
+        - Test card visibility logic
+        - Test delta calculation
+        - Test error handling (missing cookie, API failure)
+        - Test update button functionality
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    1. Card Display Requirements:
+       - Location: Display as separate section below main dashboard grid (4-card layout)
+       - Do NOT add as 5th card to avoid cluttering main stats
+       - Visually distinct from main stats (secondary styling)
+       - Content Display: Heading "My Prediction", Value (predicted date), Delta (comparison to median), Button "Update Prediction"
+       - Data Source: Read from cookie gta6_user_id (primary), Fallback to localStorage, API call GET /api/predict/:cookie_id if needed
+    2. If no prediction exists: Hide card entirely (no empty state in dashboard)
+    3. Error handling: If cookie exists but prediction not found - hide card, If API fails - show cached data or hide card, No error messages (graceful degradation)
+    4. Automated tests exist covering: Card visibility logic, Data fetching and display, Delta calculation accuracy, Update button functionality
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR16-FR18: Social Comparison and Delta Display</section>
+        <snippet>Users can see social comparison ("You're optimistic/pessimistic compared to community") and quantified delta from median ("[X] days earlier/later than community")</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR96: "My Prediction" Display Card</section>
+        <snippet>"My Prediction" display card for returning users - shows user's prediction prominently in dashboard for quick review</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>ADR-015: Custom GTA Gaming Theme</section>
+        <snippet>Custom GTA theme colors: gta-dark (#0f172a), gta-card (#1e293b), gta-pink (#db2777), gta-purple (#7c3aed), gta-blue (#0ea5e9). Card styling: bg-gta-card border border-gray-700 rounded-xl</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Cookie Management Pattern</section>
+        <snippet>Use js-cookie library for cookie management. Cookie: gta6_user_id (365 days, secure, sameSite=strict). Functions: Cookies.get('gta6_user_id') to retrieve cookie ID</snippet>
+      </doc>
+      <doc>
+        <path>docs/ux-design-specification.md</path>
+        <title>UX Design Specification</title>
+        <section>Design System: Custom GTA Gaming Theme</section>
+        <snippet>Bold, energetic gaming aesthetic using Tailwind utilities with custom GTA color tokens. Responsive design with mobile-first approach. WCAG-compliant color contrast</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-10-dashboard-enhancements.md</path>
+        <title>Epic 10: Dashboard Enhancements</title>
+        <section>Story 10.3: My Prediction Card Enhancement</section>
+        <snippet>Display user's prediction below main dashboard grid. Location: Separate section (not 5th card). Content: Heading, predicted date, delta from median, Update button. Hide if no prediction exists</snippet>
+      </doc>
+    </docs>
+    <code>
+      <file>
+        <path>public/app.js</path>
+        <kind>frontend-module</kind>
+        <symbol>Cookies.get(), Cookies.set(), getCookieID()</symbol>
+        <lines>60-151</lines>
+        <reason>Cookie management utilities - reuse for reading gta6_user_id cookie. Provides Cookies.get(COOKIE_NAME) pattern</reason>
+      </file>
+      <file>
+        <path>public/app.js</path>
+        <kind>frontend-module</kind>
+        <symbol>fetchStats()</symbol>
+        <lines>826-906</lines>
+        <reason>Stats fetching pattern with retry logic - reuse for getting median date for delta calculation. Returns {median, min, max, count}</reason>
+      </file>
+      <file>
+        <path>public/js/comparison.js</path>
+        <kind>frontend-module</kind>
+        <symbol>calculateDaysDiff(), formatDelta()</symbol>
+        <lines>29-100+</lines>
+        <reason>Delta calculation logic - reuse for comparing user prediction to median. Handles month/day formatting ("-3 months", "+29 days")</reason>
+      </file>
+      <file>
+        <path>public/index.html</path>
+        <kind>html-template</kind>
+        <symbol>Dashboard section structure</symbol>
+        <lines>50-200+</lines>
+        <reason>Main dashboard HTML - add "My Prediction" section below voting section. Follow existing card styling patterns with bg-gta-card</reason>
+      </file>
+      <file>
+        <path>public/styles.css</path>
+        <kind>stylesheet</kind>
+        <symbol>GTA theme classes</symbol>
+        <lines>N/A</lines>
+        <reason>Custom GTA theme styling - use bg-gta-card, border-gray-700, rounded-xl patterns for card consistency</reason>
+      </file>
+      <file>
+        <path>src/routes/stats.ts</path>
+        <kind>api-endpoint</kind>
+        <symbol>GET /api/stats</symbol>
+        <lines>49-94</lines>
+        <reason>Stats API endpoint - frontend will call this to get median for delta calculation. Returns {median, min, max, count, cached_at}</reason>
+      </file>
+    </code>
+    <dependencies>
+      <frontend>
+        <package name="Cookies utility (inline)" version="inline">Inline cookie management (Cookies.get/set) - no external library needed, already in public/app.js</package>
+        <package name="dayjs" version="^1.11.19">Date manipulation and formatting - used for delta calculations (optional, can use native Date)</package>
+        <package name="Browser localStorage API" version="built-in">Browser API for caching user's prediction data (key: gta6_prediction_{cookie_id})</package>
+        <package name="Browser crypto API" version="built-in">Used by existing code for UUID generation (crypto.randomUUID())</package>
+      </frontend>
+      <backend>
+        <package name="None" version="N/A">Pure frontend feature - no backend dependencies required</package>
+      </backend>
+      <testing>
+        <package name="vitest" version="^3.2.4">Unit testing framework - test file: public/js/my-prediction.test.js</package>
+        <package name="happy-dom" version="^20.0.10">DOM environment for frontend tests (simulates browser)</package>
+      </testing>
+      <styling>
+        <package name="tailwindcss" version="^4.0.0">CSS framework with custom GTA theme tokens (gta-card, gta-pink, etc.)</package>
+      </styling>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Pure frontend implementation - no backend changes required per Dev Notes
+    - Use localStorage for caching user's own prediction (performance optimization)
+    - Do NOT create GET /api/predict/:cookie_id endpoint - use localStorage instead
+    - Display card as separate section BELOW main dashboard grid (not as 5th card)
+    - Hide card entirely if no prediction exists (no empty state or placeholder)
+    - Error handling: graceful degradation - never show error messages to user
+    - Follow GTA gaming theme styling: bg-gta-card, border-gray-700, rounded-xl
+    - Responsive design: mobile stacking using Tailwind breakpoints
+    - Mandatory automated tests per ADR-011 (test file: public/js/my-prediction.test.js)
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>fetchStats() function</name>
+      <kind>JavaScript function</kind>
+      <signature>async function fetchStats(retryCount = 0, bypassCache = false): Promise&lt;Stats&gt;</signature>
+      <path>public/app.js:826-906</path>
+      <returns>{median: string, min: string, max: string, count: number, cached_at: string}</returns>
+    </interface>
+    <interface>
+      <name>Cookies.get() function</name>
+      <kind>JavaScript function</kind>
+      <signature>Cookies.get(name: string): string | undefined</signature>
+      <path>public/app.js:96-107</path>
+      <returns>Cookie value or undefined if not found</returns>
+    </interface>
+    <interface>
+      <name>calculateDaysDiff() function</name>
+      <kind>JavaScript function</kind>
+      <signature>function calculateDaysDiff(userDate: Date|string, medianDate: Date|string): number</signature>
+      <path>public/js/comparison.js:36-44</path>
+      <returns>Days difference (positive = pessimistic, negative = optimistic)</returns>
+    </interface>
+    <interface>
+      <name>formatDelta() function</name>
+      <kind>JavaScript function</kind>
+      <signature>function formatDelta(daysDiff: number): string</signature>
+      <path>public/js/comparison.js:98+</path>
+      <returns>Formatted delta string (e.g., "+3 months" or "-29 days")</returns>
+    </interface>
+    <interface>
+      <name>localStorage API</name>
+      <kind>Browser API</kind>
+      <signature>localStorage.getItem(key: string): string | null</signature>
+      <path>Browser built-in</path>
+      <usage>Store and retrieve user's prediction: key format "gta6_prediction_{cookie_id}"</usage>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+      Testing Standards per ADR-011 (Mandatory Automated Testing):
+
+      - Framework: Vitest v3.2 with happy-dom for DOM simulation
+      - Test File Location: public/js/my-prediction.test.js (co-located with implementation)
+      - Coverage Target: 90%+ for card logic, visibility, delta calculation
+      - Test Patterns: Unit tests for functions, integration tests for DOM manipulation
+      - Naming: describe() blocks for features, it() blocks for specific behaviors
+      - Assertions: Use expect() with descriptive matchers (toBe, toEqual, toBeTruthy, etc.)
+      - Mocking: Mock fetchStats() calls, localStorage, and Cookies.get()
+      - Reference: See public/js/comparison.test.js for delta calculation test patterns
+
+      Test Execution:
+      - Local: npm run test:unit (runs all frontend unit tests)
+      - Watch: npm run test:unit:watch (development mode)
+      - CI/CD: Tests run automatically in GitHub Actions workflow
+      - Resource Limits: maxConcurrency=3, maxThreads=4 per vitest.config.unit.ts
+    </standards>
+    <locations>
+      - Test file: public/js/my-prediction.test.js (to be created)
+      - Implementation: public/js/my-prediction.js (to be created)
+      - DOM integration: public/index.html (add card section)
+      - Vitest config: vitest.config.unit.ts (existing, no changes needed)
+      - Test runner: npm run test:unit (existing script)
+    </locations>
+    <ideas>
+      AC1 - Card Visibility Logic:
+      - Test: Show card when cookie exists AND localStorage has prediction
+      - Test: Hide card when cookie missing
+      - Test: Hide card when localStorage missing prediction
+      - Test: Card not added to DOM when no prediction (not just hidden)
+
+      AC2 - Delta Calculation Accuracy:
+      - Test: Calculate positive delta (user more pessimistic than median)
+      - Test: Calculate negative delta (user more optimistic than median)
+      - Test: Format months correctly for large differences (>60 days)
+      - Test: Format days correctly for small differences (<=60 days)
+      - Test: Handle zero delta (aligned with median)
+      - Reuse: calculateDaysDiff() and formatDelta() from comparison.js
+
+      AC3 - Data Fetching and Display:
+      - Test: Fetch median from /api/stats successfully
+      - Test: Read user prediction from localStorage
+      - Test: Display user's predicted date formatted correctly
+      - Test: Display delta comparison text correctly
+      - Mock: fetchStats() should return {median: "2027-02-14", ...}
+      - Mock: localStorage.getItem() should return user's prediction JSON
+
+      AC4 - Update Button Functionality:
+      - Test: Button links to prediction form (scroll to top)
+      - Test: Form pre-filled with current prediction
+      - Test: Button click handler fires correctly
+
+      AC5 - Error Handling (Graceful Degradation):
+      - Test: API failure - hide card gracefully (no error message shown)
+      - Test: localStorage failure - hide card gracefully
+      - Test: Cookie exists but prediction not in localStorage - hide card
+      - Test: Corrupted localStorage data - hide card gracefully
+      - Assert: No console.error() or user-facing error messages
+
+      AC6 - Responsive Layout:
+      - Test: Card displays below dashboard grid (not as 5th card)
+      - Test: Mobile: Card stacks vertically
+      - Test: Desktop: Card maintains proper width
+      - Test: Tailwind classes applied correctly (bg-gta-card, border-gray-700, rounded-xl)
+    </ideas>
+  </tests>
+</story-context>

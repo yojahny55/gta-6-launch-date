@@ -1,31 +1,153 @@
 /* Tailwind CSS v4.0 - Imports */
 @import "tailwindcss";
 
+/* Import Inter and Oswald Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800;900&family=Oswald:wght@700&display=swap');
+
 /* DaisyUI Component Styles */
 @plugin "daisyui";
 
-/* Custom CSS Variables for theming */
-:root {
-  --gta6-purple: #6366f1;
-  --gta6-orange: #f97316;
+/* Tailwind v4 Theme Configuration */
+@theme {
+  --color-gta-pink: #db2777;
+  --color-gta-purple: #7c3aed;
+  --color-gta-blue: #0ea5e9;
+  --color-gta-dark: #0f172a;
+  --color-gta-card: #1e293b;
+
+  --font-sans: 'Inter', sans-serif;
+  --font-display: 'Oswald', sans-serif;
 }
 
 /* Base Styles */
 body {
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  background-color: #0f172a;
+  color: #f8fafc;
 }
 
-/* Stats Display - Median as largest element (AC4: 2-3x normal text) */
-#stats-median {
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+/* Enforce pointer cursor on interactive elements */
+button,
+a,
+input[type="submit"],
+input[type="button"] {
+  cursor: pointer;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #7c3aed;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #db2777;
+}
+
+/* Animation Utilities */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 40px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-out;
+}
+
+/* Glassmorphism Card */
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+/* Neon Text Glow */
+.text-glow {
+  text-shadow: 0 0 10px rgba(217, 70, 239, 0.7), 0 0 20px rgba(217, 70, 239, 0.5);
+}
+
+.text-glow-cyan {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.7), 0 0 20px rgba(6, 182, 212, 0.5);
+}
+
+/* Box Glow */
+.box-glow {
+  box-shadow: 0 0 15px rgba(217, 70, 239, 0.3);
+}
+
+/* Glitch Animation */
+@keyframes glitch {
+  0% {
+    transform: translate(0)
+  }
+
+  20% {
+    transform: translate(-2px, 2px)
+  }
+
+  40% {
+    transform: translate(-2px, -2px)
+  }
+
+  60% {
+    transform: translate(2px, 2px)
+  }
+
+  80% {
+    transform: translate(2px, -2px)
+  }
+
+  100% {
+    transform: translate(0)
+  }
+}
+
+.glitch-hover:hover {
+  animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+}
+
+/* Stats Display - Removed custom sizing for new dashboard grid layout (Story 3.1b)
+   All cards now use consistent text-3xl sizing */
 
 /* Loading skeleton animation */
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.5;
   }
@@ -56,24 +178,7 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-/* Responsive font sizing for stats median */
-@media (max-width: 640px) {
-  #stats-median {
-    font-size: 2.5rem;
-  }
-}
-
-@media (min-width: 641px) and (max-width: 768px) {
-  #stats-median {
-    font-size: 3rem;
-  }
-}
-
-@media (min-width: 769px) {
-  #stats-median {
-    font-size: 3.75rem;
-  }
-}
+/* Responsive font sizing removed - using Tailwind text-3xl consistently across all dashboard cards */
 
 /* Smooth transitions for state changes */
 #stats-loading,
@@ -96,10 +201,12 @@ a:focus-visible {
     transform: scale(1);
     opacity: 1;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.9;
   }
+
   100% {
     transform: scale(1);
     opacity: 1;
@@ -142,22 +249,24 @@ input[type="date"],
 input[type="text"],
 input[type="email"] {
   min-height: 44px;
-  font-size: 16px; /* Prevents iOS zoom on focus */
+  font-size: 16px;
+  /* Prevents iOS zoom on focus */
 }
 
 /* Share buttons: Full width on mobile, side-by-side on tablet+ */
 #share-buttons-section .btn {
-  min-height: 48px; /* Slightly larger for better mobile UX */
+  min-height: 48px;
+  /* Slightly larger for better mobile UX */
   padding: 0.875rem 1.25rem;
 }
 
 /* Spacing between tappable elements (minimum 8px - FR87) */
-.btn + .btn {
+.btn+.btn {
   margin-top: 0.5rem;
 }
 
 @media (min-width: 640px) {
-  .btn + .btn {
+  .btn+.btn {
     margin-top: 0;
     margin-left: 0.75rem;
   }
@@ -165,6 +274,7 @@ input[type="email"] {
 
 /* Mobile Layout (<768px): Single column, stacked elements */
 @media (max-width: 767px) {
+
   /* Container padding adjustment for mobile */
   #app {
     padding-left: 1rem;
@@ -175,7 +285,8 @@ input[type="email"] {
 
   /* Headline responsive sizing */
   h1 {
-    font-size: 1.875rem; /* 30px */
+    font-size: 1.875rem;
+    /* 30px */
     line-height: 1.2;
   }
 
@@ -213,7 +324,8 @@ input[type="email"] {
   }
 
   h1 {
-    font-size: 2.25rem; /* 36px */
+    font-size: 2.25rem;
+    /* 36px */
   }
 
   /* Stats and form can use two-column grid if needed */
@@ -228,7 +340,8 @@ input[type="email"] {
 /* Desktop Layout (>1024px): Optimized spacing and layout */
 @media (min-width: 1024px) {
   h1 {
-    font-size: 3rem; /* 48px */
+    font-size: 3rem;
+    /* 48px */
   }
 
   /* Reduce vertical spacing on desktop for more compact layout */
@@ -238,9 +351,10 @@ input[type="email"] {
   }
 
   /* Desktop: Reduce spacing between sections */
-  #app > section,
-  #app > header {
-    margin-bottom: 2rem; /* Was 8 (2rem default) */
+  #app>section,
+  #app>header {
+    margin-bottom: 2rem;
+    /* Was 8 (2rem default) */
   }
 
   /* Stats display: More compact on desktop */
@@ -270,6 +384,7 @@ input[type="email"] {
 
   /* Respect prefers-reduced-motion */
   @media (prefers-reduced-motion: reduce) {
+
     button:hover,
     .btn:hover {
       transform: none;
@@ -310,7 +425,7 @@ img[loading="lazy"].loaded {
 }
 
 /* Mobile-friendly spacing (comfortable tap targets) */
-.card-body > * + * {
+.card-body>*+* {
   margin-top: 0.75rem;
 }
 
@@ -326,31 +441,35 @@ body {
 /* Desktop: Override Tailwind's max-w-2xl (672px) for better desktop experience */
 @media (min-width: 1024px) {
   #app.max-w-2xl {
-    max-width: 900px; /* Better desktop width */
+    max-width: 900px;
+    /* Better desktop width */
   }
 }
 
 @media (min-width: 1280px) {
   #app.max-w-2xl {
-    max-width: 1200px; /* Even wider on XL screens */
+    max-width: 1200px;
+    /* Even wider on XL screens */
   }
 }
 
 @media (min-width: 1536px) {
   #app.max-w-2xl {
-    max-width: 1400px; /* Max width on 2XL screens */
+    max-width: 1400px;
+    /* Max width on 2XL screens */
   }
 }
 
 /* Override default Tailwind spacing for better desktop layout */
 @media (min-width: 1024px) {
+
   /* Reduce excessive margin-bottom on sections */
   #app .mb-8 {
     margin-bottom: 1.5rem;
   }
 
   /* Header can have a bit more space */
-  #app > header.mb-8 {
+  #app>header.mb-8 {
     margin-bottom: 2rem;
   }
 
@@ -374,6 +493,7 @@ body {
 
 /* Desktop: Layout optimizations for better horizontal space usage */
 @media (min-width: 1280px) {
+
   /* On XL screens, reduce section spacing even more */
   #app .mb-8 {
     margin-bottom: 1.25rem;

@@ -66,7 +66,7 @@ npm run dev
 | **Database** | Cloudflare D1 (SQLite) | Latest | Data storage | Free tier (5M reads/day), serverless, auto-backups |
 | **Language** | TypeScript | Latest | All code | Type safety, better DX, AI-friendly |
 | **Frontend** | Vanilla HTML/CSS/JS | N/A | UI, forms, display | Fastest load, zero framework overhead |
-| **CSS** | Tailwind CSS | v4.0 | Styling | Rapid development, tree-shaken, <10KB |
+| **CSS** | Tailwind CSS + Custom GTA Theme | v4.0 | Styling | Custom gaming aesthetic, tree-shaken, <15KB |
 | **Cookie Library** | js-cookie | v3.0.5 | User tracking | Clean API, 2KB, handles edge cases |
 | **Date Library** | day.js | v1.11.19 | Algorithm, display | Tiny (2KB), clean diff/format API |
 | **IP Hashing** | SHA-256 (Web Crypto) | Built-in | Rate limiting, privacy | Zero dependencies, GDPR-compliant |
@@ -584,9 +584,10 @@ const userId = Cookies.get('gta6_user_id');
 - Constants: SCREAMING_SNAKE_CASE: `IP_HASH_SALT`, `CACHE_TTL_SECONDS`
 - Interfaces: PascalCase: `Prediction`, `Stats`, `PredictionResponse`
 
-**CSS Classes (Tailwind):**
-- Use Tailwind utilities: `px-4`, `py-2`, `bg-blue-500`
-- Custom classes (if needed): kebab-case: `.prediction-form`, `.stats-display`
+**CSS Classes (Custom GTA Theme):**
+- Use Tailwind utilities: `px-4`, `py-2`, `bg-gta-pink`
+- Custom theme tokens: `gta-dark`, `gta-card`, `gta-pink`, `gta-purple`, `gta-blue`
+- Component classes: kebab-case: `.prediction-form`, `.stats-display`
 
 ### Code Organization
 
@@ -1484,7 +1485,88 @@ await fetch(`${API_URL}/api/predict`, { ... });
 
 ---
 
+### ADR-015: Custom GTA Gaming Theme over DaisyUI
+
+**Decision:** Replace DaisyUI component library with custom GTA-themed design system using Tailwind CSS utilities.
+
+**Context:** ADR-003 selected DaisyUI v4.x for rapid development with semantic class names. During UI implementation (2025-11-27), the team recognized that DaisyUI's clean, minimal aesthetic conflicted with the viral sharing goals and target audience preferences identified in UX research.
+
+**Decision Rationale:**
+
+1. **Target Audience Alignment:** Gaming community (r/GTA6, Discord) responds better to bold, energetic aesthetics than corporate-minimal design
+2. **Viral Mechanics:** Screenshot-worthy results require visual boldness (Spotify Wrapped pattern)
+3. **Brand Differentiation:** Generic countdown sites use clean designs; gaming aesthetic differentiates
+4. **UX Spec Fulfillment:** Gaming Energy color theme was documented in UX spec but DaisyUI couldn't deliver the intensity needed
+5. **Performance Maintained:** Custom CSS (~184 additional lines) still keeps total CSS under 15KB
+
+**Implementation:**
+
+**Custom Color System:**
+```css
+/* Custom GTA Theme Colors */
+--gta-dark: #0f172a;      /* Base background */
+--gta-card: #1e293b;      /* Card backgrounds */
+--gta-pink: #db2777;      /* Primary accent */
+--gta-purple: #7c3aed;    /* Secondary accent */
+--gta-blue: #0ea5e9;      /* Tertiary accent */
+```
+
+**Component Migration:**
+- **DaisyUI `btn`** → Custom gradient buttons with `bg-gradient-to-r from-gta-pink to-gta-purple`
+- **DaisyUI `card`** → Custom cards with `bg-gta-card border border-gray-700 rounded-xl`
+- **DaisyUI `stats`** → Custom dashboard grid with 4-card layout
+- **DaisyUI semantic classes** → Utility-first Tailwind approach
+
+**CSS Organization:**
+- File: `public/styles.css` (+184 lines)
+- Tailwind config: `tailwind.config.js` (custom color tokens)
+- No DaisyUI plugin dependency removed (breaking change)
+
+**Trade-offs:**
+
+- ✅ **Pro:** Complete design control, perfect brand alignment
+- ✅ **Pro:** Gaming aesthetic resonates with target audience
+- ✅ **Pro:** Screenshot-worthy for social sharing
+- ❌ **Con:** Lost DaisyUI's semantic class names (developer convenience)
+- ❌ **Con:** More custom CSS to maintain (184 lines vs 0 custom)
+- ⚠️ **Neutral:** Development velocity slightly slower without pre-built components
+
+**Consequences:**
+
+1. **All Epic 3 stories require DOM updates** (stats display, confirmation, comparison)
+2. **All UI tests broken** (DOM selectors changed from DaisyUI classes)
+3. **Epic 10 required** (new dashboard features: Optimism Score, My Prediction card)
+4. **Documentation debt created** (15+ stories reference DaisyUI in acceptance criteria)
+5. **ADR-003 superseded** (DaisyUI selection no longer active)
+
+**Validation:**
+
+- Performance budget maintained: Total CSS <15KB (target was <10KB, acceptable)
+- Load time testing required: Verify <2s desktop, <3s mobile still met
+- New images (5 files, 463KB each) need compression validation
+- Accessibility re-audit required (WCAG AA compliance)
+
+**Migration Path:**
+
+1. Update all story acceptance criteria to use new class names
+2. Rewrite UI tests with new DOM selectors
+3. Create Epic 10 for dashboard enhancements
+4. Document custom theme in style guide
+5. Remove DaisyUI from dependencies: `npm uninstall daisyui`
+
+**Alternatives Considered:**
+
+- **DaisyUI theme customization:** Rejected - couldn't achieve gaming intensity needed
+- **Hybrid approach (DaisyUI + custom):** Rejected - inconsistent visual language
+- **Revert to DaisyUI:** Rejected - loses momentum, doesn't solve viral sharing goals
+
+**Resolution Date:** 2025-11-27 (Sprint Change Proposal: UI Redesign & Integration)
+
+**Status:** ✅ Approved - Implements Option 3A (Embrace Gaming Aesthetic)
+
+---
+
 _Generated by BMad Decision Architecture Workflow v1.0_
 _Date: 2025-11-13_
-_Updated: 2025-11-27 (Added ADR-014 PNG over SVG for Open Graph Images)_
+_Updated: 2025-11-27 (Added ADR-014 PNG over SVG for Open Graph Images, ADR-015 Custom GTA Gaming Theme)_
 _For: yojahny_

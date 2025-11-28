@@ -248,12 +248,16 @@ function renderChart(config) {
     });
   }
 
-  // Create background colors (highlight user's bucket)
-  const backgroundColors = data.map((_, index) => {
+  // Create background colors (Pink for 2026, Purple for others, Blue for user)
+  const backgroundColors = buckets.map((bucket, index) => {
     if (index === userBucketIndex) {
-      return 'rgba(59, 130, 246, 0.8)'; // Blue for user's bucket
+      return '#0ea5e9'; // gta-blue for user's bucket
     }
-    return 'rgba(107, 114, 128, 0.6)'; // Gray for other buckets
+    // Check if bucket is in 2026
+    if (bucket.startDate.includes('2026') || bucket.endDate.includes('2026')) {
+      return '#db2777'; // gta-pink
+    }
+    return '#7c3aed'; // gta-purple
   });
 
   // Chart.js configuration
@@ -267,30 +271,31 @@ function renderChart(config) {
         label: 'Number of Predictions',
         data: data,
         backgroundColor: backgroundColors,
-        borderColor: backgroundColors.map(c => c.replace('0.6', '1').replace('0.8', '1')),
-        borderWidth: 1
+        borderColor: backgroundColors,
+        borderWidth: 1,
+        borderRadius: 4
       }]
     },
     options: {
       responsive: true,
-      maintainAspectRatio: true,
-      aspectRatio: 2, // Width:height ratio (2:1)
+      maintainAspectRatio: false,
       plugins: {
         legend: {
           display: false
         },
         title: {
-          display: true,
-          text: 'Prediction Distribution (30-day buckets)',
-          color: theme === 'dark' ? '#e5e7eb' : '#1f2937',
-          font: {
-            size: 16,
-            weight: 'bold'
-          }
+          display: false // Title handled by HTML
         },
         tooltip: {
+          backgroundColor: '#1e293b',
+          titleColor: '#f8fafc',
+          bodyColor: '#cbd5e1',
+          borderColor: '#334155',
+          borderWidth: 1,
+          padding: 12,
+          displayColors: false,
           callbacks: {
-            label: function(context) {
+            label: function (context) {
               const bucket = buckets[context.dataIndex];
               return [
                 `Count: ${context.parsed.y}`,
@@ -306,19 +311,22 @@ function renderChart(config) {
               type: 'line',
               xMin: medianBucketIndex,
               xMax: medianBucketIndex,
-              borderColor: 'rgba(34, 197, 94, 0.8)', // Green
+              borderColor: '#db2777', // gta-pink
               borderWidth: 2,
               borderDash: [5, 5],
               label: {
                 display: true,
                 content: 'Median',
                 position: 'start',
-                backgroundColor: 'rgba(34, 197, 94, 0.8)',
+                backgroundColor: '#db2777',
                 color: '#ffffff',
                 font: {
                   size: 12,
-                  weight: 'bold'
-                }
+                  weight: 'bold',
+                  family: 'Inter'
+                },
+                padding: 6,
+                borderRadius: 4
               }
             }
           }
@@ -326,39 +334,31 @@ function renderChart(config) {
       },
       scales: {
         x: {
-          title: {
-            display: true,
-            text: 'Date Range',
-            color: theme === 'dark' ? '#e5e7eb' : '#1f2937',
-            font: {
-              size: 14
-            }
+          grid: {
+            display: false,
+            drawBorder: false
           },
           ticks: {
-            color: theme === 'dark' ? '#9ca3af' : '#6b7280',
-            maxRotation: 45,
-            minRotation: 45
-          },
-          grid: {
-            color: theme === 'dark' ? 'rgba(75, 85, 99, 0.2)' : 'rgba(229, 231, 235, 0.5)'
+            color: '#94a3b8',
+            font: {
+              family: 'Inter',
+              size: 11
+            }
           }
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: 'Number of Predictions',
-            color: theme === 'dark' ? '#e5e7eb' : '#1f2937',
-            font: {
-              size: 14
-            }
+          grid: {
+            color: '#334155',
+            drawBorder: false
           },
           ticks: {
-            color: theme === 'dark' ? '#9ca3af' : '#6b7280',
-            precision: 0 // No decimals for count
-          },
-          grid: {
-            color: theme === 'dark' ? 'rgba(75, 85, 99, 0.2)' : 'rgba(229, 231, 235, 0.5)'
+            color: '#94a3b8',
+            font: {
+              family: 'Inter',
+              size: 11
+            },
+            precision: 0
           }
         }
       }
@@ -451,15 +451,23 @@ async function toggleChart() {
     // Expanding: Show loading, load Chart.js, render chart
     console.log('Expanding chart...');
 
-    // Update button text and ARIA
-    chartElements.toggleText.textContent = 'Hide Chart';
-    chartElements.toggleBtn.setAttribute('aria-expanded', 'true');
-    chartElements.toggleBtn.setAttribute('aria-label', 'Hide prediction distribution chart');
+    // Update button text and ARIA (if toggle button exists - old UI)
+    if (chartElements.toggleText && chartElements.toggleBtn) {
+      chartElements.toggleText.textContent = 'Hide Chart';
+      chartElements.toggleBtn.setAttribute('aria-expanded', 'true');
+      chartElements.toggleBtn.setAttribute('aria-label', 'Hide prediction distribution chart');
+    }
 
     // Show container with loading indicator
-    chartElements.container.classList.remove('hidden');
-    chartElements.loading.classList.remove('hidden');
-    chartElements.canvas.classList.add('hidden');
+    if (chartElements.container) {
+      chartElements.container.classList.remove('hidden');
+    }
+    if (chartElements.loading) {
+      chartElements.loading.classList.remove('hidden');
+    }
+    if (chartElements.canvas) {
+      chartElements.canvas.classList.add('hidden');
+    }
 
     // Load Chart.js library (lazy loading)
     const loaded = await loadChartLibrary();
@@ -528,8 +536,12 @@ async function toggleChart() {
       createDataTable(buckets);
 
       // Hide loading, show canvas
-      chartElements.loading.classList.add('hidden');
-      chartElements.canvas.classList.remove('hidden');
+      if (chartElements.loading) {
+        chartElements.loading.classList.add('hidden');
+      }
+      if (chartElements.canvas) {
+        chartElements.canvas.classList.remove('hidden');
+      }
 
       isChartExpanded = true;
 
@@ -537,26 +549,32 @@ async function toggleChart() {
     } catch (error) {
       console.error('Failed to render chart:', error);
 
-      chartElements.loading.innerHTML = `
-        <div class="alert alert-error shadow-lg">
-          <svg class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>Failed to render chart. Please try again.</span>
-        </div>
-      `;
+      if (chartElements.loading) {
+        chartElements.loading.innerHTML = `
+          <div class="alert alert-error shadow-lg">
+            <svg class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>Failed to render chart. Please try again.</span>
+          </div>
+        `;
+      }
     }
   } else {
     // Collapsing: Hide chart
     console.log('Collapsing chart...');
 
-    // Update button text and ARIA
-    chartElements.toggleText.textContent = 'Show Prediction Distribution';
-    chartElements.toggleBtn.setAttribute('aria-expanded', 'false');
-    chartElements.toggleBtn.setAttribute('aria-label', 'Show prediction distribution chart');
+    // Update button text and ARIA (if toggle button exists - old UI)
+    if (chartElements.toggleText && chartElements.toggleBtn) {
+      chartElements.toggleText.textContent = 'Show Prediction Distribution';
+      chartElements.toggleBtn.setAttribute('aria-expanded', 'false');
+      chartElements.toggleBtn.setAttribute('aria-label', 'Show prediction distribution chart');
+    }
 
     // Hide container with smooth animation
-    chartElements.container.classList.add('hidden');
+    if (chartElements.container) {
+      chartElements.container.classList.add('hidden');
+    }
 
     isChartExpanded = false;
 
@@ -566,14 +584,47 @@ async function toggleChart() {
 
 /**
  * Initialize chart module
- * Sets up toggle button event listener
+ * Auto-loads chart if container exists and has 50+ predictions
  */
-function initChart() {
+async function initChart() {
   initChartElements();
 
-  if (chartElements && chartElements.toggleBtn) {
-    chartElements.toggleBtn.addEventListener('click', toggleChart);
-    console.log('Chart toggle initialized');
+  // Check if we have enough predictions to show the chart (minimum 50)
+  try {
+    const response = await fetch('/api/stats');
+    if (!response.ok) {
+      console.warn('Failed to fetch stats for chart threshold check');
+      return;
+    }
+
+    const result = await response.json();
+    const stats = result.data || result;
+    const totalPredictions = stats.total || 0;
+
+    console.log(`Chart init: ${totalPredictions} predictions (threshold: 50)`);
+
+    // Only show chart if we have 50+ predictions
+    if (totalPredictions < 50) {
+      console.log('Not enough predictions to show chart (need 50)');
+      if (chartElements && chartElements.container) {
+        chartElements.container.classList.add('hidden');
+      }
+      return;
+    }
+
+    // Auto-load chart if canvas exists (new UI behavior)
+    if (chartElements && chartElements.canvas) {
+      // Check if already loaded or loading to prevent double-init
+      if (!isChartExpanded) {
+        toggleChart(); // This function handles loading and rendering
+      }
+    } else if (chartElements && chartElements.toggleBtn) {
+      // Fallback for old UI with toggle button
+      chartElements.toggleBtn.addEventListener('click', toggleChart);
+      console.log('Chart toggle initialized');
+    }
+  } catch (error) {
+    console.error('Error checking prediction count for chart:', error);
   }
 }
 
@@ -583,6 +634,9 @@ if (document.readyState === 'loading') {
 } else {
   initChart();
 }
+
+// Make initChart available globally for submission.js to trigger after threshold
+window.initChart = initChart;
 
 // Export functions for testing
 if (typeof module !== 'undefined' && module.exports) {

@@ -257,10 +257,14 @@ export async function invalidateAllCaches(kv: KVNamespace | undefined): Promise<
   }
 
   try {
-    // Invalidate both caches in parallel
-    await Promise.all([kv.delete('stats:latest'), kv.delete('predictions:aggregated')]);
+    // Invalidate all caches in parallel (Story 10.1: added sentiment cache)
+    await Promise.all([
+      kv.delete('stats:latest'),
+      kv.delete('predictions:aggregated'),
+      kv.delete('sentiment:score'), // Story 10.1
+    ]);
     console.log('All caches invalidated', {
-      keys: ['stats:latest', 'predictions:aggregated'],
+      keys: ['stats:latest', 'predictions:aggregated', 'sentiment:score'],
     });
   } catch (error) {
     // Cache invalidation failed - log but don't fail

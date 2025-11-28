@@ -47,61 +47,89 @@ _Generated using BMad Method - Create UX Design Workflow v1.0_
 
 ### 1.1 Design System Choice
 
-**Selected Design System:** DaisyUI v4.x
+**Selected Design System:** Custom GTA Gaming Theme (Tailwind CSS utilities)
 
 **Rationale:**
 
-DaisyUI is a pure CSS plugin for Tailwind CSS with **zero JavaScript dependency**, making it perfect for the GTA 6 Prediction Tracker's performance and simplicity goals.
+The custom GTA Gaming theme uses Tailwind CSS utilities with custom color tokens to achieve the bold, energetic gaming aesthetic required for viral sharing and target audience engagement.
 
-**Why DaisyUI:**
+**Why Custom Theme Over DaisyUI:**
 
-1. **Performance Priority:** Zero JS bundle = faster load times (aligns with <2s desktop, <3s mobile goal)
-2. **Clean & Modern:** Matches "Stripe/Linear inspiration" brand personality from PRD
-3. **Tailwind-native:** Seamless integration with existing Tailwind CSS v4.0 architecture
-4. **Development Velocity:** Semantic class names (`btn btn-primary`) speed up 2-week MVP timeline
-5. **Lightweight:** No framework dependency, works perfectly with vanilla JavaScript
-6. **Themeable:** Easily customizable to match gaming aesthetic
+1. **Visual Intensity:** DaisyUI's minimal aesthetic couldn't deliver the neon gradient boldness needed for screenshot-worthy results
+2. **Brand Differentiation:** Generic component libraries create generic-looking sites; custom theme creates unique GTA gaming identity
+3. **Target Audience Fit:** Gaming community (r/GTA6, Discord) responds better to bold, energetic aesthetics than clean minimal design
+4. **Complete Control:** Custom CSS allows precise implementation of Gaming Energy color palette
+5. **Performance:** Custom CSS (~184 lines) keeps total CSS under 15KB with tree-shaking
 
-**What DaisyUI Provides:**
+**What Custom Theme Provides:**
 
-- **60+ Components:** Buttons, cards, forms, modals, alerts, badges, loading states
-- **20+ Built-in Themes:** Starting point for customization
-- **Semantic Classes:** `class="btn btn-primary"` instead of 20 utility classes
-- **Responsive:** Mobile-first design baked in
-- **Accessible:** WCAG-compliant base components
+- **GTA Color Tokens:** `gta-dark`, `gta-card`, `gta-pink`, `gta-purple`, `gta-blue`
+- **Gradient Utilities:** Purple-to-pink gradients for CTAs and highlights
+- **Custom Components:** Dashboard cards, stats displays, prediction forms
+- **Responsive Design:** Mobile-first with Tailwind breakpoints
+- **Accessible:** WCAG-compliant color contrast ratios
 
-**Components Relevant to GTA 6 Tracker:**
-
-- `btn` - Submit button, share buttons (primary, secondary, ghost variants)
-- `card` - Results display container
-- `input` - Date picker styling
-- `badge` - Percentile indicators, stats labels
-- `alert` - Success/error messages
-- `modal` - Cookie consent, terms of service
-- `stats` - Statistics display (median, min, max, total)
-- `progress` - Loading states (if needed)
-- `tooltip` - Help text, explanations
-
-**Installation (from architecture):**
-```bash
-npm install -D daisyui@latest
-```
+**Implementation:**
 
 **Tailwind Config:**
 ```javascript
 // tailwind.config.js
 module.exports = {
-  plugins: [require("daisyui")],
+  theme: {
+    extend: {
+      colors: {
+        'gta-dark': '#0f172a',
+        'gta-card': '#1e293b',
+        'gta-pink': '#db2777',
+        'gta-purple': '#7c3aed',
+        'gta-blue': '#0ea5e9',
+      }
+    }
+  }
 }
 ```
 
-**Version:** DaisyUI 4.x (latest stable as of 2025)
-**Documentation:** https://daisyui.com/
-**License:** MIT (free for commercial use)
+**Custom CSS:**
+```css
+/* public/styles.css */
+/* Dashboard cards, gradient buttons, gaming aesthetic */
+/* ~184 lines of custom components */
+```
+
+**Version:** Custom theme v1.0 (2025-11-27)
+**Documentation:** ADR-015 (Design System Change)
+**License:** MIT (project-owned)
 
 **Customization Strategy:**
 
-DaisyUI will provide the base component styles. Custom colors, typography, and spacing will be defined through Tailwind's theme configuration to match the gaming aesthetic established in visual foundation design.
+Custom theme tokens are defined in Tailwind config. Component styles are in `public/styles.css`. All styling uses Tailwind utilities where possible, custom CSS only for complex gradients and animations.
+
+---
+
+### 1.2 Implementation Status
+
+**Design System Migration:** DaisyUI → Custom GTA Theme
+
+**Migration Date:** 2025-11-27 (Sprint Change Proposal: UI Redesign)
+
+**Status:** ✅ **Gaming Energy Color Theme Implemented**
+
+The Gaming Energy color palette (Section 3.1, lines 167-240) was successfully implemented using custom Tailwind tokens. The bold, vibrant, competitive aesthetic aligns perfectly with target audience preferences and viral sharing goals.
+
+**Key Changes from Original Spec:**
+- ❌ **DaisyUI removed** - Implementation method changed to custom CSS
+- ✅ **Gaming Energy colors implemented** - Purple/pink/cyan palette active
+- ✅ **Gradient usage implemented** - CTAs use purple-to-pink gradients
+- ✅ **Immersive Hero → Compact Card** - Responsive hybrid approach implemented
+- 🔄 **Dashboard grid added** - 4-card layout for Total/Median/Official/Optimism
+
+**Component Mapping (DaisyUI → Custom):**
+- `btn btn-primary` → `bg-gradient-to-r from-gta-pink to-gta-purple`
+- `card` → `bg-gta-card border border-gray-700 rounded-xl`
+- `stats` → Custom dashboard grid with 4 cards
+- `badge` → Custom styled spans with `bg-gta-pink/20 text-gta-pink`
+
+**Architecture Reference:** See ADR-015 for full design system change rationale.
 
 ---
 
@@ -421,6 +449,15 @@ This hybrid approach maximizes the strengths of each screen size:
 **Mobile Navigation Pattern:**
 - Same as desktop (no hamburger menu needed)
 - Compact footer at card bottom
+
+**Container Width Strategy:**
+- **All Main Content Sections:** `max-w-4xl` (896px) - Consistent width
+  - Voting Section
+  - Confirmation Display
+  - My Prediction Card
+  - Dashboard Section
+- **Footer:** `max-w-6xl` (1152px) - Full-width information
+- **Rationale:** Consistent 896px width for all main content sections creates visual harmony, unified flow, and optimal desktop viewing experience
 
 **Content Structure:**
 
