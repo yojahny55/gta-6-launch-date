@@ -1,333 +1,104 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>About - GTA 6 Launch Date Prediction Tracker</title>
-  <meta name="description" content="Learn about our community-driven GTA 6 prediction tracker, how it works, and our commitment to transparency and privacy.">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>About - GTA 6 Launch Truth</title>
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
   <link rel="stylesheet" href="/styles.built.css">
-  <style>
-    /* Smooth scroll behavior for anchor links */
-    html {
-      scroll-behavior: smooth;
-    }
-    /* Offset for anchor links to account for sticky header if any */
-    :target {
-      scroll-margin-top: 2rem;
-    }
-  </style>
 </head>
-<body class="min-h-screen bg-base-200 px-4 py-8">
-  <div class="container mx-auto max-w-4xl">
-    <!-- Header -->
-    <header class="text-center mb-8">
-      <h1 class="text-3xl md:text-4xl font-bold text-base-content mb-3">
-        About GTA 6 Predictions
-      </h1>
-      <p class="text-sm text-base-content/60">
-        Transparency, community, and data you can trust
-      </p>
-    </header>
 
-    <!-- Main Content -->
-    <main>
-      <!-- Section 1: What Is This? -->
-      <section id="what-is-this" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">What Is This?</h2>
+<body
+  class="min-h-screen bg-gta-dark font-sans text-slate-100 selection:bg-gta-pink selection:text-white flex flex-col">
 
-          <p class="mb-4 text-base-content/80">
-            This is a <strong>community-driven tracker</strong> for GTA 6 launch date predictions. Think of it as a collective crystal ball where you can see what the gaming community <em>really</em> thinks—not just official dates or corporate promises.
-          </p>
-
-          <p class="mb-4 text-base-content/80">
-            Rockstar has announced GTA 6 will launch in November 2026, but let's be honest: after years of delays and radio silence, plenty of gamers are skeptical. This tool captures that sentiment.
-          </p>
-
-          <div class="alert alert-info">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div>
-              <h3 class="font-bold">Your anonymous prediction helps paint the collective sentiment</h3>
-              <p class="text-sm">No account needed. No tracking. Just honest community data.</p>
-            </div>
-          </div>
+  <!-- Header -->
+  <header
+    class="w-full py-1 px-4 md:px-8 flex items-center justify-between border-b border-gray-800/50 bg-gta-dark/80 backdrop-blur-md sticky top-0 z-50">
+    <div class="flex items-center gap-3">
+      <a href="/" class="flex items-center gap-3 hover:opacity-80 transition-opacity">
+        <div class="p-2 bg-gradient-to-br from-gta-pink to-gta-purple rounded-lg shadow-lg shadow-gta-pink/20">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+            class="text-white w-6 h-6">
+            <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+          </svg>
         </div>
-      </section>
-
-      <!-- Section 2: Why This Exists -->
-      <section id="why-this-exists" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">Why This Exists</h2>
-
-          <p class="mb-4 text-base-content/80">
-            GTA 6 has been delayed more times than we can count. Rockstar announced a release date, then pushed it back. The gaming community has every right to be skeptical.
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">The Problem</h3>
-          <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li><strong>No existing tool captures community sentiment:</strong> Reddit polls disappear, Twitter threads get buried, and forum discussions are scattered</li>
-            <li><strong>Gap between official dates and what fans believe:</strong> Rockstar says 2026. Fans think 2027, 2028, or "when pigs fly."</li>
-            <li><strong>Community needs a voice:</strong> Gamers deserve a place to voice their predictions without corporate spin</li>
-          </ul>
-
-          <p class="text-base-content/80">
-            This tracker fills that gap. It's built by a GTA fan for GTA fans, with no corporate agenda—just transparency and data.
-          </p>
+        <div>
+          <h1
+            class="font-display text-base tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 uppercase italic">
+            Launch<span class="text-gta-pink">Truth</span>
+          </h1>
+          <p class="text-xs text-gray-400 font-sans tracking-widest uppercase">Community Sentiment Tracker</p>
         </div>
-      </section>
+      </a>
+    </div>
+  </header>
 
-      <!-- Section 3: How It Works -->
-      <section id="how-it-works" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">How It Works</h2>
+  <main class="flex-grow flex flex-col items-center w-full px-4 py-12">
+    <div class="w-full max-w-3xl animate-fade-in-up">
+      <div class="bg-gta-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-12 shadow-2xl">
+        <h2 class="font-display text-3xl md:text-4xl text-white mb-6 italic uppercase">
+          About the <span class="text-gta-pink">Project</span>
+        </h2>
 
-          <ol class="list-decimal list-inside space-y-3 mb-4 text-base-content/80">
-            <li>
-              <strong>Submit your prediction anonymously:</strong> No account required. We use a cookie to remember your prediction so you can update it later if you change your mind.
+        <div class="prose prose-invert prose-lg text-gray-300">
+          <p class="mb-6">
+            <strong>GTA 6 Launch Truth</strong> is a community-driven experiment designed to track the <em>real</em>
+            sentiment of gamers regarding the release date of Grand Theft Auto VI.
+          </p>
+
+          <p class="mb-6">
+            While official announcements set targets, the gaming community often has a different pulse on reality. This
+            tool aggregates thousands of predictions to find the "Wisdom of Crowds" median date—a potentially more
+            accurate predictor than corporate press releases.
+          </p>
+
+          <h3 class="text-xl font-bold text-white mt-8 mb-4">How it Works</h3>
+          <ul class="list-disc pl-6 space-y-2 mb-6">
+            <li><strong>Vote:</strong> Lock in your gut-feeling prediction date.</li>
+            <li><strong>Analyze:</strong> We calculate the median date from all verified predictions.</li>
+            <li><strong>Compare:</strong> See how your prediction aligns with the community and the official timeline.
             </li>
-            <li>
-              <strong>We calculate a weighted median:</strong> Your prediction is included in the community median, but trolls submitting "2099" have less influence than reasonable predictions (more on this below).
-            </li>
-            <li>
-              <strong>See how you compare:</strong> After submitting, you'll see the community consensus and how your prediction stacks up.
-            </li>
-            <li>
-              <strong>Share results:</strong> Spread the word on Reddit, Twitter, or Discord to get more predictions and better data.
-            </li>
-          </ol>
-
-          <p class="mb-4 text-base-content/80">
-            It's simple, fast, and completely anonymous. No BS, no data harvesting—just honest community sentiment.
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">Updates Work Across IP Changes</h3>
-          <p class="mb-2 text-base-content/80">
-            Your cookie is the primary identifier for your prediction. This means <strong>you can update your prediction from any IP address</strong>—whether you're switching between WiFi and mobile data, using a VPN, or accessing from a different location.
-          </p>
-          <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li><strong>Mobile users:</strong> Update from WiFi, LTE, or 5G—your cookie stays valid</li>
-            <li><strong>VPN users:</strong> Your prediction follows you, not your IP address</li>
-            <li><strong>Network changes:</strong> Switching networks? No problem. Your cookie is your identity.</li>
-          </ul>
-          <div class="alert alert-warning">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-            <div>
-              <h4 class="font-bold">Lost Your Cookie?</h4>
-              <p class="text-sm">If you cleared your browser cookies, you'll need to submit a new prediction. Each IP address can only submit once, but your cookie allows updates from any IP.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 4: The Algorithm (Transparency) -->
-      <section id="the-algorithm" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">The Algorithm (Transparency)</h2>
-
-          <p class="mb-4 text-base-content/80">
-            We know what you're thinking: <em>"Is this rigged? Can trolls skew the results?"</em>
-          </p>
-
-          <p class="mb-4 text-base-content/80">
-            The answer is <strong>no</strong>, and here's why. We use a <strong>weighted median algorithm</strong> that gives different predictions different levels of influence based on how reasonable they are.
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">How Weighting Works</h3>
-          <div class="overflow-x-auto mb-4">
-            <table class="table table-zebra w-full">
-              <thead>
-                <tr>
-                  <th>Prediction Range</th>
-                  <th>Weight</th>
-                  <th>Explanation</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Within 5 years of official date (2025-2030)</td>
-                  <td class="font-bold text-success">1.0 (Full weight)</td>
-                  <td>Reasonable predictions get full influence</td>
-                </tr>
-                <tr>
-                  <td>5-50 years out (2030-2075)</td>
-                  <td class="font-bold text-warning">0.3 (Reduced weight)</td>
-                  <td>Far-out predictions get less influence</td>
-                </tr>
-                <tr>
-                  <td>Beyond 50 years (2075+)</td>
-                  <td class="font-bold text-error">0.1 (Minimal weight)</td>
-                  <td>Troll predictions barely count</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div class="alert alert-success">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div>
-              <h3 class="font-bold">Why This Matters</h3>
-              <p class="text-sm">Someone submitting "2099" as a joke gets only 10% of the influence of someone predicting 2027. This keeps trolls from ruining the data while still being democratic.</p>
-            </div>
-          </div>
-
-          <p class="mt-4 text-base-content/80">
-            <strong>Plain English:</strong> Reasonable predictions count more. Troll predictions barely count. The median stays meaningful.
-          </p>
-        </div>
-      </section>
-
-      <!-- Section 5: Privacy & Data -->
-      <section id="privacy-and-data" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">Privacy & Data</h2>
-
-          <p class="mb-4 text-base-content/80">
-            We take privacy seriously. Here's exactly what we collect and why:
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">What We Collect</h3>
-          <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li><strong>Your prediction date:</strong> Obviously, we need this to calculate the median</li>
-            <li><strong>Cookie ID:</strong> A unique identifier stored in your browser to track your prediction (so you can update it later)</li>
-            <li><strong>Hashed IP address:</strong> Your IP is encrypted (hashed) before storage to prevent spam. We <strong>never</strong> store your actual IP address in plain text.</li>
           </ul>
 
-          <h3 class="text-lg font-semibold mb-2">What We DON'T Collect</h3>
-          <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li>No email addresses</li>
-            <li>No names or personal info</li>
-            <li>No tracking across other websites</li>
-            <li>No selling your data to third parties (ever)</li>
-          </ul>
-
-          <h3 class="text-lg font-semibold mb-2">Cookie Usage</h3>
-          <p class="mb-4 text-base-content/80">
-            We use cookies <strong>only</strong> to remember your prediction. No tracking, no analytics cookies unless you explicitly consent. You can manage cookie preferences in the banner at the bottom of the page.
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">Data Retention (How Long We Keep Your Data)</h3>
-          <p class="mb-2 text-base-content/80">
-            We practice data minimization and automatically delete old data according to these retention policies:
-          </p>
-          <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li><strong>Predictions:</strong> Kept indefinitely (core product value—you expect your prediction to persist)</li>
-            <li><strong>Analytics data:</strong> Automatically deleted after 24 months (Cloudflare handles this)</li>
-            <li><strong>Server logs:</strong> Automatically deleted after 90 days (daily cleanup at 2 AM UTC)</li>
-            <li><strong>Rate limiting & cache data:</strong> Automatically expires (60 seconds for rate limits, 5 minutes for cache)</li>
-          </ul>
-          <p class="mb-4 text-base-content/80">
-            Our automated cleanup system runs daily to ensure we only keep what's necessary. This minimizes data storage while maintaining service quality—exactly what GDPR requires.
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">Your Data, Your Control</h3>
-          <p class="mb-4 text-base-content/80">
-            You have complete control over your data:
-          </p>
-          <ul class="list-disc list-inside space-y-2 mb-4 ml-4 text-base-content/80">
-            <li><strong>Update your prediction:</strong> Just submit a new date—we'll update your existing prediction</li>
-            <li><strong>Delete your data:</strong> Visit our <a href="/delete.html" class="link link-primary">data deletion form</a> to request deletion (GDPR "Right to be Forgotten")</li>
-            <li><strong>View your data:</strong> Your prediction is displayed when you visit the homepage</li>
-          </ul>
-
-          <p class="text-base-content/80">
-            For full details, check out our <a href="/privacy.html" class="link link-primary">Privacy Policy</a>.
+          <p class="text-sm text-gray-500 italic mt-12 border-t border-gray-700 pt-6">
+            Disclaimer: This is a fan-made project and is not affiliated with, endorsed by, or connected to Rockstar
+            Games or Take-Two Interactive. All trademarks belong to their respective owners.
           </p>
         </div>
-      </section>
 
-      <!-- Section 6: Who Made This -->
-      <section id="who-made-this" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">Who Made This</h2>
-
-          <p class="mb-4 text-base-content/80">
-            Hi, I'm a GTA fan who got tired of seeing Reddit polls disappear and Twitter threads get lost in the void. After Rockstar delayed GTA 6 (again), I wanted a permanent place to track what the community <em>actually</em> thinks—not what corporate PR tells us.
-          </p>
-
-          <p class="mb-4 text-base-content/80">
-            This is a <strong>solo passion project</strong> built by a fan for fans. No corporate backing, no hidden agenda, no monetization schemes. Just a tool to answer the question: <em>"When will GTA 6 actually launch?"</em>
-          </p>
-
-          <div class="alert alert-info">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            <div>
-              <div class="font-semibold">Got questions or feedback?</div>
-              <a href="mailto:contact@gta6predictions.com" class="link link-primary">contact@gta6predictions.com</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Section 7: Open Source / Transparency -->
-      <section id="open-source" class="card bg-base-100 shadow-xl mb-6">
-        <div class="card-body">
-          <h2 class="card-title text-2xl mb-4">Open Source / Transparency</h2>
-
-          <p class="mb-4 text-base-content/80">
-            We believe in radical transparency. If you're technically inclined, you can verify everything we've said about the algorithm, privacy, and data handling.
-          </p>
-
-          <h3 class="text-lg font-semibold mb-2">Nothing to Hide</h3>
-          <p class="mb-4 text-base-content/80">
-            The weighted median algorithm, IP hashing logic, and cookie handling are all implemented in open-source code. We're considering making the full repository public on GitHub so you can audit it yourself.
-          </p>
-
-          <div class="alert alert-success mb-4">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <div>
-              <h3 class="font-bold">GitHub Repository (Coming Soon)</h3>
-              <p class="text-sm">We're planning to open-source the codebase so you can verify the algorithm, inspect privacy measures, and contribute improvements.</p>
-            </div>
-          </div>
-
-          <p class="text-base-content/80">
-            <strong>Bottom line:</strong> Everything transparent. No black boxes. Trust through openness.
-          </p>
-        </div>
-      </section>
-    </main>
-
-    <!-- Footer Navigation -->
-    <footer class="mt-12 pt-6 border-t border-base-300 text-center">
-      <nav aria-label="Footer navigation">
-        <ul class="flex flex-wrap justify-center gap-4 text-sm text-base-content/70">
-          <li><a href="/" class="link hover:link-primary">Home</a></li>
-          <li><a href="/privacy.html" class="link hover:link-primary">Privacy Policy</a></li>
-          <li><a href="/terms.html" class="link hover:link-primary">Terms of Service</a></li>
-          <li><a href="/about.html" class="link hover:link-primary" aria-current="page">About</a></li>
-        </ul>
-      </nav>
-      <p class="mt-4 text-xs text-base-content/50">
-        &copy; 2025 GTA 6 Launch Date Prediction Tracker. All rights reserved.
-      </p>
-    </footer>
-  </div>
-
-  <!-- Cookie Consent Banner (Story 4.1: GDPR Cookie Consent Banner) -->
-  <aside id="cookie-consent-banner" class="hidden fixed bottom-0 left-0 right-0 z-50 bg-base-100 border-t-2 border-primary shadow-2xl" role="dialog" aria-labelledby="cookie-consent-heading" aria-describedby="cookie-consent-description" aria-live="polite">
-    <div class="container mx-auto px-4 py-4 max-w-4xl">
-      <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-        <div class="flex-1">
-          <h2 id="cookie-consent-heading" class="text-lg font-bold text-base-content mb-2">
-            We use cookies
-          </h2>
-          <p id="cookie-consent-description" class="text-sm text-base-content/80">
-            We use functional cookies to save your prediction and analytics cookies to understand usage. You can opt out of analytics.
-            <a href="/privacy.html" class="link link-primary ml-1" aria-label="Learn more about our privacy policy">Learn more</a>
-          </p>
-        </div>
-        <div class="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-          <button id="cookie-accept-all" type="button" class="btn btn-primary btn-sm" aria-label="Accept all cookies including analytics">
-            Accept All
-          </button>
-          <button id="cookie-functional-only" type="button" class="btn btn-outline btn-sm" aria-label="Accept only functional cookies, opt out of analytics">
-            Functional Only
-          </button>
+        <div class="mt-8">
+          <a href="/"
+            class="inline-flex items-center gap-2 text-gta-pink hover:text-white transition-colors font-bold uppercase tracking-wider text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Back to Tracker
+          </a>
         </div>
       </div>
     </div>
-  </aside>
+  </main>
 
-  <script src="/js/cookie-consent.js"></script>
+  <!-- Footer -->
+  <footer class="w-full py-8 border-t border-gray-800 mt-auto bg-black/40">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-gray-600 text-sm">
+        &copy; 2025 GTA 6 Launch Truth. Fan made. Not affiliated with Rockstar Games.
+      </p>
+      <div class="flex gap-4 text-sm text-gray-500">
+        <a href="/about.html" class="text-gta-pink transition-colors">About</a>
+        <a href="/privacy.html" class="hover:text-gta-pink transition-colors">Privacy</a>
+        <a href="/terms.html" class="hover:text-gta-pink transition-colors">Terms</a>
+        <a href="#" class="hover:text-gta-pink transition-colors">Twitter</a>
+      </div>
+    </div>
+  </footer>
+
 </body>
+
 </html>
