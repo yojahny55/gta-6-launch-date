@@ -34,10 +34,10 @@ export const OFFICIAL_RELEASE_DATE = '2026-11-19';
  * Threshold values for status determination (in days)
  */
 export const STATUS_THRESHOLDS = {
-  EARLY_RELEASE: -60,      // More than 60 days before official
-  ON_TRACK_MIN: -60,       // 60 days before official
-  ON_TRACK_MAX: 60,        // 60 days after official
-  DELAY_LIKELY_MAX: 180,   // 180 days after official
+  EARLY_RELEASE: -60, // More than 60 days before official
+  ON_TRACK_MIN: -60, // 60 days before official
+  ON_TRACK_MAX: 60, // 60 days after official
+  DELAY_LIKELY_MAX: 180, // 180 days after official
 } as const;
 
 /**
@@ -61,34 +61,38 @@ export function calculateStatus(
   const median = new Date(medianDate);
 
   // Calculate difference in days
-  const daysDiff = Math.round(
-    (median.getTime() - official.getTime()) / (24 * 60 * 60 * 1000)
-  );
+  const daysDiff = Math.round((median.getTime() - official.getTime()) / (24 * 60 * 60 * 1000));
 
   // Determine status based on thresholds
   if (daysDiff < STATUS_THRESHOLDS.EARLY_RELEASE) {
     return {
       status: 'Early Release Possible',
       color: 'green',
-      daysDifference: daysDiff
+      daysDifference: daysDiff,
     };
-  } else if (daysDiff >= STATUS_THRESHOLDS.ON_TRACK_MIN && daysDiff <= STATUS_THRESHOLDS.ON_TRACK_MAX) {
+  } else if (
+    daysDiff >= STATUS_THRESHOLDS.ON_TRACK_MIN &&
+    daysDiff <= STATUS_THRESHOLDS.ON_TRACK_MAX
+  ) {
     return {
       status: 'On Track',
       color: 'blue',
-      daysDifference: daysDiff
+      daysDifference: daysDiff,
     };
-  } else if (daysDiff > STATUS_THRESHOLDS.ON_TRACK_MAX && daysDiff <= STATUS_THRESHOLDS.DELAY_LIKELY_MAX) {
+  } else if (
+    daysDiff > STATUS_THRESHOLDS.ON_TRACK_MAX &&
+    daysDiff <= STATUS_THRESHOLDS.DELAY_LIKELY_MAX
+  ) {
     return {
       status: 'Delay Likely',
       color: 'amber',
-      daysDifference: daysDiff
+      daysDifference: daysDiff,
     };
   } else {
     return {
       status: 'Major Delay Expected',
       color: 'red',
-      daysDifference: daysDiff
+      daysDifference: daysDiff,
     };
   }
 }

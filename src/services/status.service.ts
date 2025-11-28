@@ -26,7 +26,7 @@ import {
   calculateStatus,
   OFFICIAL_RELEASE_DATE,
   type StatusValue,
-  type StatusColor
+  type StatusColor,
 } from '../utils/status-calculator';
 
 /**

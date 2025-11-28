@@ -4,7 +4,7 @@ import {
   isValidDate,
   OFFICIAL_RELEASE_DATE,
   STATUS_THRESHOLDS,
-  type StatusResult
+  type StatusResult,
 } from './status-calculator';
 
 describe('Status Calculator', () => {

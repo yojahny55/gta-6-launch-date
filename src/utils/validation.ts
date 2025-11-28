@@ -68,7 +68,9 @@ export const DateSchema = z
       const min = new Date(MIN_DATE);
       return parsed >= min;
     },
-    { message: `Date must be on or after ${MIN_DATE} (official GTA 6 launch date). Predictions before the official launch date are not allowed.` }
+    {
+      message: `Date must be on or after ${MIN_DATE} (official GTA 6 launch date). Predictions before the official launch date are not allowed.`,
+    }
   )
   .refine(
     (date) => {
