@@ -421,6 +421,59 @@ export interface ErrorResponse {
 
 ---
 
+### GET /api/status
+
+**Purpose:** Fetch current community sentiment status based on median prediction
+
+**Query Parameters:** None
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "Delay Likely",
+    "status_color": "amber",
+    "median_date": "2027-03-15",
+    "official_date": "2026-11-19",
+    "days_difference": 116,
+    "cached_at": "2025-11-28T14:30:00Z"
+  }
+}
+```
+
+**Status Values:**
+- `"Early Release Possible"` - Median is 60+ days before official date (Green)
+- `"On Track"` - Median is within ±60 days of official date (Blue)
+- `"Delay Likely"` - Median is 60-180 days after official date (Amber)
+- `"Major Delay Expected"` - Median is 180+ days after official date (Red)
+
+**Caching:** 5 minutes via Cloudflare Workers cache API
+
+**Minimum Threshold (FR99):**
+- If total predictions < 50: Returns `"Gathering Data"` status with blue color
+
+**Error Response (500):**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SERVER_ERROR",
+    "message": "Unable to fetch status data. Please try again."
+  },
+  "data": {
+    "status": "Unknown",
+    "status_color": "blue",
+    "median_date": null,
+    "official_date": "2026-11-19",
+    "days_difference": 0,
+    "cached_at": "2025-11-28T14:30:00Z"
+  }
+}
+```
+
+---
+
 ### GET /widget
 
 **Purpose:** Embeddable widget for streamers/sites
@@ -559,6 +612,85 @@ const userId = Cookies.get('gta6_user_id');
 **Backend validation:**
 - Cookie ID must be valid UUID format
 - Match cookie_id from database for updates
+
+---
+
+### Status Calculation
+
+**File:** `src/utils/status-calculator.ts`
+
+**Purpose:** Calculate community sentiment status based on median prediction vs official date
+
+**Implementation:**
+
+```typescript
+export interface StatusResult {
+  status: 'Early Release Possible' | 'On Track' | 'Delay Likely' | 'Major Delay Expected';
+  color: 'green' | 'blue' | 'amber' | 'red';
+  daysDifference: number;
+}
+
+export function calculateStatus(
+  medianDate: string,
+  officialDate: string = '2026-11-19'
+): StatusResult {
+  const official = new Date(officialDate);
+  const median = new Date(medianDate);
+
+  const daysDiff = Math.round(
+    (median.getTime() - official.getTime()) / (24 * 60 * 60 * 1000)
+  );
+
+  if (daysDiff < -60) {
+    return {
+      status: 'Early Release Possible',
+      color: 'green',
+      daysDifference: daysDiff
+    };
+  } else if (daysDiff >= -60 && daysDiff <= 60) {
+    return {
+      status: 'On Track',
+      color: 'blue',
+      daysDifference: daysDiff
+    };
+  } else if (daysDiff > 60 && daysDiff <= 180) {
+    return {
+      status: 'Delay Likely',
+      color: 'amber',
+      daysDifference: daysDiff
+    };
+  } else {
+    return {
+      status: 'Major Delay Expected',
+      color: 'red',
+      daysDifference: daysDiff
+    };
+  }
+}
+```
+
+**Thresholds:**
+- **Early Release Possible:** < -60 days from official
+- **On Track:** -60 to +60 days from official
+- **Delay Likely:** +60 to +180 days from official
+- **Major Delay Expected:** > +180 days from official
+
+**Usage:**
+```typescript
+const median = await getWeightedMedian();
+const status = calculateStatus(median);
+// Returns: { status: 'Delay Likely', color: 'amber', daysDifference: 116 }
+```
+
+**Test Coverage:**
+- Test case: Median 90 days before official → "Early Release Possible"
+- Test case: Median exactly on official date → "On Track"
+- Test case: Median 30 days after official → "On Track"
+- Test case: Median 90 days after official → "Delay Likely"
+- Test case: Median 200 days after official → "Major Delay Expected"
+- Test case: Boundary at -60 days (should be "On Track")
+- Test case: Boundary at +60 days (should be "Delay Likely")
+- Test case: Boundary at +180 days (should be "Major Delay Expected")
 
 ---
 

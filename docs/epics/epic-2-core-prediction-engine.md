@@ -96,19 +96,19 @@ So that I can submit my prediction.
 **Given** a user wants to submit a prediction
 **When** they interact with the date picker
 **Then** a native HTML5 date input is presented:
-- `<input type="date" min="2025-01-01" max="2125-12-31">`
+- `<input type="date" min="2026-11-19" max="2125-12-31">`
 - Default value: Empty (forces user to choose)
 - Mobile-friendly (native date pickers on iOS/Android)
 - Keyboard accessible (FR69 requirement)
 
 **And** date validation occurs on client-side:
-- Minimum date: January 1, 2025 (past dates rejected)
+- Minimum date: November 19, 2026 (official launch date - earlier dates rejected)
 - Maximum date: December 31, 2125 (100-year range, FR2)
 - Invalid format rejected (only YYYY-MM-DD accepted)
 - Empty submission prevented (required field)
 
 **And** validation messages are clear:
-- "Please select a date between Jan 1, 2025 and Dec 31, 2125"
+- "Please select a date between Nov 19, 2026 (official launch date) and Dec 31, 2125"
 - "GTA 6 can't launch in the past!"
 - "Please enter a valid date"
 

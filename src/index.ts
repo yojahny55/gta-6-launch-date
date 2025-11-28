@@ -6,6 +6,7 @@ import { metaInjectionMiddleware } from './middleware/meta-injection';
 import { createPredictRoutes } from './routes/predict';
 import { createStatsRoutes } from './routes/stats';
 import { createSentimentRoutes } from './routes/sentiment';
+import { createStatusRoutes } from './routes/status';
 import { createPredictionsRoutes } from './routes/predictions';
 import { createDegradationRoutes } from './routes/degradation';
 import { createDeleteRoutes } from './routes/delete';
@@ -31,6 +32,9 @@ app.route('/', createStatsRoutes());
 
 // Register sentiment routes (Story 10.1)
 app.route('/', createSentimentRoutes());
+
+// Register status routes (Story 10.4)
+app.route('/', createStatusRoutes());
 
 // Register predictions data routes (Story 3.4b)
 app.route('/', createPredictionsRoutes());

@@ -38,9 +38,11 @@ Check out the full data and add your prediction:
 - Tracks Reddit traffic (FR42)
 
 **And** button placement (FR100):
-- Next to Twitter button
-- Same visual prominence
-- Icon: Reddit logo (orange)
+- Displayed next to Twitter button **inside the Prediction Locked card**
+- Above-the-fold (no scrolling required)
+- Prominent visual design with gaming aesthetic (purple-to-blue gradient, border, shadow)
+- Icon: Reddit logo (Snoo)
+- Responsive layout: Stacks vertically on mobile, side-by-side with Twitter button on desktop
 
 **And** automated tests exist covering main functionality
 

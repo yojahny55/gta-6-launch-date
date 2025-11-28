@@ -212,29 +212,157 @@ So that I can quickly review what I predicted.
 
 ---
 
+## Story 10.4: Dynamic Status Badge
+
+As a user,
+I want to see a dynamic status badge in the header that reflects current community sentiment,
+So that I can quickly understand if the community expects a delay or not.
+
+**Acceptance Criteria:**
+
+**Given** predictions exist in the database
+**When** the page loads
+**Then** the status badge is displayed dynamically in the header:
+
+**Backend Implementation:**
+
+1. **API Endpoint:**
+   ```typescript
+   GET /api/status
+   Response (200 OK):
+   {
+     "success": true,
+     "data": {
+       "status": "Delay Likely",
+       "status_color": "amber",
+       "median_date": "2027-03-15",
+       "official_date": "2026-11-19",
+       "days_difference": 116,
+       "cached_at": "2025-11-28T14:30:00Z"
+     }
+   }
+   ```
+
+2. **Status Calculation Logic:**
+   ```typescript
+   function calculateStatus(medianDate: string): StatusResult {
+     const official = new Date('2026-11-19');
+     const median = new Date(medianDate);
+     const daysDiff = Math.round((median - official) / (24 * 60 * 60 * 1000));
+
+     if (daysDiff < -60) {
+       return { status: "Early Release Possible", color: "green" };
+     } else if (daysDiff >= -60 && daysDiff <= 60) {
+       return { status: "On Track", color: "blue" };
+     } else if (daysDiff > 60 && daysDiff <= 180) {
+       return { status: "Delay Likely", color: "amber" };
+     } else {
+       return { status: "Major Delay Expected", color: "red" };
+     }
+   }
+   ```
+
+3. **Thresholds:**
+   - **Early Release Possible:** median < official - 60 days (Green)
+   - **On Track:** median within ±60 days of official (Blue)
+   - **Delay Likely:** median between +60 and +180 days of official (Amber)
+   - **Major Delay Expected:** median > official + 180 days (Red)
+
+4. **Caching Strategy:**
+   - Cache key: `status:current`
+   - TTL: 5 minutes (300 seconds)
+   - Invalidate on new submission/update
+   - Same pattern as `/api/stats` and `/api/sentiment`
+
+**Frontend Implementation:**
+
+5. **Header Badge Update:**
+   - Location: Header at `public/index.html:46`
+   - Current: Hardcoded `Status: Delay Likely`
+   - New: Dynamic content from `/api/status`
+
+6. **DOM Integration:**
+   - DOM ID: `#status-badge`
+   - Fetch: `GET /api/status` on page load (parallel with stats)
+   - Update: Badge text and color based on response
+
+7. **Color Coding:**
+   - Green: `text-green-500 border-green-500/30 bg-green-500/10`
+   - Blue: `text-gta-blue border-gta-blue/30 bg-gta-blue/10` (current)
+   - Amber: `text-amber-500 border-amber-500/30 bg-amber-500/10`
+   - Red: `text-red-500 border-red-500/30 bg-red-500/10`
+
+**And** respects 50-prediction minimum (FR99):
+- If total_count < 50: Show "Status: Gathering Data"
+- Return null for status, use default blue color
+
+**And** error handling:
+- If API fails: Show last cached value or "Status: Unknown"
+- Retry with same strategy as stats endpoint
+- Don't block page load if status fetch fails
+
+**And** automated tests exist covering main functionality:
+
+**Testing Requirements:**
+- [x] Unit tests for `calculateStatus()` function (all 4 thresholds)
+- [x] Unit tests for edge cases (exactly at boundaries, null median)
+- [x] Integration tests for `/api/status` endpoint
+- [x] API caching tests (verify 5-min TTL)
+- [x] Frontend tests for badge color switching
+
+**Prerequisites:**
+- Story 2.10 (caching pattern)
+- Story 2.9 (median calculation)
+- Database schema (predictions table)
+
+**Technical Notes:**
+- Implements automated status calculation based on prediction data
+- Removes hardcoded "Status: Delay Likely" from header
+- Provides real-time community sentiment indicator
+- Simple aggregation (reuses median from /api/stats)
+- File locations:
+  - `src/routes/status.ts` (API endpoint)
+  - `src/utils/status-calculator.ts` (calculation logic)
+  - `src/utils/status-calculator.test.ts` (tests)
+  - `public/js/status-badge.js` (frontend integration)
+
+**Effort:** 6-8 hours (backend + frontend + tests)
+**Priority:** 🟡 **MEDIUM** (UX enhancement, not MVP-blocking)
+
+**Implementation Status:** ✅ **COMPLETED** (2025-11-28)
+
+---
+
 ## Epic 10 Summary
 
-**Total Stories:** 3 (1 critical, 1 medium, 1 optional)
+**Total Stories:** 4 (1 critical, 2 medium, 1 optional)
 
-**Total Effort:** 8-12 hours (1-1.5 developer days)
+**Total Effort:** 14-20 hours (2-2.5 developer days)
 
 **Key Deliverables:**
 - `/api/sentiment` endpoint (Optimism Score calculation)
+- `/api/status` endpoint (Dynamic Status Badge) ✅ COMPLETED
 - Dashboard grid finalized and verified
 - Hardcoded "42%" removed and replaced with real data
+- Dynamic status badge in header
 
 **Success Metrics:**
 - Optimism Score updates in real-time (5-min cache)
+- Status badge reflects community sentiment (4-level system)
 - Dashboard loads all 4 metrics in < 500ms
-- Users can see and share Optimism Score statistic
+- Users can see and share metrics
 
 **Dependencies:**
 - Database: predictions table (already exists)
 - Caching: Pattern from Story 2.10 (already implemented)
 - Frontend: Dashboard grid HTML (already exists in new UI)
+- Weighted median calculation (Story 2.9)
 
 ---
 
 **Epic Created:** 2025-11-27
-**Sprint Change Proposal:** UI Redesign & Backend Integration
-**Status:** Ready for implementation
+**Epic Updated:** 2025-11-28 (Added Story 10.4)
+**Sprint Change Proposals:**
+- UI Redesign & Backend Integration (2025-11-27)
+- Dynamic Status Badge (2025-11-28) ✅ COMPLETED
+**Status:** In Progress (Story 10.4 completed, Stories 10.1-10.3 pending)

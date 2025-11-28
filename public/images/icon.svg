@@ -1,15 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- GTA 6 Prediction Tracker Icon - Simple Calendar/Prediction Icon -->
-  <rect width="512" height="512" fill="#1DA1F2"/>
-  <g fill="#FFFFFF">
-    <!-- Calendar Icon -->
-    <rect x="96" y="128" width="320" height="320" rx="24" fill="none" stroke="#FFFFFF" stroke-width="24"/>
-    <rect x="96" y="128" width="320" height="80" rx="24" fill="#FFFFFF" opacity="0.3"/>
-
-    <!-- Date Number "6" -->
-    <text x="256" y="340" font-family="Arial, sans-serif" font-size="160" font-weight="bold" text-anchor="middle" fill="#FFFFFF">6</text>
-
-    <!-- Question Mark (prediction uncertainty) -->
-    <text x="360" y="280" font-family="Arial, sans-serif" font-size="80" font-weight="bold" fill="#FFD700">?</text>
-  </g>
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#db2777;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7c3aed;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="15" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <!-- Background Circle (Dark) -->
+  <circle cx="256" cy="256" r="240" fill="#0f172a" stroke="url(#grad)" stroke-width="20" />
+  
+  <!-- Inner Target/Clock Rings -->
+  <circle cx="256" cy="256" r="160" fill="none" stroke="#db2777" stroke-width="15" opacity="0.8" filter="url(#glow)" />
+  <circle cx="256" cy="256" r="80" fill="none" stroke="#7c3aed" stroke-width="15" opacity="0.8" />
+  
+  <!-- Center Dot -->
+  <circle cx="256" cy="256" r="30" fill="#fff" filter="url(#glow)" />
+  
+  <!-- Clock Hands / Target Lines -->
+  <line x1="256" y1="256" x2="256" y2="100" stroke="#fff" stroke-width="15" stroke-linecap="round" />
+  <line x1="256" y1="256" x2="380" y2="256" stroke="#fff" stroke-width="15" stroke-linecap="round" />
 </svg>

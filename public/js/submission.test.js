@@ -374,7 +374,7 @@ describe('Submission Module (Story 3.3)', () => {
     });
 
     it('should handle very early dates correctly', () => {
-      announceToScreenReader('2025-01-01', '2027-02-14');
+      announceToScreenReader('2026-11-20', '2027-02-14');
 
       const announcement = document.getElementById('confirmation-announcement');
       expect(announcement.textContent).toContain('more optimistic');

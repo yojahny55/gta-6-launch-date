@@ -156,10 +156,10 @@ function getCookieID() {
  * Mirrors backend validation rules from src/utils/date-validation.ts
  *
  * NOTE: DATE_REGEX only validates format (YYYY-MM-DD), not range.
- * Range validation (2025-2125) happens separately in validateDateRange().
+ * Range validation (2026-11-19 to 2125-12-31) happens separately in validateDateRange().
  * This ensures consistency between frontend and backend validation logic.
  */
-const MIN_DATE = '2025-01-01';
+const MIN_DATE = '2026-11-19'; // Official GTA 6 launch date
 const MAX_DATE = '2125-12-31';
 const DATE_REGEX =
   /^(\d{4})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
@@ -177,7 +177,7 @@ function isValidDateFormat(date) {
 }
 
 /**
- * Validate date is within allowed range (2025-01-01 to 2125-12-31)
+ * Validate date is within allowed range (2026-11-19 to 2125-12-31)
  * @param {string} dateString - ISO 8601 date string
  * @returns {boolean} True if within range
  */
@@ -211,7 +211,7 @@ function validateDate(dateString) {
   if (date > max) {
     return {
       valid: false,
-      error: 'Please select a date between Jan 1, 2025 and Dec 31, 2125',
+      error: 'Please select a date between Nov 19, 2026 and Dec 31, 2125',
     };
   }
 
@@ -1177,16 +1177,16 @@ function hideComparison() {
 // ============================================================================
 
 /**
- * DOM elements for share buttons section
+ * DOM elements for share buttons (now integrated into confirmation card)
  */
 let shareButtonsElements = null;
 
 /**
  * Initialize and cache share buttons DOM elements
+ * Note: Share buttons are now integrated into #confirmation-display card
  */
 function initShareButtonsElements() {
   shareButtonsElements = {
-    container: document.getElementById('share-buttons-section'),
     twitterBtn: document.getElementById('twitter-share-btn'),
     redditBtn: document.getElementById('reddit-share-btn')
   };
@@ -1201,8 +1201,8 @@ let latestPrediction = {
 };
 
 /**
- * Display share buttons section after successful prediction submission
- * AC: Share buttons displayed immediately after submission confirmation
+ * Store prediction data for share buttons (now integrated into confirmation card)
+ * AC: Share buttons displayed immediately after submission confirmation (inside Prediction Locked card)
  *
  * @param {string} userDate - User's predicted date (ISO format)
  * @param {string} medianDate - Community median date (ISO format)
@@ -1212,33 +1212,23 @@ function displayShareButtons(userDate, medianDate) {
     initShareButtonsElements();
   }
 
-  // Store latest prediction data for share button handler
+  // Store latest prediction data for share button handlers
   latestPrediction.userDate = userDate;
   latestPrediction.medianDate = medianDate;
 
-  // Show the share buttons section
-  if (shareButtonsElements.container) {
-    shareButtonsElements.container.classList.remove('hidden');
-    // Smooth scroll to share buttons
-    setTimeout(() => {
-      shareButtonsElements.container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 200);
-  }
+  // Note: Share buttons now show/hide automatically with #confirmation-display card
+  // No need to toggle visibility separately
 
-  console.log('Share buttons displayed for prediction:', { userDate, medianDate });
+  console.log('Share buttons ready for prediction:', { userDate, medianDate });
 }
 
 /**
  * Hide share buttons section
+ * Note: Share buttons now integrated into confirmation card, so they hide automatically with the card
  */
 function hideShareButtons() {
-  if (!shareButtonsElements) {
-    initShareButtonsElements();
-  }
-
-  if (shareButtonsElements.container) {
-    shareButtonsElements.container.classList.add('hidden');
-  }
+  // No-op: Share buttons now show/hide automatically with #confirmation-display card
+  // Keeping this function for backward compatibility
 }
 
 /**

@@ -355,7 +355,7 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
         {
           method: 'POST',
           headers: { ...testHeaders, 'CF-Connecting-IP': '203.0.113.10' },
-          body: JSON.stringify({ ...validRequest, predicted_date: '2025-01-01' }),
+          body: JSON.stringify({ ...validRequest, predicted_date: '2026-11-19' }),
         },
         env
       );
@@ -427,13 +427,13 @@ describe('POST /api/predict - Prediction Submission Endpoint', () => {
       expect(data.error.code).toBe('VALIDATION_ERROR');
     });
 
-    it('should return 400 for date before MIN_DATE (2025-01-01)', async () => {
+    it('should return 400 for date before MIN_DATE (2026-11-19)', async () => {
       const response = await app.request(
         '/api/predict',
         {
           method: 'POST',
           headers: testHeaders,
-          body: JSON.stringify({ predicted_date: '2024-12-31', turnstile_token: 'test' }),
+          body: JSON.stringify({ predicted_date: '2026-11-18', turnstile_token: 'test' }),
         },
         env
       );
@@ -1801,7 +1801,7 @@ describe('PUT /api/predict - Edge Cases', () => {
           Cookie: `gta6_user_id=${testCookie}`,
         },
         body: JSON.stringify({
-          predicted_date: '2025-01-01',
+          predicted_date: '2026-11-19',
           turnstile_token: 'test-token',
         }),
       },

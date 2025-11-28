@@ -27,7 +27,7 @@ import {
 
 describe('Validation Module - Constants', () => {
   it('should export MIN_DATE constant', () => {
-    expect(MIN_DATE).toBe('2025-01-01');
+    expect(MIN_DATE).toBe('2026-11-19');
   });
 
   it('should export MAX_DATE constant', () => {
@@ -48,8 +48,8 @@ describe('Validation Module - Constants', () => {
 });
 
 describe('DateSchema - Valid Dates', () => {
-  it('should accept valid ISO 8601 date in 2025', () => {
-    expect(() => DateSchema.parse('2025-01-01')).not.toThrow();
+  it('should accept valid ISO 8601 date in 2026 (min boundary)', () => {
+    expect(() => DateSchema.parse('2026-11-19')).not.toThrow();
   });
 
   it('should accept valid ISO 8601 date in 2026', () => {
@@ -64,8 +64,8 @@ describe('DateSchema - Valid Dates', () => {
     expect(() => DateSchema.parse('2125-12-31')).not.toThrow();
   });
 
-  it('should accept min boundary date (2025-01-01)', () => {
-    expect(() => DateSchema.parse('2025-01-01')).not.toThrow();
+  it('should accept min boundary date (2026-11-19)', () => {
+    expect(() => DateSchema.parse('2026-11-19')).not.toThrow();
   });
 
   it('should accept leap year Feb 29 (2028)', () => {
@@ -78,18 +78,18 @@ describe('DateSchema - Valid Dates', () => {
 
   it('should accept valid dates in all months', () => {
     const validDates = [
-      '2026-01-15',
-      '2026-02-15',
-      '2026-03-15',
-      '2026-04-15',
-      '2026-05-15',
-      '2026-06-15',
-      '2026-07-15',
-      '2026-08-15',
-      '2026-09-15',
-      '2026-10-15',
-      '2026-11-15',
+      '2026-11-19', // Min boundary (official launch date)
+      '2026-11-20',
       '2026-12-15',
+      '2027-01-15',
+      '2027-02-15',
+      '2027-03-15',
+      '2027-04-15',
+      '2027-05-15',
+      '2027-06-15',
+      '2027-07-15',
+      '2027-08-15',
+      '2027-09-15',
     ];
 
     validDates.forEach((date) => {
@@ -129,8 +129,8 @@ describe('DateSchema - Invalid Format', () => {
 });
 
 describe('DateSchema - Invalid Range', () => {
-  it('should reject date before min (2024-12-31)', () => {
-    expect(() => DateSchema.parse('2024-12-31')).toThrow();
+  it('should reject date before min (2026-11-18)', () => {
+    expect(() => DateSchema.parse('2026-11-18')).toThrow();
   });
 
   it('should reject date after max (2126-01-01)', () => {
@@ -346,7 +346,7 @@ describe('PredictionRequestSchema - Valid Requests', () => {
 
   it('should accept request with min date', () => {
     const request = {
-      predicted_date: '2025-01-01',
+      predicted_date: '2026-11-19',
       turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).not.toThrow();

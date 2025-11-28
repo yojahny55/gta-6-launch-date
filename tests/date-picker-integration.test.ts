@@ -71,7 +71,7 @@ describe('Date Picker Form Submission Integration', () => {
               stats: {
                 count: 10235,
                 median: '2027-02-14',
-                min: '2025-01-01',
+                min: '2026-11-19',
                 max: '2030-12-31'
               }
             }
@@ -160,8 +160,8 @@ describe('Date Picker Form Submission Integration', () => {
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
       const validationMessage = document.getElementById('validation-message');
 
-      // Set a date in the past
-      dateInput.value = '2024-12-31';
+      // Set a date before official launch date
+      dateInput.value = '2026-11-18';
 
       // Submit the form
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
@@ -184,7 +184,7 @@ describe('Date Picker Form Submission Integration', () => {
 
       // Should show range error message
       expect(validationMessage?.classList.contains('hidden')).toBe(false);
-      expect(validationMessage?.textContent).toContain('between Jan 1, 2025 and Dec 31, 2125');
+      expect(validationMessage?.textContent).toContain('between Nov 19, 2026 and Dec 31, 2125');
     });
 
     test.skip('should accept minimum boundary date', async () => {
@@ -193,7 +193,7 @@ describe('Date Picker Form Submission Integration', () => {
       const confirmationDisplay = document.getElementById('confirmation-display');
 
       // Set minimum date
-      dateInput.value = '2025-01-01';
+      dateInput.value = '2026-11-19';
 
       // Submit the form
       form.dispatchEvent(new window.Event('submit', { bubbles: true, cancelable: true }));
@@ -389,7 +389,7 @@ describe('Date Picker Form Submission Integration', () => {
 
     test('should have correct min and max attributes', () => {
       const dateInput = document.getElementById('predicted-date') as HTMLInputElement;
-      expect(dateInput.min).toBe('2025-01-01');
+      expect(dateInput.min).toBe('2026-11-19');
       expect(dateInput.max).toBe('2125-12-31');
     });
 

@@ -13,9 +13,9 @@
 import { z } from 'zod';
 
 /**
- * Minimum allowed date for predictions (January 1, 2025)
+ * Minimum allowed date for predictions (November 19, 2026 - Official GTA 6 launch date)
  */
-export const MIN_DATE = '2025-01-01';
+export const MIN_DATE = '2026-11-19';
 
 /**
  * Maximum allowed date for predictions (December 31, 2125)
@@ -44,7 +44,7 @@ export const MAX_USER_AGENT_LENGTH = 256;
  *
  * Validation rules:
  * - Format: YYYY-MM-DD (ISO 8601)
- * - Range: 2025-01-01 to 2125-12-31
+ * - Range: 2026-11-19 to 2125-12-31
  * - Valid calendar date (no Feb 30, no month 13, etc.)
  *
  * @example
@@ -54,7 +54,7 @@ export const MAX_USER_AGENT_LENGTH = 256;
  */
 export const DateSchema = z
   .string()
-  .regex(DATE_REGEX, 'Invalid date format. Expected YYYY-MM-DD between 2025-01-01 and 2125-12-31')
+  .regex(DATE_REGEX, 'Invalid date format. Expected YYYY-MM-DD between 2026-11-19 and 2125-12-31')
   .refine(
     (date) => {
       const parsed = new Date(date);
@@ -68,7 +68,7 @@ export const DateSchema = z
       const min = new Date(MIN_DATE);
       return parsed >= min;
     },
-    { message: `Date must be on or after ${MIN_DATE}` }
+    { message: `Date must be on or after ${MIN_DATE} (official GTA 6 launch date). Predictions before the official launch date are not allowed.` }
   )
   .refine(
     (date) => {

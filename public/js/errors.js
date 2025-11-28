@@ -269,18 +269,22 @@ export function showError(code, details = {}) {
   }
 
   // Build error UI (AC8: Red/orange colors, retry/dismiss buttons)
+  // Custom styling to match GTA theme
   errorContainer.innerHTML = `
-    <div class="alert alert-error shadow-lg" role="alert" aria-live="assertive">
-      <div class="flex items-start gap-4 w-full">
-        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current flex-shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        <div class="flex-1">
-          <span>${escapeHtml(message)}</span>
-        </div>
-        <div class="flex gap-2">
-          ${isRetryable(code) ? '<button id="error-retry-btn" class="btn btn-sm">Retry</button>' : ''}
-          <button id="error-dismiss-btn" class="btn btn-sm btn-ghost" aria-label="Dismiss error">✕</button>
+    <div class="w-full max-w-4xl mx-auto px-4 mb-4">
+      <div class="bg-red-500/10 border border-red-500/30 rounded-xl p-4 shadow-lg" role="alert" aria-live="assertive">
+        <div class="flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 flex-shrink-0 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <div class="flex-1 text-sm text-red-200">
+            ${escapeHtml(message)}
+          </div>
+          <button id="error-dismiss-btn" class="text-red-400 hover:text-red-300 transition-colors" aria-label="Dismiss error">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

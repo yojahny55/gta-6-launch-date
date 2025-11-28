@@ -110,7 +110,7 @@ describe('GET /api/stats', () => {
     it('should return all required fields', async () => {
       const stats = {
         median: '2027-03-15',
-        min: '2025-01-01',
+        min: '2026-11-19',
         max: '2125-12-31',
         count: 10234,
         cached_at: '2025-11-24T15:00:00.000Z',

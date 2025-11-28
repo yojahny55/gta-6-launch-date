@@ -7,7 +7,7 @@
  * Requirements: Implements FR2 (date range validation), FR73 (UTC conversion),
  * and supports Epic 2 Story 2.3 acceptance criteria.
  *
- * Date Range: 2025-01-01 to 2125-12-31 (100-year window per PRD FR2)
+ * Date Range: 2026-11-19 to 2125-12-31 (starting from official GTA 6 launch date per PRD FR2)
  * Format: ISO 8601 (YYYY-MM-DD) throughout
  */
 
@@ -18,10 +18,10 @@ import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 /**
- * Minimum allowed date for predictions (January 1, 2025)
- * Past dates rejected to prevent historical trolling
+ * Minimum allowed date for predictions (November 19, 2026 - Official GTA 6 launch date)
+ * Dates before official launch are illogical for predictions
  */
-export const MIN_DATE = '2025-01-01';
+export const MIN_DATE = '2026-11-19';
 
 /**
  * Maximum allowed date for predictions (December 31, 2125)
@@ -113,20 +113,20 @@ export function isLeapYear(year: number): boolean {
 }
 
 /**
- * Validate if a date is within the allowed range (2025-01-01 to 2125-12-31)
+ * Validate if a date is within the allowed range (2026-11-19 to 2125-12-31)
  *
  * Range constraints per FR2:
- * - Minimum: January 1, 2025 (past dates rejected)
+ * - Minimum: November 19, 2026 (official GTA 6 launch date)
  * - Maximum: December 31, 2125 (100-year window)
  *
  * @param {string} dateString - ISO 8601 date string (YYYY-MM-DD)
  * @returns {boolean} True if within range, false otherwise
  *
  * @example
- * validateDateRange('2026-11-19') // true
- * validateDateRange('2025-01-01') // true (min boundary)
+ * validateDateRange('2026-11-19') // true (min boundary)
+ * validateDateRange('2027-01-01') // true
  * validateDateRange('2125-12-31') // true (max boundary)
- * validateDateRange('2024-12-31') // false (before min)
+ * validateDateRange('2026-11-18') // false (before min)
  * validateDateRange('2126-01-01') // false (after max)
  */
 export function validateDateRange(dateString: string): boolean {

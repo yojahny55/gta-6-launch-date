@@ -22,8 +22,8 @@ import {
 } from './date-validation';
 
 describe('Date Validation Constants', () => {
-  it('should have correct MIN_DATE (2025-01-01)', () => {
-    expect(MIN_DATE).toBe('2025-01-01');
+  it('should have correct MIN_DATE (2026-11-19)', () => {
+    expect(MIN_DATE).toBe('2026-11-19');
   });
 
   it('should have correct MAX_DATE (2125-12-31)', () => {
@@ -41,8 +41,8 @@ describe('isValidDateFormat', () => {
       expect(isValidDateFormat('2026-11-19')).toBe(true);
     });
 
-    it('should accept minimum boundary date (2025-01-01)', () => {
-      expect(isValidDateFormat('2025-01-01')).toBe(true);
+    it('should accept minimum boundary date (2026-11-19)', () => {
+      expect(isValidDateFormat('2026-11-19')).toBe(true);
     });
 
     it('should accept maximum boundary date (2125-12-31)', () => {
@@ -238,8 +238,8 @@ describe('validateDateRange', () => {
       expect(validateDateRange('2026-11-19')).toBe(true);
     });
 
-    it('should accept minimum boundary (2025-01-01)', () => {
-      expect(validateDateRange('2025-01-01')).toBe(true);
+    it('should accept minimum boundary (2026-11-19)', () => {
+      expect(validateDateRange('2026-11-19')).toBe(true);
     });
 
     it('should accept maximum boundary (2125-12-31)', () => {
@@ -254,8 +254,8 @@ describe('validateDateRange', () => {
   });
 
   describe('Invalid date ranges', () => {
-    it('should reject date before minimum (2024-12-31)', () => {
-      expect(validateDateRange('2024-12-31')).toBe(false);
+    it('should reject date before minimum (2026-11-18)', () => {
+      expect(validateDateRange('2026-11-18')).toBe(false);
     });
 
     it('should reject date after maximum (2126-01-01)', () => {
@@ -290,8 +290,8 @@ describe('convertToUTC', () => {
   });
 
   it('should handle minimum boundary date', () => {
-    const result = convertToUTC('2025-01-01');
-    expect(result).toBe('2025-01-01');
+    const result = convertToUTC('2026-11-19');
+    expect(result).toBe('2026-11-19');
   });
 
   it('should handle maximum boundary date', () => {
@@ -315,7 +315,7 @@ describe('validateDate (comprehensive)', () => {
     });
 
     it('should validate minimum boundary date', () => {
-      const result = validateDate('2025-01-01');
+      const result = validateDate('2026-11-19');
       expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
@@ -402,8 +402,8 @@ describe('validateDate (comprehensive)', () => {
   });
 
   describe('Edge cases', () => {
-    it('should handle day after minimum boundary (2025-01-02)', () => {
-      const result = validateDate('2025-01-02');
+    it('should handle day after minimum boundary (2026-11-20)', () => {
+      const result = validateDate('2026-11-20');
       expect(result.valid).toBe(true);
     });
 

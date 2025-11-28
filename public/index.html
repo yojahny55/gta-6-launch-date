@@ -7,7 +7,8 @@
   <title>GTA 6 Launch Truth - Community Sentiment Tracker</title>
 
   <!-- Favicon -->
-  <link rel="icon" type="image/x-icon" href="/images/favicon.ico" sizes="any">
+  <link rel="icon" type="image/svg+xml" href="/images/icon.svg">
+  <link rel="alternate icon" href="/images/favicon.ico">
   <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
 
   <!-- Styles -->
@@ -20,50 +21,42 @@
 <body
   class="min-h-screen bg-gta-dark font-sans text-slate-100 selection:bg-gta-pink selection:text-white flex flex-col">
 
-  <!-- Header -->
-  <header
-    class="w-full py-1 px-4 md:px-8 flex items-center justify-between border-b border-gray-800/50 bg-gta-dark/80 backdrop-blur-md sticky top-0 z-50">
-    <div class="flex items-center gap-3">
-      <div class="p-2 bg-gradient-to-br from-gta-pink to-gta-purple rounded-lg shadow-lg shadow-gta-pink/20">
-        <!-- Activity Icon SVG -->
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
-          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-          class="text-white w-6 h-6">
-          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-        </svg>
-      </div>
-      <div>
-        <h1
-          class="font-display text-base tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-white to-gray-400 uppercase italic">
-          Launch<span class="text-gta-pink">Truth</span>
-        </h1>
-        <p class="text-xs text-gray-400 font-sans tracking-widest uppercase">Community Sentiment Tracker</p>
-      </div>
-    </div>
-    <div class="hidden md:block">
-      <span
-        class="px-3 py-1 rounded-full border border-gta-blue/30 text-gta-blue text-xs font-bold uppercase tracking-wider bg-gta-blue/10">
-        Status: Delay Likely
-      </span>
-    </div>
-  </header>
+
 
   <main class="flex-grow flex flex-col items-center w-full">
 
     <!-- Voting Section (Hero) -->
     <div id="voting-section" class="w-full max-w-4xl mx-auto my-16 px-4 animate-fade-in-up">
       <div
-        class="bg-gta-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50 relative overflow-hidden group">
+        class="bg-gta-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl shadow-black/50 relative overflow-hidden">
 
         <!-- Background decorative glow -->
         <div
-          class="absolute -top-24 -right-24 w-64 h-64 bg-gta-purple/20 rounded-full blur-3xl group-hover:bg-gta-purple/30 transition-all duration-1000">
+          class="absolute -top-24 -right-24 w-64 h-64 bg-gta-pink/20 rounded-full blur-3xl group-hover:bg-gta-pink/30 transition-all duration-700">
         </div>
         <div
-          class="absolute -bottom-24 -left-24 w-64 h-64 bg-gta-blue/20 rounded-full blur-3xl group-hover:bg-gta-blue/30 transition-all duration-1000">
+          class="absolute -bottom-24 -left-24 w-64 h-64 bg-gta-purple/20 rounded-full blur-3xl group-hover:bg-gta-purple/30 transition-all duration-700">
         </div>
 
         <div class="relative z-10 text-center">
+          <div class="mb-6 flex justify-center">
+            <div class="relative inline-block">
+              <span id="status-badge"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest border border-gta-blue/30 bg-white/5 text-gray-400">
+                <span id="status-text">Status: Delay Likely</span>
+                <a href="/about.html#status-explained"
+                  class="inline-flex items-center justify-center w-3 h-3 text-gta-blue hover:text-gta-blue/80 transition-colors"
+                  aria-label="Learn about status">
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="w-2.5 h-2.5">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </a>
+              </span>
+            </div>
+          </div>
           <h2 class="font-display text-3xl md:text-4xl text-white mb-4 italic uppercase">
             When does GTA VI <span class="text-gta-pink">ACTUALLY</span> drop?
           </h2>
@@ -86,7 +79,7 @@
                     <line x1="3" x2="21" y1="10" y2="10" />
                   </svg>
                 </div>
-                <input type="date" id="predicted-date" name="predicted-date" min="2025-01-01" max="2029-12-31" required
+                <input type="date" id="predicted-date" name="predicted-date" min="2026-11-19" max="2125-12-31" required
                   class="block w-full pl-10 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gta-pink focus:border-transparent transition-all" />
               </div>
 
@@ -107,13 +100,16 @@
           </form>
           <div id="validation-message" class="hidden text-red-400 mt-2 text-sm" role="alert"></div>
         </div>
+
+        <!-- Error Container for backend validation errors -->
+        <div id="error-container" class="hidden"></div>
       </div>
     </div>
 
-    <!-- Confirmation / AI Analysis Section (Hidden by default) -->
+    <!-- Confirmation / AI Analysis Section with Integrated Share Buttons (Hidden by default) -->
     <div id="confirmation-display" class="hidden w-full max-w-4xl mx-auto mb-8 px-4 animate-fade-in">
       <div class="bg-gta-card border border-gta-pink/30 rounded-2xl p-6 shadow-lg shadow-gta-pink/10">
-        <div class="flex items-start gap-4">
+        <div class="flex items-start gap-4 mb-4">
           <div class="p-3 bg-gta-pink/10 rounded-full">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
@@ -129,32 +125,97 @@
             </p>
           </div>
         </div>
+
+        <!-- Share Buttons (integrated into card) -->
+        <div>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <button id="twitter-share-btn"
+              class="flex-1 px-4 py-2.5 bg-gradient-to-r from-gta-pink to-gta-purple text-white rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 border border-gta-pink/30 shadow-lg shadow-gta-pink/20">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z">
+                </path>
+              </svg>
+              Share on X
+            </button>
+            <button id="reddit-share-btn"
+              class="flex-1 px-4 py-2.5 bg-gradient-to-r from-gta-purple to-gta-blue text-white rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center justify-center gap-2 border border-gta-purple/30 shadow-lg shadow-gta-purple/20">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path
+                  d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z">
+                </path>
+              </svg>
+              Share on Reddit
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- My Prediction Card (Hidden by default, shown for returning users) -->
     <div id="my-prediction-card" class="hidden w-full max-w-4xl mx-auto mb-8 px-4 animate-fade-in">
-      <div class="bg-gta-card border border-gta-purple/30 rounded-2xl p-6 shadow-lg shadow-gta-purple/10">
-        <div>
-          <h3 class="text-lg font-bold text-white mb-1">My Prediction</h3>
-          <p class="text-gray-300 text-sm mb-2">
-            You predicted <span id="my-prediction-date" class="text-gta-purple font-bold">--</span>
-          </p>
-          <p id="my-prediction-delta" class="text-xs text-gray-400 mb-2">
-            Calculating difference from median...
-          </p>
-          <p class="text-xs text-gray-500 italic">
-            Scroll up to update your prediction
-          </p>
+      <div
+        class="bg-gradient-to-br from-gta-purple/10 via-gta-card to-gta-pink/10 border border-gta-purple/40 rounded-2xl p-8 shadow-2xl shadow-gta-purple/20 relative overflow-hidden">
+        <!-- Decorative background elements -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-gta-purple/20 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-0 left-0 w-32 h-32 bg-gta-pink/20 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10">
+          <!-- Header -->
+          <div class="mb-6">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="p-2 bg-gradient-to-br from-gta-purple to-gta-pink rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="text-white">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <h3 class="font-display text-2xl font-bold text-white uppercase italic">Your <span
+                  class="text-gta-purple">Prediction</span></h3>
+            </div>
+            <p class="text-gray-500 text-xs italic">Use the voting form above to update your prediction</p>
+          </div>
+
+          <!-- Main Content Grid -->
+          <div class="grid md:grid-cols-2 gap-6">
+            <!-- Left: Your Date -->
+            <div class="bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl p-6 text-center">
+              <p class="text-gray-400 text-xs uppercase tracking-widest mb-2">You Called</p>
+              <div id="my-prediction-date"
+                class="font-display text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gta-purple to-gta-pink mb-2">
+                --
+              </div>
+              <p class="text-gray-500 text-xs">Your launch date prediction</p>
+            </div>
+
+            <!-- Right: Comparison -->
+            <div class="bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl p-6">
+              <p class="text-gray-400 text-xs uppercase tracking-widest mb-3">vs Community</p>
+              <div id="my-prediction-delta" class="text-gray-300 text-sm mb-3 min-h-[3rem] flex items-center">
+                Calculating difference from median...
+              </div>
+              <div class="flex items-center gap-2 text-xs">
+                <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                  <div id="prediction-position-bar"
+                    class="h-full bg-gradient-to-r from-gta-purple to-gta-pink rounded-full transition-all duration-500"
+                    style="width: 50%"></div>
+                </div>
+                <span id="prediction-percentile" class="text-gray-400 font-bold min-w-[3rem] text-right">--</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
+
 
     <!-- Dashboard Section -->
     <div id="dashboard-section" class="w-full max-w-4xl mx-auto px-4 pb-20 animate-fade-in">
 
       <!-- Key Metrics Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
 
         <!-- Total Votes -->
         <div class="bg-gta-card border border-gray-700 p-6 rounded-xl card-hover">
@@ -238,31 +299,6 @@
         </div>
       </div>
 
-      <!-- Share Buttons (Hidden by default) -->
-      <div id="share-buttons-section" class="hidden text-center">
-        <p class="text-gray-400 mb-4">Share your prediction</p>
-        <div class="flex justify-center gap-4">
-          <button id="twitter-share-btn"
-            class="px-6 py-3 bg-[#1DA1F2] text-white rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z">
-              </path>
-            </svg>
-            Share on X
-          </button>
-          <button id="reddit-share-btn"
-            class="px-6 py-3 bg-[#FF4500] text-white rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2">
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z">
-              </path>
-            </svg>
-            Share on Reddit
-          </button>
-        </div>
-      </div>
-
     </div>
   </main>
 
@@ -276,7 +312,6 @@
         <a href="/about.html" class="hover:text-gta-pink transition-colors">About</a>
         <a href="/privacy.html" class="hover:text-gta-pink transition-colors">Privacy</a>
         <a href="/terms.html" class="hover:text-gta-pink transition-colors">Terms</a>
-        <a href="#" class="hover:text-gta-pink transition-colors">Twitter</a>
       </div>
     </div>
   </footer>
@@ -303,6 +338,7 @@
   <script src="/js/cookie-consent.js" defer></script>
   <script src="/js/comparison.js" defer></script>
   <script src="/js/my-prediction.js" defer></script>
+  <script src="/js/status-badge.js" defer></script>
   <script src="/js/twitter-share.js" type="module" defer></script>
   <script src="/js/reddit-share.js" type="module" defer></script>
   <script src="/js/chart.js" type="module" defer></script>

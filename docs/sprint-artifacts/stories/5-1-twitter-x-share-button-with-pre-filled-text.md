@@ -34,10 +34,11 @@ What do you think? 🎮
 - `u={hash}` optional unique identifier for virality tracking
 
 **And** button placement (FR100):
-- Displayed immediately after submission confirmation
+- Displayed immediately after submission confirmation **inside the Prediction Locked card**
 - Above-the-fold (no scrolling required)
-- Prominent visual design (Twitter blue color)
+- Prominent visual design with gaming aesthetic (pink-to-purple gradient, border, shadow)
 - Icon: Twitter/X logo
+- Responsive layout: Stacks vertically on mobile, side-by-side with Reddit button on desktop
 
 **And** share analytics (FR45):
 - Track: Share button clicks
