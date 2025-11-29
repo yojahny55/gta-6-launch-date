@@ -79,7 +79,7 @@
                     <line x1="3" x2="21" y1="10" y2="10" />
                   </svg>
                 </div>
-                <input type="date" id="predicted-date" name="predicted-date" min="2026-11-19" max="2125-12-31" required
+                <input type="date" id="predicted-date" name="predicted-date" min="2026-11-19" max="2100-12-31" required
                   class="block w-full pl-10 pr-4 py-4 bg-gray-900/50 border border-gray-600 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-gta-pink focus:border-transparent transition-all" />
               </div>
 
@@ -192,7 +192,10 @@
 
             <!-- Right: Comparison -->
             <div class="bg-black/30 backdrop-blur-sm border border-white/10 rounded-xl p-6">
-              <p class="text-gray-400 text-xs uppercase tracking-widest mb-3">vs Community</p>
+              <p class="text-gray-400 text-xs uppercase tracking-widest mb-3 flex items-center gap-1.5">
+                <span>vs Community</span>
+                <span class="text-gray-400 hover:text-gta-pink cursor-pointer text-sm transition-colors" title="Shows your percentile position in all predictions. 0% = earliest prediction, 100% = latest prediction">ⓘ</span>
+              </p>
               <div id="my-prediction-delta" class="text-gray-300 text-sm mb-3 min-h-[3rem] flex items-center">
                 Calculating difference from median...
               </div>

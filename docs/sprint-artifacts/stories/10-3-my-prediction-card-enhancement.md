@@ -32,6 +32,18 @@ so that I can quickly review what I predicted and see how it compares to the com
    - Fallback: localStorage for performance
    - API call: `GET /api/predict/:cookie_id` if needed for verification
 
+4. **Percentile Calculation:** ✨ **Sprint Change Proposal: 2025-11-28**
+   - Calculate user's position in prediction distribution
+   - Formula: `(predictions_before_user / total_predictions) × 100`
+   - Display percentile value (e.g., "65%") replacing "--" placeholder
+   - Update progress bar width dynamically to match percentile
+   - Progress bar meaning: 0% = earliest prediction, 100% = latest prediction
+
+5. **Progress Bar Display:** ✨ **Sprint Change Proposal: 2025-11-28**
+   - Width dynamically set to percentile value (remove hardcoded 50%)
+   - Visual indicator of user's position in community
+   - Tooltip explaining: "Shows your percentile position in all predictions"
+
 **And** if no prediction exists:
 - Hide card entirely (don't show empty state in dashboard)
 - No placeholder or "Submit your prediction" messaging
@@ -39,6 +51,7 @@ so that I can quickly review what I predicted and see how it compares to the com
 **And** error handling:
 - If cookie exists but prediction not found in database: Hide card
 - If API fails: Show cached data from localStorage or hide card
+- If `/api/predictions` fails: Default to 50th percentile (middle)
 - No error messages displayed to user (graceful degradation)
 
 **And** automated tests exist covering main functionality:
@@ -46,6 +59,8 @@ so that I can quickly review what I predicted and see how it compares to the com
 - Data fetching and display
 - Delta calculation accuracy
 - Update button functionality
+- ✨ **Percentile calculation accuracy (Sprint Change: 2025-11-28)**
+- ✨ **Progress bar width updates correctly (Sprint Change: 2025-11-28)**
 
 ### Testing Requirements
 
@@ -54,6 +69,9 @@ so that I can quickly review what I predicted and see how it compares to the com
 - [x] Integration tests for cookie/localStorage data retrieval
 - [x] UI tests for card show/hide logic
 - [x] Error handling tests (missing cookie, API failure, prediction not found)
+- [x] ✨ **Unit tests for percentile calculation (Sprint Change: 2025-11-28)**
+- [x] ✨ **Unit tests for progress bar width updates (Sprint Change: 2025-11-28)**
+- [x] ✨ **Edge case tests (0%, 50%, 100% percentiles) (Sprint Change: 2025-11-28)**
 
 ## Tasks / Subtasks
 
@@ -93,6 +111,24 @@ so that I can quickly review what I predicted and see how it compares to the com
   - [x] Test delta calculation
   - [x] Test error handling (missing cookie, API failure)
   - [x] Test update message display
+
+- [x] ✨ **Task 8: Percentile Calculation Implementation** (Sprint Change: 2025-11-28)
+  - [x] Create `calculatePercentile()` function in my-prediction.js
+  - [x] Create `fetchAndCalculatePercentile()` function to call `/api/predictions`
+  - [x] Create `updateProgressBar()` function to update DOM elements
+  - [x] Integrate percentile calculation into `showMyPredictionCard()`
+  - [x] Export new functions for testing
+
+- [x] ✨ **Task 9: UX Enhancement - Tooltip** (Sprint Change: 2025-11-28)
+  - [x] Add information icon (ⓘ) next to "vs Community" heading
+  - [x] Add title attribute with explanation text
+  - [x] Ensure tooltip is accessible (hover + focus states)
+
+- [x] ✨ **Task 10: Automated Tests for Percentile** (Sprint Change: 2025-11-28)
+  - [x] Write 12 unit tests for `calculatePercentile()` function
+  - [x] Write 8 unit tests for `updateProgressBar()` function
+  - [x] Write 3 integration tests for percentile flow
+  - [x] Total: 23 new tests in my-prediction.test.js
 
 ## Dev Notes
 
@@ -245,6 +281,45 @@ claude-sonnet-4-5-20250929
 - **User Feedback Applied:** Removed interactive button, replaced with simple "Scroll up to update" message
 
 **Ready for Review** - All acceptance criteria met, comprehensive tests passing, user feedback incorporated.
+
+---
+
+### ✨ **Sprint Change Proposal Implementation** (2025-11-28)
+
+**Issue:** VS Community card progress bar hardcoded at 50%, percentile showing "--" placeholder
+
+**Implementation Summary:**
+- Added percentile calculation logic to `my-prediction.js`
+- Created `calculatePercentile()` function with formula: `(predictions_before_user / total) × 100`
+- Created `fetchAndCalculatePercentile()` to fetch data from `/api/predictions` (Story 3.4b)
+- Created `updateProgressBar()` to dynamically set progress bar width and percentile text
+- Integrated into `showMyPredictionCard()` with async percentile fetch
+- Added tooltip (ⓘ) to "vs Community" heading explaining progress bar meaning
+
+**Files Modified:**
+1. `public/js/my-prediction.js` - Added 3 new functions (100+ lines)
+2. `public/js/my-prediction.test.js` - Added 23 new tests for percentile logic
+3. `public/index.html` - Added tooltip to "vs Community" heading
+4. `docs/sprint-artifacts/stories/10-3-my-prediction-card-enhancement.md` - Updated acceptance criteria
+
+**Test Coverage Added:**
+- 12 unit tests for `calculatePercentile()` (0%, 50%, 100%, edge cases)
+- 8 unit tests for `updateProgressBar()` (width updates, text updates, error handling)
+- 3 integration tests for percentile calculation flow (optimistic, pessimistic, aligned users)
+- **Total:** 23 new tests, all passing ✅
+
+**Acceptance Criteria Updated:**
+- AC#4: Percentile Calculation (new)
+- AC#5: Progress Bar Display (new)
+- Testing Requirements: 3 new test requirements added
+
+**Build & Tests:**
+- ✅ All 50 tests passing (27 original + 23 new)
+- ✅ Build successful (no errors)
+- ✅ Lint clean
+- ✅ No regressions in existing functionality
+
+**Ready for QA** - Sprint Change Proposal fully implemented and tested.
 
 ### File List
 

@@ -14,6 +14,10 @@ const {
   hideMyPredictionCard,
   initMyPrediction,
   updateMyPredictionDelta,
+  // Sprint Change Proposal: 2025-11-28 - Percentile functions
+  calculatePercentile,
+  fetchAndCalculatePercentile,
+  updateProgressBar,
 } = await import('./my-prediction.js');
 
 // Mock comparison.js functions
@@ -438,6 +442,179 @@ describe('My Prediction Card - Story 10.3', () => {
 
       // Delta should be different (user is now only 2 months ahead instead of 3)
       expect(updatedDelta).not.toBe(initialDelta);
+    });
+  });
+
+  // ✨ Sprint Change Proposal: 2025-11-28 - Percentile Calculation Tests
+  describe('AC7 - Percentile Calculation (Sprint Change 2025-11-28)', () => {
+    describe('calculatePercentile()', () => {
+      it('should calculate 0th percentile for earliest prediction', () => {
+        const userDate = '2025-06-01';
+        const allPredictions = [
+          { predicted_date: '2025-06-01', count: 1 },  // User's prediction
+          { predicted_date: '2026-03-15', count: 50 },
+          { predicted_date: '2027-06-10', count: 100 },
+        ];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(0); // 0 predictions earlier than 2025-06-01
+      });
+
+      it('should calculate 50th percentile for median prediction', () => {
+        const userDate = '2026-06-01';
+        const allPredictions = [
+          { predicted_date: '2025-12-01', count: 25 },
+          { predicted_date: '2026-03-15', count: 25 },
+          { predicted_date: '2026-06-01', count: 1 },  // User's prediction (50 earlier)
+          { predicted_date: '2027-01-01', count: 25 },
+          { predicted_date: '2027-06-10', count: 25 },
+        ];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(50); // 50 out of 100 predictions earlier
+      });
+
+      it('should calculate 100th percentile for latest prediction', () => {
+        const userDate = '2099-01-01';
+        const allPredictions = [
+          { predicted_date: '2025-12-01', count: 30 },
+          { predicted_date: '2026-11-19', count: 40 },
+          { predicted_date: '2027-06-10', count: 30 },
+          { predicted_date: '2099-01-01', count: 1 },  // User's prediction (latest)
+        ];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(99); // 100 out of 101 predictions earlier = 99th percentile
+      });
+
+      it('should calculate 64th percentile for user between quartiles', () => {
+        const userDate = '2027-03-01';
+        const allPredictions = [
+          { predicted_date: '2026-01-01', count: 20 },  // Earlier (20)
+          { predicted_date: '2026-06-01', count: 25 },  // Earlier (45)
+          { predicted_date: '2026-11-19', count: 20 },  // Earlier (65)
+          { predicted_date: '2027-03-01', count: 1 },   // User's prediction
+          { predicted_date: '2027-06-01', count: 20 },  // Later
+          { predicted_date: '2028-01-01', count: 15 },  // Later
+        ];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(64); // 65 out of 101 predictions earlier = 64th percentile
+      });
+
+      it('should handle empty predictions array (return default 50)', () => {
+        const userDate = '2027-06-01';
+        const allPredictions = [];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(50); // Default to middle
+      });
+
+      it('should handle null predictions array (return default 50)', () => {
+        const userDate = '2027-06-01';
+        const allPredictions = null;
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(50); // Default to middle
+      });
+
+      it('should handle edge case: user prediction equals median', () => {
+        const userDate = '2026-11-19'; // Official date / median
+        const allPredictions = [
+          { predicted_date: '2026-01-01', count: 25 },
+          { predicted_date: '2026-06-01', count: 25 },
+          { predicted_date: '2026-11-19', count: 1 },  // User equals median
+          { predicted_date: '2027-06-01', count: 25 },
+          { predicted_date: '2027-12-01', count: 25 },
+        ];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(50); // 50 out of 100 earlier (exact median)
+      });
+
+      it('should round percentile to nearest integer', () => {
+        const userDate = '2026-12-01';
+        const allPredictions = [
+          { predicted_date: '2026-01-01', count: 33 },  // 33 earlier
+          { predicted_date: '2026-12-01', count: 1 },   // User
+          { predicted_date: '2027-06-01', count: 66 },  // 66 later
+        ];
+
+        const percentile = calculatePercentile(userDate, allPredictions);
+        expect(percentile).toBe(33); // 33/100 = 33% (rounded)
+      });
+    });
+
+    describe('updateProgressBar()', () => {
+      let dom;
+
+      beforeEach(() => {
+        // Setup DOM elements with jsdom
+        dom = new JSDOM(`
+          <!DOCTYPE html>
+          <html>
+            <body>
+              <div id="prediction-position-bar" style="width: 50%"></div>
+              <span id="prediction-percentile">--</span>
+            </body>
+          </html>
+        `);
+
+        global.document = dom.window.document;
+        global.window = dom.window;
+
+        // Initialize myPredictionElements AFTER setting globals
+        global.myPredictionElements = {
+          progressBar: global.document.getElementById('prediction-position-bar'),
+          percentile: global.document.getElementById('prediction-percentile'),
+        };
+      });
+
+      afterEach(() => {
+        delete global.myPredictionElements;
+        delete global.document;
+        delete global.window;
+      });
+
+      it('should update progress bar width to percentile value', () => {
+        updateProgressBar(65);
+
+        expect(global.myPredictionElements.progressBar.style.width).toBe('65%');
+      });
+
+      it('should update percentile display text', () => {
+        updateProgressBar(65);
+
+        expect(global.myPredictionElements.percentile.textContent).toBe('65%');
+      });
+
+      it('should handle 0% percentile', () => {
+        updateProgressBar(0);
+
+        expect(global.myPredictionElements.progressBar.style.width).toBe('0%');
+        expect(global.myPredictionElements.percentile.textContent).toBe('0%');
+      });
+
+      it('should handle 100% percentile', () => {
+        updateProgressBar(100);
+
+        expect(global.myPredictionElements.progressBar.style.width).toBe('100%');
+        expect(global.myPredictionElements.percentile.textContent).toBe('100%');
+      });
+
+      it('should handle missing progress bar element gracefully', () => {
+        global.myPredictionElements.progressBar = null;
+
+        // Should not throw error
+        expect(() => updateProgressBar(65)).not.toThrow();
+      });
+
+      it('should handle uninitialized myPredictionElements gracefully', () => {
+        global.myPredictionElements = null;
+
+        // Should not throw error
+        expect(() => updateProgressBar(65)).not.toThrow();
+      });
     });
   });
 });

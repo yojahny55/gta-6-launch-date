@@ -156,11 +156,11 @@ function getCookieID() {
  * Mirrors backend validation rules from src/utils/date-validation.ts
  *
  * NOTE: DATE_REGEX only validates format (YYYY-MM-DD), not range.
- * Range validation (2026-11-19 to 2125-12-31) happens separately in validateDateRange().
+ * Range validation (2026-11-19 to 2100-12-31) happens separately in validateDateRange().
  * This ensures consistency between frontend and backend validation logic.
  */
 const MIN_DATE = '2026-11-19'; // Official GTA 6 launch date
-const MAX_DATE = '2125-12-31';
+const MAX_DATE = '2100-12-31'; // Maximum year 2100 for democratic predictions
 const DATE_REGEX =
   /^(\d{4})-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
 
@@ -211,7 +211,7 @@ function validateDate(dateString) {
   if (date > max) {
     return {
       valid: false,
-      error: 'Please select a date between Nov 19, 2026 and Dec 31, 2125',
+      error: 'Please select a date between Nov 19, 2026 and Dec 31, 2100',
     };
   }
 
@@ -522,12 +522,8 @@ async function handleFormSubmit(event) {
     hasExistingPrediction = true;
     updateSubmitButtonText();
 
-    // Update the "Your Current Prediction" card with the new data
-    displayCurrentPrediction({
-      predicted_date: result.data?.predicted_date || result.predicted_date,
-      submitted_at: result.data?.submitted_at || new Date().toISOString(),
-      updated_at: new Date().toISOString(), // Just updated now
-    });
+    // ✨ Sprint Change 2025-11-28: Card display now handled by my-prediction.js module
+    // It will fetch from /api/predict (Cloudflare KV) after stats refresh for always-fresh data
 
     // Success! Update confirmation with actual data (Story 3.3, AC: Update with actual ranking)
     console.log('Prediction submitted/updated successfully:', result);
@@ -560,7 +556,8 @@ async function handleFormSubmit(event) {
     }
 
     // Refresh stats display to show updated count (bypass cache for fresh data)
-    loadStats(true);
+    // ✨ Sprint Change 2025-11-28: This will also trigger initMyPrediction() via loadStats callback
+    await loadStats(true);
 
     // Clear the form
     dateInput.value = '';
@@ -911,11 +908,10 @@ async function loadStats(bypassCache = false) {
     const stats = await fetchStats(0, bypassCache);
     renderStats(stats);
 
-    // Initialize My Prediction card after first stats load (Story 10.3)
-    // Only initialize once (check if initMyPrediction function exists)
-    if (typeof initMyPrediction === 'function' && !window.myPredictionInitialized) {
-      initMyPrediction(stats);
-      window.myPredictionInitialized = true;
+    // Initialize My Prediction card after stats load (Story 10.3)
+    // ✨ Sprint Change 2025-11-28: Always call to refresh card (fetches fresh data from API)
+    if (typeof initMyPrediction === 'function') {
+      await initMyPrediction(stats);
     }
   } catch (error) {
     console.error('Failed to load stats after retries:', error.message);
@@ -1304,8 +1300,45 @@ async function handleRedditShareClick() {
 }
 
 /**
- * Check for existing prediction on page load
+ * Check if user has existing prediction (lightweight flag check only)
+ * Sprint Change 2025-11-28: Simplified version that only sets hasExistingPrediction flag
+ * Card display is handled by my-prediction.js module
+ */
+async function checkExistingPredictionFlag() {
+  try {
+    const response = await fetch('/api/predict', {
+      method: 'GET',
+      credentials: 'same-origin',
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      if (result.success && result.data) {
+        // User has an existing prediction - set flag for button text
+        hasExistingPrediction = true;
+        updateSubmitButtonText();
+
+        console.log('Existing prediction detected - button set to update mode');
+      }
+    } else if (response.status === 404) {
+      // User hasn't submitted yet - this is normal
+      console.log('No existing prediction found - user is new');
+    } else {
+      // Other errors - log but don't disrupt UX
+      console.warn('Error checking existing prediction:', response.status);
+    }
+  } catch (error) {
+    // Network or other errors - log but don't disrupt UX
+    console.error('Failed to check existing prediction:', error);
+  }
+}
+
+/**
+ * Check for existing prediction on page load (OLD FUNCTION - DEPRECATED)
  * Fetches user's current prediction and updates UI accordingly
+ *
+ * Sprint Change 2025-11-28: DEPRECATED - Use checkExistingPredictionFlag() instead
  */
 async function checkExistingPrediction() {
   try {
@@ -1436,7 +1469,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // See modified loadStats() which calls initMyPrediction()
 
   // Check for existing prediction (UX Enhancement)
-  checkExistingPrediction();
+  // ✨ Sprint Change 2025-11-28: Only check to set hasExistingPrediction flag (card display handled by my-prediction.js)
+  checkExistingPredictionFlag();
 
   // Initialize share buttons (Story 5.1)
   initShareButtonsElements();

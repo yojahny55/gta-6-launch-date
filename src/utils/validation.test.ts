@@ -31,7 +31,7 @@ describe('Validation Module - Constants', () => {
   });
 
   it('should export MAX_DATE constant', () => {
-    expect(MAX_DATE).toBe('2125-12-31');
+    expect(MAX_DATE).toBe('2100-12-31');
   });
 
   it('should export DATE_REGEX pattern', () => {
@@ -60,8 +60,8 @@ describe('DateSchema - Valid Dates', () => {
     expect(() => DateSchema.parse('2027-02-14')).not.toThrow();
   });
 
-  it('should accept max boundary date (2125-12-31)', () => {
-    expect(() => DateSchema.parse('2125-12-31')).not.toThrow();
+  it('should accept max boundary date (2100-12-31)', () => {
+    expect(() => DateSchema.parse('2100-12-31')).not.toThrow();
   });
 
   it('should accept min boundary date (2026-11-19)', () => {
@@ -354,7 +354,7 @@ describe('PredictionRequestSchema - Valid Requests', () => {
 
   it('should accept request with max date', () => {
     const request = {
-      predicted_date: '2125-12-31',
+      predicted_date: '2100-12-31',
       turnstile_token: 'token123',
     };
     expect(() => PredictionRequestSchema.parse(request)).not.toThrow();
