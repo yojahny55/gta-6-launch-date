@@ -1,0 +1,144 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>3</storyId>
+    <title>Terms of Service Page</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-3-terms-of-service-page.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a site owner</asA>
+    <iWant>clear terms of service</iWant>
+    <soThat>user expectations and liabilities are defined</soThat>
+    <tasks>
+      - Task 1: Create terms of service HTML structure
+      - Task 2-9: Write 8 required sections (Acceptance, Service Description, User Conduct, IP, Liability, Disputes, Modifications, Termination)
+      - Task 10: Style terms page
+      - Task 11: Add footer links
+      - Task 12: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** the site needs terms of service (legal protection)
+    **When** a user navigates to /terms or clicks Terms of Service link
+    **Then** a comprehensive ToS page is displayed with all required sections
+    **And** automated tests exist covering main functionality
+
+    ### 8 Required Sections
+    1. Acceptance of Terms
+    2. Service Description (community prediction tracking, as-is, no warranties)
+    3. User Conduct (no spam/bots/manipulation, right to remove predictions)
+    4. Intellectual Property (© 2025 GTA6Predictions, user predictions ownership, GTA 6 trademarks fair use)
+    5. Liability Limitations (entertainment purposes, no liability for inaccuracy/data loss, max $0)
+    6. Dispute Resolution (governing law, informal resolution, arbitration, class action waiver)
+    7. Modifications (update rights, notice, continued use = acceptance)
+    8. Termination (right to terminate, user data deletion rights)
+
+    ### Page Formatting
+    - Numbered sections for easy reference
+    - Last updated date displayed
+    - Link from footer on every page
+    - Not required to accept before use (browse freely)
+    - Mobile-responsive design
+
+    ### Testing Requirements
+    - Unit tests for terms page route
+    - Test page accessibility (WCAG AA)
+    - Test numbered section structure
+    - Test mobile responsiveness
+    - Test footer link presence
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR52: Terms of Service Accessible</section>
+        <snippet>Users can access Terms of Service via footer link. Legal protection requirement.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.3: Terms of Service Page</section>
+        <snippet>8 sections: Acceptance, Service Description (as-is, no warranties), User Conduct (no spam/bots), IP (site copyright, user predictions ownership), Liability ($0 max), Disputes, Modifications, Termination. Numbered sections, last updated date, footer link, no acceptance required before use.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture - GDPR Compliance</section>
+        <snippet>Terms of Service page at public/terms.html. Legal protection for free service.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>public/privacy.html</path>
+        <kind>HTML template</kind>
+        <symbol>Static legal page pattern</symbol>
+        <lines>N/A</lines>
+        <reason>Reuse same structure and styling pattern for Terms of Service. Similar legal page format with sections, footer, navigation.</reason>
+      </artifact>
+
+      <artifact>
+        <path>public/index.html</path>
+        <kind>HTML template</kind>
+        <symbol>Footer navigation</symbol>
+        <lines>N/A</lines>
+        <reason>Add /terms.html link to footer. Consistent footer pattern across all pages.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="tailwindcss" version="^4.0.0">Styling for terms page. Use existing patterns from privacy.html.</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - Use clear, enforceable language
+    - Numbered sections (1-8) for easy reference
+    - Static HTML page (no backend required)
+    - Footer link on ALL pages
+    - Last updated date displayed
+    - No acceptance popup required (browse freely)
+    - Mobile-responsive design
+    - Similar structure to privacy.html for consistency
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Static HTML Page</name>
+      <kind>Web Page</kind>
+      <signature>GET /terms.html → HTML document with 8 numbered sections, footer navigation</signature>
+      <path>public/terms.html</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4. Test HTML structure, accessibility, navigation, mobile responsiveness. Coverage target: 90%+.
+    </standards>
+
+    <locations>
+      - tests/unit/terms-page.test.ts
+      - vitest.config.unit.ts
+    </locations>
+
+    <ideas>
+      AC1 (8 Sections): Test all section headings present, numbered correctly
+      AC2 (Page Formatting): Test last updated date, footer link, mobile responsive
+      AC3 (Content): Test key phrases present (as-is, no warranties, $0 liability)
+      AC4 (Accessibility): Test WCAG AA compliance, keyboard navigation
+    </ideas>
+  </tests>
+</story-context>

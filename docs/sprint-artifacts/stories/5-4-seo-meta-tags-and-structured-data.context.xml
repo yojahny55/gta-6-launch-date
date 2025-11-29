@@ -1,0 +1,122 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.4</storyId>
+    <title>SEO Meta Tags and Structured Data</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-4-seo-meta-tags-and-structured-data.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a site owner</asA>
+    <iWant>optimized meta tags and structured data</iWant>
+    <soThat>the site ranks well for "GTA 6 predictions" searches</soThat>
+    <tasks>Main tasks include implementing SEO meta tags (title, description, keywords), Schema.org VideoGame structured data with dynamic aggregateRating, Schema.org Event data with median as startDate, canonical URL, and automated testing with Google Rich Results Test validator.</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    SEO-optimized meta tags present: title "GTA 6 Launch Date Predictions - Community Sentiment Tracker", dynamic meta description with current median and count, Schema.org VideoGame JSON-LD with aggregateRating (median, min, max, total), Schema.org Event JSON-LD with median as startDate, canonical URL, mobile viewport meta tag, lang attribute, favicon. All tags dynamically updated with current stats from /api/stats.
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>SEO Structured Data Service</title>
+        <section>Services and Modules</section>
+        <snippet>Generate Schema.org JSON-LD for VideoGame/Event with dynamic stats. Located in public/index.html. Inputs: Stats data. Outputs: JSON-LD script tag embedded in HTML.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-social-sharing-virality.md</path>
+        <title>Story 5.4: SEO Meta Tags</title>
+        <section>Meta tags and structured data</section>
+        <snippet>Meta title optimized for "GTA 6 predictions" (FR35), meta description with median (FR36), Schema.org VideoGame (FR37), Schema.org Event (FR38). Validated with Google Rich Results Test.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>file</kind>
+        <symbol>HTML head section</symbol>
+        <lines>1-20</lines>
+        <reason>Where SEO meta tags and JSON-LD structured data will be added/injected</reason>
+      </artifact>
+      <artifact>
+        <path>src/middleware/meta-injection.ts</path>
+        <kind>module</kind>
+        <symbol>meta injection middleware (from Story 5.3)</symbol>
+        <lines>all</lines>
+        <reason>Middleware that injects dynamic meta tags - will extend to include SEO meta tags alongside OG tags</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/stats.ts</path>
+        <kind>module</kind>
+        <symbol>GET /api/stats</symbol>
+        <lines>all</lines>
+        <reason>Stats API provides median, min, max, total for dynamic structured data</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency>
+          <name>hono</name>
+          <version>^4.10.0</version>
+          <purpose>Web framework - meta injection middleware for SEO tags</purpose>
+        </dependency>
+        <dependency>
+          <name>dayjs</name>
+          <version>^1.11.19</version>
+          <purpose>Date formatting for meta description and JSON-LD</purpose>
+        </dependency>
+      </node>
+      <external>
+        <api>
+          <name>Google Rich Results Test</name>
+          <endpoint>https://search.google.com/test/rich-results</endpoint>
+          <purpose>Validate Schema.org structured data</purpose>
+        </api>
+        <api>
+          <name>Schema.org Validator</name>
+          <endpoint>https://validator.schema.org/</endpoint>
+          <purpose>Validate JSON-LD syntax</purpose>
+        </api>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Meta title must be optimized for "GTA 6 predictions" keyword (FR35)</constraint>
+    <constraint>Meta description must include dynamic median and total count (FR36)</constraint>
+    <constraint>Schema.org JSON-LD must validate against schema.org spec</constraint>
+    <constraint>Structured data must pass Google Rich Results Test</constraint>
+    <constraint>Dynamic data fetched from /api/stats (cached 5 min)</constraint>
+    <constraint>Canonical URL must be absolute: https://gta6predictions.com/</constraint>
+    <constraint>JSON-LD must be embedded in script tag with type="application/ld+json"</constraint>
+    <constraint>VideoGame aggregateRating uses median as ratingValue</constraint>
+    <constraint>Event startDate uses median prediction date</constraint>
+    <constraint>Follow ADR-011: Mandatory automated testing</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>generateSEOMetaTags</name>
+      <kind>Function signature</kind>
+      <signature>function generateSEOMetaTags(stats: StatsData): {title: string, description: string, keywords: string}</signature>
+      <path>src/middleware/meta-injection.ts or separate SEO module</path>
+    </interface>
+    <interface>
+      <name>generateSchemaOrgJSON</name>
+      <kind>Function signature</kind>
+      <signature>function generateSchemaOrgJSON(stats: StatsData): {videoGame: object, event: object}</signature>
+      <path>src/middleware/meta-injection.ts or separate SEO module</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest with Cloudflare Workers pool. Integration tests for meta tag injection. Unit tests for JSON-LD generation. Validate with Google Rich Results Test and Schema.org validator.</standards>
+    <locations>tests/integration/seo-meta.test.ts (NEW), npm run test:workers</locations>
+    <ideas>Test meta title includes "GTA 6 predictions", test meta description includes dynamic median, test VideoGame JSON-LD validates, test Event JSON-LD validates, test aggregateRating uses correct stats, test canonical URL is absolute</ideas>
+  </tests>
+</story-context>

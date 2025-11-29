@@ -1,0 +1,192 @@
+<story-context id="3-7-graceful-degradation-under-load" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>7</storyId>
+    <title>Graceful Degradation Under Load</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-7-graceful-degradation-under-load.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>system</asA>
+    <iWant>the site to remain functional when traffic exceeds capacity</iWant>
+    <soThat>users have a degraded but working experience</soThat>
+    <tasks>
+      <task id="1">Implement capacity monitoring service tracking daily request count in KV</task>
+      <task id="2">Implement degradation feature flags (statsEnabled, submissionsEnabled, chartEnabled, cacheExtended)</task>
+      <task id="3">Implement cache TTL adjustment - extend to 15 minutes at elevated capacity</task>
+      <task id="4">Implement submission queue storage in Cloudflare KV (24h TTL)</task>
+      <task id="5">Implement queue processor for FIFO submission processing</task>
+      <task id="6">Implement frontend degradation notices with countdown</task>
+      <task id="7">Disable chart at elevated capacity</task>
+      <task id="8">Implement read-only mode at 100% capacity</task>
+      <task id="9">Add monitoring, alerting, and daily capacity reports</task>
+      <task id="10">Write automated tests for capacity levels and feature flags</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">At 80% capacity (80K requests): Log warning, no user-facing changes</criterion>
+    <criterion id="AC2">At 90% capacity (90K requests): Extend cache TTL from 5 to 15 minutes</criterion>
+    <criterion id="AC3">At 90% capacity: Disable chart visualization (Story 3.4)</criterion>
+    <criterion id="AC4">At 90% capacity: Show notice "High traffic! Some features temporarily limited."</criterion>
+    <criterion id="AC5">At 95% capacity (95K requests): Serve cached stats only (no live updates)</criterion>
+    <criterion id="AC6">At 95% capacity: Queue new submissions in Cloudflare KV</criterion>
+    <criterion id="AC7">At 95% capacity: Show "We're experiencing high traffic. Your submission will be processed shortly."</criterion>
+    <criterion id="AC8">At 100% capacity (100K requests): Read-only mode - stats visible, submissions disabled</criterion>
+    <criterion id="AC9">At 100% capacity: Show "We've reached capacity for today. Try again in {hours} hours."</criterion>
+    <criterion id="AC10">At 100% capacity: Countdown to midnight UTC reset</criterion>
+    <criterion id="AC11">Queue stored in KV with 24h TTL, processed FIFO</criterion>
+    <criterion id="AC12">Alert triggered at 80% threshold</criterion>
+    <criterion id="AC13">Daily capacity report generated</criterion>
+    <criterion id="AC14">90%+ test coverage for capacity and degradation logic</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models - Degradation State</section>
+        <snippet>CapacityLevel type: 'normal'|'elevated'|'high'|'critical'|'exceeded'. DegradationState: {level, requestsToday, limitToday, features: {statsEnabled, submissionsEnabled, chartEnabled, cacheExtended}}. CAPACITY_THRESHOLDS: ELEVATED=0.80, HIGH=0.90, CRITICAL=0.95, EXCEEDED=1.00</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Graceful Degradation Flow</section>
+        <snippet>80%: Log warning. 90%: Extend TTL, disable chart, show banner. 95%: Cached stats only, queue submissions. 100%: Read-only, countdown to reset.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Cloudflare Free Tier Limits</section>
+        <snippet>Workers: 100,000 requests/day. D1: 5M reads/day, 100K writes/day. KV: 100K reads/day, 1K writes/day.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/services/statistics.service.ts</path>
+        <kind>service</kind>
+        <symbol>getStatisticsWithCache, STATS_CACHE_TTL</symbol>
+        <lines>157-195, 236</lines>
+        <reason>Stats caching - TTL needs to be adjustable based on capacity</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>POST /api/predict</symbol>
+        <lines>66-297</lines>
+        <reason>Submission endpoint - needs capacity check and queueing logic</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/stats.ts</path>
+        <kind>route</kind>
+        <symbol>GET /api/stats</symbol>
+        <lines>51-91</lines>
+        <reason>Stats endpoint - needs to respect extended TTL at high capacity</reason>
+      </artifact>
+      <artifact>
+        <path>src/middleware/rate-limiter.ts</path>
+        <kind>middleware</kind>
+        <symbol>Rate limiter</symbol>
+        <reason>KV pattern can be reused for capacity tracking and queue storage</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>types</kind>
+        <symbol>Env</symbol>
+        <lines>156-167</lines>
+        <reason>Add new KV namespace for submission queue</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="hono" version="^4.10.0">API framework</package>
+        <package name="vitest" version="^3.2.4">Testing framework</package>
+        <package name="@cloudflare/workers-types" version="latest">KV namespace types</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture">Cloudflare free tier: 100,000 requests/day</constraint>
+    <constraint source="Architecture">D1: 5M reads/day, 100K writes/day</constraint>
+    <constraint source="Architecture">KV: 100K reads/day, 1K writes/day</constraint>
+    <constraint source="Tech Spec">Queue TTL: 24 hours, FIFO processing</constraint>
+    <constraint source="Tech Spec">Daily reset at midnight UTC</constraint>
+    <constraint source="Architecture ADR-011">90%+ test coverage for capacity logic</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>getCapacityLevel</name>
+      <kind>function</kind>
+      <signature>getCapacityLevel(kv: KVNamespace): Promise&lt;{level: CapacityLevel, requestsToday: number, resetAt: Date}&gt;</signature>
+      <path>src/services/capacity.service.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>getDegradationState</name>
+      <kind>function</kind>
+      <signature>getDegradationState(level: CapacityLevel): DegradationState</signature>
+      <path>src/utils/degradation.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>queueSubmission</name>
+      <kind>function</kind>
+      <signature>queueSubmission(kv: KVNamespace, data: QueuedSubmission): Promise&lt;{position: number}&gt;</signature>
+      <path>src/services/capacity.service.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>processQueue</name>
+      <kind>function</kind>
+      <signature>processQueue(kv: KVNamespace, db: D1Database, batchSize: number): Promise&lt;{processed: number}&gt;</signature>
+      <path>src/services/capacity.service.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>GET /api/degradation</name>
+      <kind>REST endpoint</kind>
+      <signature>GET /api/degradation -> DegradationState</signature>
+      <path>src/index.ts (ADD route)</path>
+    </interface>
+    <interface>
+      <name>CapacityLevel</name>
+      <kind>type</kind>
+      <signature>'normal' | 'elevated' | 'high' | 'critical' | 'exceeded'</signature>
+      <path>src/services/capacity.service.ts (NEW)</path>
+    </interface>
+    <interface>
+      <name>DegradationState</name>
+      <kind>interface</kind>
+      <signature>{level: CapacityLevel, requestsToday: number, limitToday: number, features: {statsEnabled, submissionsEnabled, chartEnabled, cacheExtended}}</signature>
+      <path>src/utils/degradation.ts (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest with KV mocking. Test all 5 capacity levels. Test feature flag combinations. 90%+ coverage.</standards>
+    <locations>
+      <location>src/services/capacity.service.test.ts (NEW)</location>
+      <location>src/utils/degradation.test.ts (NEW)</location>
+      <location>public/js/app.test.js (MODIFY - degradation notices)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test 79K requests returns 'normal' level</idea>
+      <idea acId="AC1">Test 80K requests returns 'elevated' level</idea>
+      <idea acId="AC1">Test 80K triggers warning log</idea>
+      <idea acId="AC2">Test 90K requests returns 'high' level with cacheExtended=true</idea>
+      <idea acId="AC3">Test 'high' level has chartEnabled=false</idea>
+      <idea acId="AC5">Test 95K requests returns 'critical' level</idea>
+      <idea acId="AC6">Test queueSubmission stores data with correct key format</idea>
+      <idea acId="AC6">Test queue TTL is set to 24 hours</idea>
+      <idea acId="AC8">Test 100K requests returns 'exceeded' level with submissionsEnabled=false</idea>
+      <idea acId="AC10">Test countdown calculates hours until midnight UTC</idea>
+      <idea acId="AC11">Test processQueue processes oldest entries first (FIFO)</idea>
+      <idea acId="AC11">Test processQueue deletes entries after successful processing</idea>
+      <idea acId="AC12">Test alert fired at exactly 80% threshold</idea>
+    </ideas>
+  </tests>
+</story-context>

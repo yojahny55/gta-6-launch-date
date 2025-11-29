@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>About - GTA 6 Launch Truth</title>
+  <link rel="icon" type="image/svg+xml" href="/images/icon.svg">
+  <link rel="alternate icon" href="/images/favicon.ico">
+  <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+  <link rel="stylesheet" href="/styles.built.css">
+</head>
+
+<body
+  class="min-h-screen bg-gta-dark font-sans text-slate-100 selection:bg-gta-pink selection:text-white flex flex-col">
+
+
+
+  <main class="flex-grow flex flex-col items-center w-full px-4 py-12">
+    <div class="w-full max-w-3xl animate-fade-in-up">
+      <div class="mb-6">
+        <a href="/"
+          class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm uppercase tracking-wider">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m12 19-7-7 7-7" />
+            <path d="M19 12H5" />
+          </svg>
+          Back
+        </a>
+      </div>
+      <div class="bg-gta-card/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 md:p-12 shadow-2xl">
+        <h2 class="font-display text-3xl md:text-4xl text-white mb-6 italic uppercase">
+          About the <span class="text-gta-pink">Project</span>
+        </h2>
+
+        <div class="prose prose-invert prose-lg text-gray-300">
+          <p class="mb-6">
+            <strong>GTA 6 Launch Truth</strong> is a community-driven experiment designed to track the <em>real</em>
+            sentiment of gamers regarding the release date of Grand Theft Auto VI.
+          </p>
+
+          <p class="mb-6">
+            While official announcements set targets, the gaming community often has a different pulse on reality. This
+            tool aggregates thousands of predictions to find the "Wisdom of Crowds" median date—a potentially more
+            accurate predictor than corporate press releases.
+          </p>
+
+          <h3 class="text-xl font-bold text-white mt-8 mb-4">How it Works</h3>
+          <ul class="list-disc pl-6 space-y-2 mb-6">
+            <li><strong>Vote:</strong> Lock in your gut-feeling prediction date.</li>
+            <li><strong>Analyze:</strong> We calculate the median date from all verified predictions.</li>
+            <li><strong>Compare:</strong> See how your prediction aligns with the community and the official timeline.
+            </li>
+          </ul>
+
+          <h3 id="status-explained" class="text-xl font-bold text-white mt-12 mb-4">Status Explained</h3>
+          <p class="mb-4">
+            The status badge compares the community median prediction with Rockstar's official date (November 19, 2026).
+          </p>
+
+          <div class="space-y-4 mb-8">
+            <div class="flex items-start gap-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <span class="text-blue-400 font-bold text-lg mt-0.5">◐</span>
+              <div>
+                <strong class="text-white">Gathering Data:</strong>
+                <span class="text-gray-400">Not enough predictions yet (need 50+ votes)</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+              <span class="text-green-400 font-bold text-lg mt-0.5">✓</span>
+              <div>
+                <strong class="text-white">On Track:</strong>
+                <span class="text-gray-400">Community predicts within 3 months of official date</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+              <span class="text-yellow-400 font-bold text-lg mt-0.5">⚠</span>
+              <div>
+                <strong class="text-white">Delay Likely:</strong>
+                <span class="text-gray-400">Community predicts 3-12 months after official date</span>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+              <span class="text-red-400 font-bold text-lg mt-0.5">✕</span>
+              <div>
+                <strong class="text-white">Major Delay Expected:</strong>
+                <span class="text-gray-400">Community predicts 12+ months after official date</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-500 italic mt-12 border-t border-gray-700 pt-6">
+            Disclaimer: This is a fan-made project and is not affiliated with, endorsed by, or connected to Rockstar
+            Games or Take-Two Interactive. All trademarks belong to their respective owners.
+          </p>
+        </div>
+
+        <div class="mt-8">
+          <a href="/"
+            class="inline-flex items-center gap-2 text-gta-pink hover:text-white transition-colors font-bold uppercase tracking-wider text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m12 19-7-7 7-7" />
+              <path d="M19 12H5" />
+            </svg>
+            Back to Tracker
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-8 border-t border-gray-800 mt-auto bg-black/40">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <p class="text-gray-600 text-sm">
+        &copy; 2025 GTA 6 Launch Truth. Fan made. Not affiliated with Rockstar Games.
+      </p>
+      <div class="flex gap-4 text-sm text-gray-500">
+        <a href="/about.html" class="text-gta-pink transition-colors">About</a>
+        <a href="/privacy.html" class="hover:text-gta-pink transition-colors">Privacy</a>
+        <a href="/terms.html" class="hover:text-gta-pink transition-colors">Terms</a>
+      </div>
+    </div>
+  </footer>
+
+</body>
+
+</html>

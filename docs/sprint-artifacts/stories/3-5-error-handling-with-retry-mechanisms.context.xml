@@ -1,0 +1,189 @@
+<story-context id="3-5-error-handling-with-retry-mechanisms" v="1.0">
+  <metadata>
+    <epicId>3</epicId>
+    <storyId>5</storyId>
+    <title>Error Handling with Retry Mechanisms</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-24</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/3-5-error-handling-with-retry-mechanisms.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>helpful error messages when something goes wrong</iWant>
+    <soThat>I know what happened and can try again</soThat>
+    <tasks>
+      <task id="1">Create error handling module with classifyError() function</task>
+      <task id="2">Implement retry logic with exponential backoff (1s, 2s, 4s)</task>
+      <task id="3">Create error UI component with red/orange styling, dismiss/retry buttons</task>
+      <task id="4">Implement error display functions (showError, hideError)</task>
+      <task id="5">Implement fallback behaviors - cached stats, localStorage queue, fail-open Turnstile</task>
+      <task id="6">Integrate error handling with stats fetch and submission flows</task>
+      <task id="7">Write automated tests for all error types and retry behavior</task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Network errors show "Unable to connect. Please check your internet and try again." with retry button</criterion>
+    <criterion id="AC2">Auto-retry after 3 seconds, max 3 attempts, timeout after 10 seconds total</criterion>
+    <criterion id="AC3">400 Bad Request: Show specific validation error from API</criterion>
+    <criterion id="AC4">409 Conflict: "You've already submitted. Update your prediction instead."</criterion>
+    <criterion id="AC5">429 Rate Limit: "Slow down! Please wait {seconds} seconds."</criterion>
+    <criterion id="AC6">500 Server Error: "Something went wrong on our end. Please try again in a moment."</criterion>
+    <criterion id="AC7">Database errors (FR59): Generic user message, detailed server-side logging</criterion>
+    <criterion id="AC8">Turnstile errors: "Verification failed. Please try again." with retry button</criterion>
+    <criterion id="AC9">Error UI: Red/orange colors, clear actionable next step, dismiss button</criterion>
+    <criterion id="AC10">User's date input preserved on error</criterion>
+    <criterion id="AC11">Fallback: Stats API fail shows cached data or placeholder</criterion>
+    <criterion id="AC12">Fallback: Submission fail saves to localStorage for retry</criterion>
+    <criterion id="AC13">Fallback: Turnstile unavailable allows submission (fail-open)</criterion>
+    <criterion id="AC14">100% test coverage for error handling logic</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Data Models - Error Handling Data</section>
+        <snippet>ErrorCode type, ErrorState interface {code, message, retryable, retryCount, maxRetries}, RETRY_CONFIG {maxAttempts: 3, initialDelay: 1000, maxDelay: 10000, backoffMultiplier: 2}</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-3.md</path>
+        <title>Epic 3 Technical Specification</title>
+        <section>Error Handling Flow</section>
+        <snippet>1. Error detected, 2. Classify error type, 3. If retryable: exponential backoff retry, 4. Show error message, preserve input, 5. Log for monitoring</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Error Response Format</section>
+        <snippet>{success: false, error: {code: 'VALIDATION_ERROR'|'RATE_LIMIT_EXCEEDED'|'NOT_FOUND'|'SERVER_ERROR', message: string, details?: {}}}</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/utils/error-handler.ts</path>
+        <kind>utility</kind>
+        <symbol>ValidationError, RateLimitError, NotFoundError, formatErrorResponse, formatZodError, logError</symbol>
+        <lines>1-258</lines>
+        <reason>Backend error handling patterns - frontend should mirror error codes</reason>
+      </artifact>
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>types</kind>
+        <symbol>ErrorResponse</symbol>
+        <lines>58-71</lines>
+        <reason>Error response interface with error codes</reason>
+      </artifact>
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>route</kind>
+        <symbol>Error responses</symbol>
+        <lines>76-86, 123-136, 200-208</lines>
+        <reason>Backend error response examples for 400, 409, 503 codes</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>showValidationMessage</symbol>
+        <lines>225-268</lines>
+        <reason>Existing message display pattern - extend for error states</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend</kind>
+        <symbol>executeTurnstile error handling</symbol>
+        <lines>292-341</lines>
+        <reason>Existing fail-open Turnstile pattern - return empty token on failure</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <ecosystem name="node">
+        <package name="tailwindcss" version="^4.0.0">Error UI styling (red/orange colors)</package>
+        <package name="daisyui" version="^5.5.5">Alert component for errors</package>
+        <package name="vitest" version="^3.2.4">Testing framework</package>
+      </ecosystem>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint source="Architecture ADR-002">Vanilla JavaScript - no external retry libraries</constraint>
+    <constraint source="Tech Spec FR59">Database errors must not expose internal details to user</constraint>
+    <constraint source="Tech Spec FR60">Fallback behaviors required for resilience</constraint>
+    <constraint source="Architecture">Exponential backoff: 1s, 2s, 4s delays between retries</constraint>
+    <constraint source="Architecture ADR-011">100% test coverage for error handling logic</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>classifyError</name>
+      <kind>function</kind>
+      <signature>classifyError(error: Error | Response): {code: ErrorCode, message: string, retryable: boolean}</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>fetchWithRetry</name>
+      <kind>function</kind>
+      <signature>fetchWithRetry(url: string, options: RequestInit, config: RetryConfig): Promise&lt;Response&gt;</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>showError</name>
+      <kind>function</kind>
+      <signature>showError(code: ErrorCode, details?: {field?: string, waitSeconds?: number}): void</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>hideError</name>
+      <kind>function</kind>
+      <signature>hideError(): void - hides error container</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>saveSubmissionToLocalStorage</name>
+      <kind>function</kind>
+      <signature>saveSubmissionToLocalStorage(data: {predicted_date, turnstile_token}): void</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>ErrorCode</name>
+      <kind>type</kind>
+      <signature>'NETWORK_ERROR' | 'VALIDATION_ERROR' | 'RATE_LIMIT_EXCEEDED' | 'CONFLICT' | 'NOT_FOUND' | 'SERVER_ERROR' | 'TURNSTILE_FAILED'</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+    <interface>
+      <name>RetryConfig</name>
+      <kind>interface</kind>
+      <signature>{maxAttempts: number, initialDelay: number, maxDelay: number, backoffMultiplier: number}</signature>
+      <path>public/js/errors.js (NEW)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Vitest with fetch mocking. 100% coverage for error logic. Test all error codes and retry timing.</standards>
+    <locations>
+      <location>public/js/errors.test.js (NEW)</location>
+    </locations>
+    <ideas>
+      <idea acId="AC1">Test network error (TypeError) returns NETWORK_ERROR code</idea>
+      <idea acId="AC2">Test fetchWithRetry retries 3 times with exponential delays</idea>
+      <idea acId="AC2">Test delays are approximately 1s, 2s, 4s</idea>
+      <idea acId="AC2">Test total timeout is less than 10 seconds</idea>
+      <idea acId="AC3">Test 400 response extracts validation message from body</idea>
+      <idea acId="AC4">Test 409 response returns CONFLICT code with update message</idea>
+      <idea acId="AC5">Test 429 response extracts Retry-After header for wait seconds</idea>
+      <idea acId="AC6">Test 500 response returns SERVER_ERROR with generic message</idea>
+      <idea acId="AC8">Test Turnstile error returns TURNSTILE_FAILED code</idea>
+      <idea acId="AC9">Test showError creates element with error-alert class</idea>
+      <idea acId="AC9">Test retry button is added for retryable errors</idea>
+      <idea acId="AC9">Test dismiss button calls hideError</idea>
+      <idea acId="AC10">Test date input value preserved after error</idea>
+      <idea acId="AC12">Test saveSubmissionToLocalStorage stores data correctly</idea>
+      <idea acId="AC12">Test localStorage data can be retrieved for retry</idea>
+    </ideas>
+  </tests>
+</story-context>

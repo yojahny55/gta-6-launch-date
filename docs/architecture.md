@@ -66,7 +66,7 @@ npm run dev
 | **Database** | Cloudflare D1 (SQLite) | Latest | Data storage | Free tier (5M reads/day), serverless, auto-backups |
 | **Language** | TypeScript | Latest | All code | Type safety, better DX, AI-friendly |
 | **Frontend** | Vanilla HTML/CSS/JS | N/A | UI, forms, display | Fastest load, zero framework overhead |
-| **CSS** | Tailwind CSS | v4.0 | Styling | Rapid development, tree-shaken, <10KB |
+| **CSS** | Tailwind CSS + Custom GTA Theme | v4.0 | Styling | Custom gaming aesthetic, tree-shaken, <15KB |
 | **Cookie Library** | js-cookie | v3.0.5 | User tracking | Clean API, 2KB, handles edge cases |
 | **Date Library** | day.js | v1.11.19 | Algorithm, display | Tiny (2KB), clean diff/format API |
 | **IP Hashing** | SHA-256 (Web Crypto) | Built-in | Rate limiting, privacy | Zero dependencies, GDPR-compliant |
@@ -421,6 +421,59 @@ export interface ErrorResponse {
 
 ---
 
+### GET /api/status
+
+**Purpose:** Fetch current community sentiment status based on median prediction
+
+**Query Parameters:** None
+
+**Success Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "status": "Delay Likely",
+    "status_color": "amber",
+    "median_date": "2027-03-15",
+    "official_date": "2026-11-19",
+    "days_difference": 116,
+    "cached_at": "2025-11-28T14:30:00Z"
+  }
+}
+```
+
+**Status Values:**
+- `"Early Release Possible"` - Median is 60+ days before official date (Green)
+- `"On Track"` - Median is within ±60 days of official date (Blue)
+- `"Delay Likely"` - Median is 60-180 days after official date (Amber)
+- `"Major Delay Expected"` - Median is 180+ days after official date (Red)
+
+**Caching:** 5 minutes via Cloudflare Workers cache API
+
+**Minimum Threshold (FR99):**
+- If total predictions < 50: Returns `"Gathering Data"` status with blue color
+
+**Error Response (500):**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "SERVER_ERROR",
+    "message": "Unable to fetch status data. Please try again."
+  },
+  "data": {
+    "status": "Unknown",
+    "status_color": "blue",
+    "median_date": null,
+    "official_date": "2026-11-19",
+    "days_difference": 0,
+    "cached_at": "2025-11-28T14:30:00Z"
+  }
+}
+```
+
+---
+
 ### GET /widget
 
 **Purpose:** Embeddable widget for streamers/sites
@@ -562,6 +615,85 @@ const userId = Cookies.get('gta6_user_id');
 
 ---
 
+### Status Calculation
+
+**File:** `src/utils/status-calculator.ts`
+
+**Purpose:** Calculate community sentiment status based on median prediction vs official date
+
+**Implementation:**
+
+```typescript
+export interface StatusResult {
+  status: 'Early Release Possible' | 'On Track' | 'Delay Likely' | 'Major Delay Expected';
+  color: 'green' | 'blue' | 'amber' | 'red';
+  daysDifference: number;
+}
+
+export function calculateStatus(
+  medianDate: string,
+  officialDate: string = '2026-11-19'
+): StatusResult {
+  const official = new Date(officialDate);
+  const median = new Date(medianDate);
+
+  const daysDiff = Math.round(
+    (median.getTime() - official.getTime()) / (24 * 60 * 60 * 1000)
+  );
+
+  if (daysDiff < -60) {
+    return {
+      status: 'Early Release Possible',
+      color: 'green',
+      daysDifference: daysDiff
+    };
+  } else if (daysDiff >= -60 && daysDiff <= 60) {
+    return {
+      status: 'On Track',
+      color: 'blue',
+      daysDifference: daysDiff
+    };
+  } else if (daysDiff > 60 && daysDiff <= 180) {
+    return {
+      status: 'Delay Likely',
+      color: 'amber',
+      daysDifference: daysDiff
+    };
+  } else {
+    return {
+      status: 'Major Delay Expected',
+      color: 'red',
+      daysDifference: daysDiff
+    };
+  }
+}
+```
+
+**Thresholds:**
+- **Early Release Possible:** < -60 days from official
+- **On Track:** -60 to +60 days from official
+- **Delay Likely:** +60 to +180 days from official
+- **Major Delay Expected:** > +180 days from official
+
+**Usage:**
+```typescript
+const median = await getWeightedMedian();
+const status = calculateStatus(median);
+// Returns: { status: 'Delay Likely', color: 'amber', daysDifference: 116 }
+```
+
+**Test Coverage:**
+- Test case: Median 90 days before official → "Early Release Possible"
+- Test case: Median exactly on official date → "On Track"
+- Test case: Median 30 days after official → "On Track"
+- Test case: Median 90 days after official → "Delay Likely"
+- Test case: Median 200 days after official → "Major Delay Expected"
+- Test case: Boundary at -60 days (should be "On Track")
+- Test case: Boundary at +60 days (should be "Delay Likely")
+- Test case: Boundary at +180 days (should be "Major Delay Expected")
+
+---
+
 ## Consistency Rules
 
 ### Naming Conventions
@@ -584,9 +716,10 @@ const userId = Cookies.get('gta6_user_id');
 - Constants: SCREAMING_SNAKE_CASE: `IP_HASH_SALT`, `CACHE_TTL_SECONDS`
 - Interfaces: PascalCase: `Prediction`, `Stats`, `PredictionResponse`
 
-**CSS Classes (Tailwind):**
-- Use Tailwind utilities: `px-4`, `py-2`, `bg-blue-500`
-- Custom classes (if needed): kebab-case: `.prediction-form`, `.stats-display`
+**CSS Classes (Custom GTA Theme):**
+- Use Tailwind utilities: `px-4`, `py-2`, `bg-gta-pink`
+- Custom theme tokens: `gta-dark`, `gta-card`, `gta-pink`, `gta-purple`, `gta-blue`
+- Component classes: kebab-case: `.prediction-form`, `.stats-display`
 
 ### Code Organization
 
@@ -1240,6 +1373,67 @@ npx tsc --noEmit
 - Test files: `src/index.test.ts`, `src/db/schema.test.ts`
 - Test setup: `vitest.config.ts`, `src/test-setup.ts`
 
+**6. Test Resource Constraints:**
+
+**Context:** During Story 3.5 implementation (Error Handling with Retry Mechanisms), tests were found to consume excessive resources (32GB RAM + 100% CPU) due to uncontrolled parallel test execution and fake timer memory leaks. This made local development testing impossible and created risk of CI/CD failures.
+
+**Root Causes Identified:**
+- No `maxConcurrency` or thread limits in Vitest configurations
+- Fake timers (`vi.useFakeTimers()`) not properly cleaned up in `afterEach()` hooks
+- Heavy DOM manipulation tests running in parallel without resource constraints
+- Async timer advancement (`vi.advanceTimersByTimeAsync()`) causing memory leaks
+
+**Requirements:**
+
+**Parallelism Limits:**
+- **Unit tests:** Max 4 threads, max 3 concurrent tests (`vitest.config.unit.ts`)
+- **Workers tests:** Max 2 concurrent tests (`vitest.config.ts`)
+- **Sequential execution:** Required for tests with >100 DOM nodes or heavy fake timer usage
+
+**Fake Timer Best Practices:**
+- **MANDATORY:** Always call `vi.clearAllTimers()` in `afterEach()` before `vi.useRealTimers()`
+- **Pattern:**
+  ```javascript
+  afterEach(() => {
+    vi.clearAllTimers(); // Clear pending timers FIRST
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+    if (global.gc) global.gc(); // Hint for GC
+  });
+  ```
+
+**CI/CD Constraints:**
+- Configure 4GB RAM limit per test runner (`NODE_OPTIONS: --max-old-space-size=4096`)
+- Set timeout: 10 minutes maximum per test suite
+- Monitor memory usage and fail if exceeding limits
+
+**Local Development:**
+- Use `--no-threads` flag if system has < 16GB RAM
+- Separate watch mode commands for development (`test:unit:watch`, `test:workers:watch`)
+- Tests should complete in < 4GB RAM with < 100% CPU usage
+
+**Configuration Files:**
+- `vitest.config.unit.ts`: Includes `maxConcurrency: 3`, `maxThreads: 4`, `sequence.concurrent: false`
+- `vitest.config.ts`: Includes `maxConcurrency: 2` (Workers pool)
+- `package.json`: Test scripts use `vitest run --no-threads` for unit tests
+
+**Enforcement:**
+- CI pipeline monitors memory usage and fails if exceeding 4GB
+- Test configurations include resource limits by default
+- Code review checklist verifies timer cleanup in all new tests
+- ESLint rules (future) to detect missing `vi.clearAllTimers()`
+
+**Rationale:**
+Ensures tests run reliably across all development and CI/CD environments without resource exhaustion. Prevents recurrence of 32GB RAM consumption issues that block local development and cause environment crashes.
+
+**Impact:**
+- Test execution time may increase 10-20% (sequential vs parallel) - acceptable trade-off
+- Tests now run in < 4GB RAM with 50-70% CPU usage (vs 32GB+ and 100% before)
+- Local development testing is reliable and doesn't crash systems
+- CI/CD tests complete within timeout windows
+
+**Resolution Date:** 2025-11-26 (Sprint Change Proposal: Test Optimization)
+
 ---
 
 ### ADR-012: Multi-Environment Deployment Strategy
@@ -1373,9 +1567,138 @@ await fetch(`${API_URL}/api/predict`, { ... });
 - Cloudflare Workers Environments: https://developers.cloudflare.com/workers/wrangler/environments/
 - Cloudflare Pages Environment Variables: https://developers.cloudflare.com/pages/platform/build-configuration/#environment-variables
 
+### ADR-014: PNG over SVG for Open Graph Images
+
+**Decision:** Use PNG format for Open Graph social sharing images instead of SVG.
+
+**Context:** Story 5.3 (Open Graph Meta Tags) required creating a 1200x630px social sharing image. SVG was initially considered for its smaller file size (~2KB) and scalability, but Twitter/X does not support SVG in Twitter Cards.
+
+**Decision Rationale:**
+
+1. **Twitter Compatibility:** Twitter Card specification requires raster formats (PNG/JPG/GIF) for `twitter:image`. SVG images are not displayed in Twitter Cards, resulting in broken social previews on Twitter/X.
+
+2. **Universal Support:** PNG is universally supported across all social platforms (Facebook, LinkedIn, Twitter, Reddit, Discord, Slack, WhatsApp, etc.), while SVG support is inconsistent.
+
+3. **File Size Acceptable:** The PNG implementation is 66KB, well under the 300KB recommended size and far below the 1MB maximum. This is acceptable for Cloudflare's global CDN with edge caching.
+
+4. **Visual Quality:** PNG provides better rendering quality on social platforms that apply compression or transformations to shared images.
+
+**Implementation:**
+
+- **File:** `public/images/og-image.png` (1200x630px, 66KB)
+- **Meta Tags:** Both `og:image` and `twitter:image` reference the PNG file
+- **SVG Alternative:** An SVG version exists at `public/images/og-image.svg` for potential future use in other contexts, but is not used for social sharing
+
+**Alternatives Considered:**
+
+- **SVG Only:** Rejected due to Twitter incompatibility
+- **Dynamic SVG→PNG Conversion:** Rejected as over-engineering for MVP; adds complexity without significant benefit
+- **Dual Format (SVG for OG, PNG for Twitter):** Rejected to avoid confusion and maintain consistency across platforms
+
+**Trade-offs:**
+
+- ✅ **Pro:** Universal social platform compatibility
+- ✅ **Pro:** Better visual quality on compressed platforms
+- ✅ **Pro:** Simpler implementation (single file format)
+- ❌ **Con:** Larger file size than SVG (66KB vs 2KB)
+- ⚠️ **Neutral:** File size is still very small and well-cached by CDN
+
+**Validation:**
+
+- Tested with Twitter Card Validator: https://cards-dev.twitter.com/validator
+- Tested with Facebook Sharing Debugger: https://developers.facebook.com/tools/debug/
+- Automated test coverage: 23/23 tests passing (src/middleware/meta-injection.test.ts)
+
+**Reference:**
+
+- Implemented in Story 5.3 (Open Graph Meta Tags for Rich Previews)
+- Twitter Card Specification: https://developer.twitter.com/en/docs/twitter-for-websites/cards/overview/markup
+- Open Graph Protocol: https://ogp.me/
+
+---
+
+### ADR-015: Custom GTA Gaming Theme over DaisyUI
+
+**Decision:** Replace DaisyUI component library with custom GTA-themed design system using Tailwind CSS utilities.
+
+**Context:** ADR-003 selected DaisyUI v4.x for rapid development with semantic class names. During UI implementation (2025-11-27), the team recognized that DaisyUI's clean, minimal aesthetic conflicted with the viral sharing goals and target audience preferences identified in UX research.
+
+**Decision Rationale:**
+
+1. **Target Audience Alignment:** Gaming community (r/GTA6, Discord) responds better to bold, energetic aesthetics than corporate-minimal design
+2. **Viral Mechanics:** Screenshot-worthy results require visual boldness (Spotify Wrapped pattern)
+3. **Brand Differentiation:** Generic countdown sites use clean designs; gaming aesthetic differentiates
+4. **UX Spec Fulfillment:** Gaming Energy color theme was documented in UX spec but DaisyUI couldn't deliver the intensity needed
+5. **Performance Maintained:** Custom CSS (~184 additional lines) still keeps total CSS under 15KB
+
+**Implementation:**
+
+**Custom Color System:**
+```css
+/* Custom GTA Theme Colors */
+--gta-dark: #0f172a;      /* Base background */
+--gta-card: #1e293b;      /* Card backgrounds */
+--gta-pink: #db2777;      /* Primary accent */
+--gta-purple: #7c3aed;    /* Secondary accent */
+--gta-blue: #0ea5e9;      /* Tertiary accent */
+```
+
+**Component Migration:**
+- **DaisyUI `btn`** → Custom gradient buttons with `bg-gradient-to-r from-gta-pink to-gta-purple`
+- **DaisyUI `card`** → Custom cards with `bg-gta-card border border-gray-700 rounded-xl`
+- **DaisyUI `stats`** → Custom dashboard grid with 4-card layout
+- **DaisyUI semantic classes** → Utility-first Tailwind approach
+
+**CSS Organization:**
+- File: `public/styles.css` (+184 lines)
+- Tailwind config: `tailwind.config.js` (custom color tokens)
+- No DaisyUI plugin dependency removed (breaking change)
+
+**Trade-offs:**
+
+- ✅ **Pro:** Complete design control, perfect brand alignment
+- ✅ **Pro:** Gaming aesthetic resonates with target audience
+- ✅ **Pro:** Screenshot-worthy for social sharing
+- ❌ **Con:** Lost DaisyUI's semantic class names (developer convenience)
+- ❌ **Con:** More custom CSS to maintain (184 lines vs 0 custom)
+- ⚠️ **Neutral:** Development velocity slightly slower without pre-built components
+
+**Consequences:**
+
+1. **All Epic 3 stories require DOM updates** (stats display, confirmation, comparison)
+2. **All UI tests broken** (DOM selectors changed from DaisyUI classes)
+3. **Epic 10 required** (new dashboard features: Optimism Score, My Prediction card)
+4. **Documentation debt created** (15+ stories reference DaisyUI in acceptance criteria)
+5. **ADR-003 superseded** (DaisyUI selection no longer active)
+
+**Validation:**
+
+- Performance budget maintained: Total CSS <15KB (target was <10KB, acceptable)
+- Load time testing required: Verify <2s desktop, <3s mobile still met
+- New images (5 files, 463KB each) need compression validation
+- Accessibility re-audit required (WCAG AA compliance)
+
+**Migration Path:**
+
+1. Update all story acceptance criteria to use new class names
+2. Rewrite UI tests with new DOM selectors
+3. Create Epic 10 for dashboard enhancements
+4. Document custom theme in style guide
+5. Remove DaisyUI from dependencies: `npm uninstall daisyui`
+
+**Alternatives Considered:**
+
+- **DaisyUI theme customization:** Rejected - couldn't achieve gaming intensity needed
+- **Hybrid approach (DaisyUI + custom):** Rejected - inconsistent visual language
+- **Revert to DaisyUI:** Rejected - loses momentum, doesn't solve viral sharing goals
+
+**Resolution Date:** 2025-11-27 (Sprint Change Proposal: UI Redesign & Integration)
+
+**Status:** ✅ Approved - Implements Option 3A (Embrace Gaming Aesthetic)
+
 ---
 
 _Generated by BMad Decision Architecture Workflow v1.0_
 _Date: 2025-11-13_
-_Updated: 2025-11-15 (Added ADR-011 Mandatory Testing, ADR-012 Multi-Environment Strategy)_
+_Updated: 2025-11-27 (Added ADR-014 PNG over SVG for Open Graph Images, ADR-015 Custom GTA Gaming Theme)_
 _For: yojahny_

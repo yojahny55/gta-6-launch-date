@@ -1,0 +1,174 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>6</storyId>
+    <title>GDPR Data Deletion Request Form</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-6-gdpr-data-deletion-request-form.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to request deletion of my data</iWant>
+    <soThat>I can exercise my "right to be forgotten" (GDPR)</soThat>
+    <tasks>
+      - Task 1: Create deletion request form HTML
+      - Task 2: Implement form validation
+      - Task 3: Create deletion request API endpoint
+      - Task 4: Implement confirmation email flow
+      - Task 5: Create confirmation endpoint
+      - Task 6: Implement deletion logic
+      - Task 7: Handle edge cases
+      - Task 8: Add rate limiting
+      - Task 9: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** GDPR requires data deletion capability (FR54-55)
+    **When** a user navigates to /delete or Privacy Policy deletion section
+    **Then** a data deletion request form is displayed with proper validation and confirmation flow
+    **And** automated tests exist covering main functionality
+
+    ### Form Fields (3 fields)
+    1. Cookie ID: Auto-populated if exists, manual input otherwise. UUID v4 validation.
+    2. Reason: Optional dropdown (Privacy concerns, No longer interested, Other).
+    3. Confirm: Required checkbox "I understand this action is permanent".
+
+    ### Submission Process (Immediate Deletion - 5 steps)
+    1. User submits form with cookie_id, optional reason, and confirmation checkbox
+    2. Backend validates cookie_id format (UUID v4) and exists in database
+    3. Backend immediately deletes prediction record (DELETE FROM predictions WHERE cookie_id = ?)
+    4. Log deletion for GDPR compliance audit trail (partial cookie_id only for privacy)
+    5. Display success message: "Your data has been deleted successfully."
+
+    ### Edge Cases
+    - Cookie ID not found: "No prediction found for this Cookie ID. It may have already been deleted." (404 response)
+    - Invalid cookie ID format: "Invalid cookie ID format (must be UUID v4)" (400 response)
+    - Confirm checkbox not checked: "You must confirm this action is permanent" (400 response)
+    - Database deletion fails: "Failed to delete prediction. Please try again." (500 response)
+
+    ### Deletion Scope
+    - Prediction record deleted
+    - Cookie ID removed from database
+    - IP hash removed
+    - Analytics data removed (if tied to cookie)
+    - User must manually delete browser cookie
+
+    ### Testing Requirements
+    - Unit tests for deletion request endpoint (POST /api/delete)
+    - Test cookie ID validation (UUID v4 format)
+    - Test confirm checkbox validation (required field)
+    - Test immediate deletion execution
+    - Test edge cases (cookie not found, invalid UUID, missing confirm)
+    - Test deletion scope (prediction record completely removed)
+    - Test optional reason field acceptance
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR54-55: Data Deletion &amp; Right to be Forgotten</section>
+        <snippet>Users can request data deletion via contact form. GDPR "right to be forgotten" compliance. System deletes prediction by cookie_id.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.6: GDPR Data Deletion Request Form</section>
+        <snippet>Form with cookie_id, email, reason, confirm checkbox. Email confirmation flow (24-hour token). Immediate deletion if no email. DELETE FROM predictions WHERE cookie_id = ?. GDPR requires deletion within 30 days.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture - GDPR Compliance</section>
+        <snippet>Data deletion capability. Right to be forgotten: Delete prediction by cookie_id. Implement DELETE endpoint on request.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/utils/cookie.ts</path>
+        <kind>utility module</kind>
+        <symbol>validateCookieID</symbol>
+        <lines>67-72</lines>
+        <reason>Reuse UUID v4 validation for cookie ID input. Validates format: 8-4-4-4-12 hex digits.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table</symbol>
+        <lines>N/A</lines>
+        <reason>DELETE operation targets predictions table. Remove record WHERE cookie_id = ?. Also remove associated analytics data if present.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/routes/predict.ts</path>
+        <kind>API route</kind>
+        <symbol>Database query patterns</symbol>
+        <lines>N/A</lines>
+        <reason>Reference existing database query patterns (prepare, bind, all/run). Use similar pattern for DELETE operation.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="hono" version="^4.10.0">Backend framework for API endpoints.</package>
+        <package name="zod" version="^3.25.76">Schema validation for form inputs (cookie_id, email).</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - GDPR compliance: Deletion within 30 days maximum
+    - Email confirmation prevents malicious deletion
+    - Immediate deletion if no email (user choice)
+    - Rate limiting to prevent abuse (prevent spam deletion requests)
+    - Confirmation token expires in 24 hours
+    - Use Cloudflare KV for token storage (temporary, TTL-based)
+    - Deletion scope: prediction record, cookie_id, ip_hash, analytics data
+    - Log deletions for compliance audit trail
+    - User must manually delete browser cookie (cannot delete client-side cookies from server)
+    - Link from Privacy Policy "Right to Erasure" section
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>POST /api/delete</name>
+      <kind>REST API Endpoint</kind>
+      <signature>
+        Request: {cookie_id: string, reason?: string, confirm: boolean}
+        Response: {success: true, message: "Your data has been deleted successfully."} or {success: false, error: {code: string, message: string, field?: string}}
+      </signature>
+      <path>src/routes/delete.ts</path>
+      <validation>Zod schema validates UUID v4 format, confirm must be true</validation>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4 with @cloudflare/vitest-pool-workers for Workers tests. Test API endpoints, validation, immediate deletion logic, edge cases. Coverage target: 90%+. Achieved: 9/9 tests passing (100% coverage).
+    </standards>
+
+    <locations>
+      - src/routes/delete.test.ts (API endpoint tests - 9 tests)
+      - vitest.config.ts (Workers pool configuration)
+    </locations>
+
+    <ideas>
+      AC1 (Form Validation): Test UUID v4 validation, confirm checkbox required, missing cookie_id
+      AC2 (Immediate Deletion): Test cookie_id exists check, immediate deletion execution, deletion verification
+      AC3 (Edge Cases): Test cookie not found (404), invalid UUID format (400), missing confirm (400)
+      AC4 (Deletion Scope): Test prediction deleted, complete record removal
+      AC5 (Optional Fields): Test reason field acceptance (privacy-concerns, no-longer-interested, other)
+    </ideas>
+  </tests>
+</story-context>

@@ -47,54 +47,56 @@ development_status:
   1-4-database-transaction-support-and-error-handling: done
   1-5-rollback-capability-and-deployment-safety: done
   1-6-basic-performance-monitoring-via-cloudflare-analytics: done
-  1-7-multi-environment-deployment-setup: review
+  1-7-multi-environment-deployment-setup: done
   epic-1-retrospective: optional
 
   # Epic 2: Core Prediction Engine
-  epic-2: backlog
-  2-1-secure-cookie-id-generation: backlog
-  2-2-ip-address-hashing-for-privacy-preserving-anti-spam: backlog
-  2-3-date-picker-with-validation: backlog
-  2-4-input-validation-and-xss-prevention: backlog
-  2-5-recaptcha-v3-integration-for-bot-protection: backlog
-  2-6-rate-limiting-per-ip-address: backlog
-  2-7-prediction-submission-api-endpoint: backlog
-  2-8-prediction-update-api-endpoint: backlog
-  2-9-weighted-median-algorithm-implementation: backlog
-  2-10-statistics-calculation-and-caching: backlog
+  epic-2: contexted
+  2-1-secure-cookie-id-generation: done
+  2-2-ip-address-hashing-for-privacy-preserving-anti-spam: done
+  2-3-date-picker-with-validation: done
+  2-4-input-validation-and-xss-prevention: done
+  2-5-recaptcha-v3-integration-for-bot-protection: deprecated  # Replaced by 2-5b (Google Cloud cost constraint)
+  2-5b-cloudflare-turnstile-integration: done  # Replaces 2-5 (zero-cost alternative) - Review completed 2025-11-21 (APPROVED)
+  2-6-rate-limiting-per-ip-address: done  # Review completed 2025-11-24 (APPROVED)
+  2-7-prediction-submission-api-endpoint: done  # Review completed 2025-11-24 (APPROVED)
+  2-8-prediction-update-api-endpoint: done  # Review completed 2025-11-24 (APPROVED)
+  2-9-weighted-median-algorithm-implementation: done  # Review completed 2025-11-24 (APPROVED)
+  2-10-statistics-calculation-and-caching: done  # Review completed 2025-11-24 (APPROVED)
   epic-2-retrospective: optional
 
   # Epic 3: Results Display & User Feedback
-  epic-3: backlog
-  3-1-landing-page-with-stats-display: backlog
-  3-2-social-comparison-messaging: backlog
-  3-3-submission-confirmation-with-visual-feedback: backlog
-  3-4-optional-chart-visualization-toggle: backlog
-  3-5-error-handling-with-retry-mechanisms: backlog
-  3-6-race-condition-prevention-for-concurrent-submissions: backlog
-  3-7-graceful-degradation-under-load: backlog
+  epic-3: contexted  # Tech spec created 2025-11-24
+  3-1-landing-page-with-stats-display: review  # Story created 2025-11-24, implementation complete
+  3-2-social-comparison-messaging: done  # Story created 2025-11-24, completed 2025-11-25, reviewed and approved 2025-11-25
+  3-3-submission-confirmation-with-visual-feedback: done  # Story created 2025-11-24, completed 2025-11-25, reviewed 2025-11-25 (APPROVED - all 30/30 tests passing = 100%, date formatting bug resolved in v2.5, ready for done status)
+  3-4-optional-chart-visualization-toggle: done  # Story created 2025-11-24, implementation complete 2025-11-25, code review BLOCKED 2025-11-25 (Chart.js annotation plugin missing), ALL BLOCKERS RESOLVED 2025-11-25 (annotation plugin added, tests passing 16/16), RE-REVIEW APPROVED 2025-11-25 (all 6 action items resolved, production ready) - FINAL REVIEW CONFIRMED 2025-11-26 (status changed to done)
+  3-4b-prediction-data-api-endpoint: done  # Story created 2025-11-26 via correct-course workflow - Addresses missing /api/predictions endpoint identified in Story 3.4 code review. Required for chart to display real prediction distribution data instead of empty buckets. APPROVED FOR IMPLEMENTATION 2025-11-26 (HIGH priority) - Implementation started 2025-11-26, COMPLETED 2025-11-26 (all 10 tasks done, 37 tests passing, 686/693 total tests passing). CODE REVIEW APPROVED 2025-11-26 (7/7 ACs implemented, 10/10 tasks verified, exemplary quality, ZERO blocking issues, ready for production deployment).
+  3-5-error-handling-with-retry-mechanisms: done  # Story created 2025-11-24, completed 2025-11-26, CODE REVIEW 2025-11-26 - CHANGES REQUESTED, ALL FIXES COMPLETED 2025-11-26 (35/35 tests passing, memory leak fixed, CSP headers added, Turnstile fail-open tests added) - STORY DONE
+  3-6-race-condition-prevention-for-concurrent-submissions: done  # Story created 2025-11-24, implementation started 2025-11-26, completed 2025-11-26 (cookie-first logic, deadlock retry, enhanced logging, 721 tests passing), CODE REVIEW 2025-11-26 - APPROVED (6/6 ACs implemented, 7/7 tasks verified, all Story 3.6 tests passing, exemplary quality with critical 409 bug fix, production ready v3.6.5)
+  3-7-graceful-degradation-under-load: done  # Story created 2025-11-24, implementation completed 2025-11-26 (all 10 tasks done, 43 tests passing, KV namespace created, frontend + backend complete)
   epic-3-retrospective: optional
 
   # Epic 4: Privacy, Compliance & Trust
   epic-4: backlog
-  4-1-gdpr-cookie-consent-banner: backlog
-  4-2-privacy-policy-page: backlog
-  4-3-terms-of-service-page: backlog
-  4-4-about-page-transparency-and-methodology: backlog
-  4-5-cookie-management-and-expiration: backlog
-  4-6-gdpr-data-deletion-request-form: backlog
-  4-7-cookie-conflict-resolution-cookie-vs-ip: backlog
-  4-8-data-retention-policy-implementation: backlog
+  4-1-gdpr-cookie-consent-banner: done  # Code review approved 2025-11-26 (all 8 ACs implemented, 32/32 tests passing, GDPR-compliant)
+  4-2-privacy-policy-page: done  # Code review approved 2025-11-26 (all 7 ACs implemented, 11/11 tasks verified, 68/68 tests passing, exceptional GDPR-compliant implementation)
+  4-3-terms-of-service-page: done  # Code review approved 2025-11-26 (all 16 ACs implemented, 12/12 tasks verified, 84/84 tests passing, exceptional GDPR-compliant legal documentation)
+  4-4-about-page-transparency-and-methodology: done  # Implementation completed 2025-11-26 (all 11 tasks done, 63/63 tests passing, 1010 total tests passing)
+  4-5-cookie-management-and-expiration: done  # Implementation completed 2025-11-26 (all 7 tasks done, 25/25 tests passing, privacy policy updated)
+  4-6-gdpr-data-deletion-request-form: done  # Implementation completed 2025-11-26 (all 9 tasks done, 9/9 tests passing, immediate deletion design, GDPR-compliant). Documentation corrected 2025-11-26 (ACs updated to match 3-field immediate deletion). CODE REVIEW APPROVED 2025-11-26 (5/5 ACs implemented, 9/9 tasks verified, zero blocking issues, production-ready)
+  4-7-cookie-conflict-resolution-cookie-vs-ip: review
+  4-8-data-retention-policy-implementation: done  # Implementation completed 2025-11-27 (all 8 tasks done, 18/18 tests passing, dual scheduling approach via GitHub Actions or Cloudflare Cron). CODE REVIEW APPROVED 2025-11-27 (4/4 ACs implemented, 43/43 tasks verified, ZERO blocking issues, database migration deployed to production, production ready)
   epic-4-retrospective: optional
 
   # Epic 5: Social Sharing & Virality
-  epic-5: backlog
-  5-1-twitter-x-share-button-with-pre-filled-text: backlog
-  5-2-reddit-share-button-with-pre-filled-text: backlog
-  5-3-open-graph-meta-tags-for-rich-previews: backlog
-  5-4-seo-meta-tags-and-structured-data: backlog
-  5-5-mobile-responsive-design: backlog
-  5-6-performance-optimization-for-fast-load-times: backlog
+  epic-5: contexted  # Tech spec created 2025-11-26
+  5-1-twitter-x-share-button-with-pre-filled-text: done  # Implementation completed 2025-11-27 (all 7 tasks done, 28/28 tests passing, pure frontend feature with zero backend changes). CODE REVIEW APPROVED 2025-11-27 (6/6 ACs implemented, 43/43 tasks verified, exemplary quality with modular design and comprehensive security, ZERO blocking issues, production ready)
+  5-2-reddit-share-button-with-pre-filled-text: done  # Implementation completed 2025-11-27 (all 7 tasks done, 27/27 tests passing). CODE REVIEW APPROVED 2025-11-27 (5/5 ACs implemented with evidence, 7/7 tasks verified, excellent code reuse from Story 5.1, zero blocking issues, production ready pending manual Reddit testing FR21)
+  5-3-open-graph-meta-tags-for-rich-previews: done  # Implementation completed 2025-11-27 (all 8 tasks done, 39/39 tests passing). CODE REVIEW FOLLOW-UP COMPLETE 2025-11-27 (all 5 action items resolved, test pass rate 90.5%→100%). FINAL REVIEW APPROVED 2025-11-27 (6/6 ACs implemented with evidence, 8/8 tasks verified including 1 intentionally skipped for MVP, exceptional code review follow-through, zero blocking issues, production ready pending manual validator testing)
+  5-4-seo-meta-tags-and-structured-data: ready-for-dev
+  5-5-mobile-responsive-design: done  # Implementation completed 2025-11-27 (all 10 tasks done, 42/42 responsive tests passing, 1173 total tests passing). CODE REVIEW APPROVED 2025-11-27 (6/6 ACs implemented with evidence, 10/10 tasks verified, WCAG 2.1 Level AAA compliance, exceptional quality with zero blocking issues, production ready pending manual device testing FR93 and Lighthouse validation FR40)
+  5-6-performance-optimization-for-fast-load-times: done  # APPROVED 2025-11-28 (Fourth Review: All 6 blocking issues from Third Review verified resolved. Core Web Vitals monitoring functional, Google Fonts removed, system fonts implemented, OG image 232KB, DaisyUI removed. CSS 8.89KB ✅, HTML 5.02KB ✅, JS 38.81KB ⚠️ acceptable for MVP. 36/36 performance tests passing. Story meets all critical acceptance criteria with documented exceptions.)
   epic-5-retrospective: optional
 
   # Epic 6: Embeddable Widget
@@ -130,3 +132,10 @@ development_status:
   9-3-mobile-experience-testing: backlog
   9-4-lighthouse-performance-audit: backlog
   epic-9-retrospective: optional
+
+  # Epic 10: Dashboard Enhancements
+  epic-10: backlog
+  10-1-optimism-score-calculation-and-api: backlog
+  10-2-dashboard-grid-layout-finalization: backlog
+  10-3-my-prediction-card-enhancement: review
+  epic-10-retrospective: optional

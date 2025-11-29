@@ -1,6 +1,6 @@
 # Story 1.7: Multi-Environment Deployment Setup
 
-Status: review
+Status: done
 
 ## Story
 
@@ -71,13 +71,13 @@ So that I can safely test changes in a live environment before deploying to prod
   - [x] Add `.env` and `.env.*.local` to `.gitignore` (if not already)
   - [x] Document local development environment variables in README
 
-- [ ] Task 4: Configure Cloudflare Pages environment variables (AC: 3)
-  - [ ] Navigate to Cloudflare Dashboard → Pages → gta6-tracker → Settings → Environment variables
-  - [ ] Add Production environment variable: `VITE_API_URL = https://gta6-tracker.yojahnychavez.workers.dev`
-  - [ ] Add Production environment variable: `VITE_ENVIRONMENT = production`
-  - [ ] Add Preview environment variable: `VITE_API_URL = https://gta6-tracker-dev.yojahnychavez.workers.dev`
-  - [ ] Add Preview environment variable: `VITE_ENVIRONMENT = dev`
-  - [ ] Document this configuration in README with screenshots/instructions
+- [x] Task 4: Configure Cloudflare Pages environment variables (AC: 3)
+  - [x] Navigate to Cloudflare Dashboard → Pages → gta6-tracker → Settings → Environment variables
+  - [x] Add Production environment variable: `VITE_API_URL = https://gta6-tracker.yojahnychavez.workers.dev`
+  - [x] Add Production environment variable: `VITE_ENVIRONMENT = production`
+  - [x] Add Preview environment variable: `VITE_API_URL = https://gta6-tracker-dev.yojahnychavez.workers.dev`
+  - [x] Add Preview environment variable: `VITE_ENVIRONMENT = dev`
+  - [x] Document this configuration in README with screenshots/instructions
 
 - [x] Task 5: Update frontend code to use environment-aware API URLs (AC: 3)
   - [x] Create API utility module: `src/utils/api.ts` or update existing
@@ -93,24 +93,24 @@ So that I can safely test changes in a live environment before deploying to prod
   - [x] Ensure environment variables are injected during build
   - [x] Test build with: `npm run build` (should use .env.production)
 
-- [ ] Task 7: Test dev environment deployment (Testing)
-  - [ ] Create dev branch: `git checkout -b dev`
-  - [ ] Make a small test change (e.g., add console.log to Worker)
-  - [ ] Push to dev branch: `git push origin dev`
-  - [ ] Verify GitHub Actions deploys to dev environment
-  - [ ] Verify dev Worker URL is accessible: `curl https://gta6-tracker-dev.*.workers.dev`
-  - [ ] Verify Worker logs show `ENVIRONMENT = "dev"`
-  - [ ] Verify Pages preview deployment created
-  - [ ] Test frontend → backend communication on dev environment
+- [x] Task 7: Test dev environment deployment (Testing)
+  - [x] Create dev branch: `git checkout -b dev`
+  - [x] Make a small test change (e.g., add console.log to Worker)
+  - [x] Push to dev branch: `git push origin dev`
+  - [x] Verify GitHub Actions deploys to dev environment
+  - [x] Verify dev Worker URL is accessible: `curl https://gta6-tracker-dev.*.workers.dev`
+  - [x] Verify Worker logs show `ENVIRONMENT = "dev"`
+  - [x] Verify Pages preview deployment created
+  - [x] Test frontend → backend communication on dev environment
 
-- [ ] Task 8: Test production environment deployment (Testing)
-  - [ ] Ensure main branch has latest changes
-  - [ ] Push to main branch: `git push origin main`
-  - [ ] Verify GitHub Actions deploys to production environment
-  - [ ] Verify production Worker URL is accessible: `curl https://gta6-tracker.*.workers.dev`
-  - [ ] Verify Worker logs show `ENVIRONMENT = "production"`
-  - [ ] Verify Pages production deployment updated
-  - [ ] Test frontend → backend communication on production environment
+- [x] Task 8: Test production environment deployment (Testing)
+  - [x] Ensure main branch has latest changes
+  - [x] Push to main branch: `git push origin main`
+  - [x] Verify GitHub Actions deploys to production environment
+  - [x] Verify production Worker URL is accessible: `curl https://gta6-tracker.*.workers.dev`
+  - [x] Verify Worker logs show `ENVIRONMENT = "production"`
+  - [x] Verify Pages production deployment updated
+  - [x] Test frontend → backend communication on production environment
 
 - [x] Task 9: Update documentation (AC: 3)
   - [x] Update README.md with multi-environment strategy section
@@ -499,17 +499,19 @@ export default defineConfig(({ mode }) => {
 - Verification: Added 3 additional tests to verify D1 bindings in all environments
 - Result: All environments now have DB binding access (confirmed by tests)
 
-**Manual tasks remaining (Tasks 4, 7, 8):**
-- Task 4: Configure Cloudflare Pages dashboard environment variables (requires manual UI configuration)
-- Task 7: Test dev environment deployment (requires creating dev branch and pushing)
-- Task 8: Test production environment deployment (requires merging to main)
+✅ **Manual Tasks Complete (Tasks 4, 7, 8):**
+- Task 4: Cloudflare Pages environment variables configured in dashboard ✅
+- Task 7: Dev environment deployment tested and verified ✅
+- Task 8: Production environment deployment tested and verified ✅
 
-These manual tasks are intentionally left for the user to complete as they require:
-1. Access to Cloudflare dashboard
-2. Creating and managing git branches
-3. Verifying live deployments
+**Deployment Verification:**
+- Dev branch deployment: GitHub Actions successfully deployed to `gta6-tracker-dev` with DB binding
+- Production deployment: GitHub Actions successfully deployed to `gta6-tracker` with DB binding
+- All environments confirmed to have D1 database access
+- Frontend-to-backend communication verified on all environments
+- Environment variables properly set and accessible in Workers
 
-The code implementation is 100% complete and ready for deployment testing.
+**Story Status:** ✅ DONE - All acceptance criteria met, all tasks complete, all tests passing
 
 ### File List
 
@@ -533,3 +535,5 @@ The code implementation is 100% complete and ready for deployment testing.
 
 - 2025-11-15: Story drafted following ADR-012 discovery - Multi-environment deployment strategy (PM agent)
 - 2025-11-15: Implementation complete - Multi-environment deployment infrastructure, API utilities, tests, and documentation (Dev agent: claude-sonnet-4-5-20250929)
+- 2025-11-15: Critical bug fix - Added D1 database bindings to all environment sections (Dev agent: claude-sonnet-4-5-20250929)
+- 2025-11-15: Manual deployment tests complete - All environments verified and operational (User: yojahny)

@@ -1,0 +1,348 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>1</storyId>
+    <title>Secure Cookie ID Generation</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-19</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>/var/www/html/others/gta-6-launch-date/docs/sprint-artifacts/stories/2-1-secure-cookie-id-generation.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>user</asA>
+    <iWant>a unique identifier assigned to my browser</iWant>
+    <soThat>I can update my prediction later without creating an account</soThat>
+    <tasks>
+- Task 1: Create cookie utility module (AC: 1, 2, 3)
+  - Create `src/utils/cookie.ts` module
+  - Implement `generateCookieID()` function using crypto.randomUUID()
+  - Implement `setCookie()` function with security flags
+  - Implement `getCookie()` function to retrieve existing cookie
+  - Implement `validateCookieID()` function (UUID v4 regex validation)
+  - Export TypeScript types: `CookieID` type alias
+
+- Task 2: Frontend cookie management (AC: 1, 2, 3)
+  - Create `public/js/cookie-manager.js` or integrate into `public/app.js`
+  - Check for existing cookie on page load
+  - If no cookie: generate UUID → set cookie with security flags
+  - If cookie exists: validate format → use existing
+  - Handle invalid cookie: regenerate and replace
+  - Log cookie generation events (for debugging)
+
+- Task 3: Backend cookie validation (AC: 3)
+  - Update API endpoints to extract cookie from request headers
+  - Validate cookie ID format (UUID v4) on every API request
+  - Return 400 Bad Request if cookie ID is invalid
+  - Add validation middleware in `src/middleware/` (optional)
+  - Log validation failures for monitoring
+
+- Task 4: Write automated tests (ADR-011 Testing Requirements)
+  - Create `src/utils/cookie.test.ts`
+  - Test UUID v4 generation: verify format matches regex
+  - Test cookie validation: valid UUID passes, invalid UUIDs fail
+  - Test edge cases: empty string, non-UUID, UUID v1/v3/v5 formats
+  - Create `tests/integration/cookie.test.ts`
+  - Integration test: cookie persists across simulated page reloads
+  - Integration test: cookie flags are correctly set (secure, sameSite, httpOnly)
+  - Verify test coverage: 100% for cookie utility functions
+
+- Task 5: Update TypeScript types (AC: 3)
+  - Add `CookieID` type to `src/types/index.ts`
+  - Update request interfaces to include `cookie_id: CookieID`
+  - Update database schema types (if applicable)
+
+- Task 6: Manual testing and browser verification
+  - Test in Chrome: verify cookie in DevTools (Application → Cookies)
+  - Test in Firefox: verify cookie flags
+  - Test in Safari: verify cookie flags
+  - Test cookie persistence: close browser, reopen, verify cookie exists
+  - Test expiration: verify maxAge is 63072000 seconds (2 years)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Given** a user visits the site for the first time
+**When** the page loads
+**Then** a cryptographically secure cookie ID is generated:
+- Format: UUID v4 (e.g., "550e8400-e29b-41d4-a716-446655440000")
+- Generated using crypto.randomUUID() (Web Crypto API)
+- Stored in cookie named "gta6_user_id"
+
+**And** cookie has security attributes:
+- httpOnly: false (needs JavaScript access for submissions)
+- secure: true (HTTPS only)
+- sameSite: "Strict"
+- maxAge: 63072000 (2 years, FR65)
+- path: "/"
+
+**And** cookie generation is deterministic:
+- If cookie already exists, don't regenerate
+- Same cookie ID persists across sessions
+- Cookie ID is validated on every request (valid UUID v4 format)
+
+**And** automated tests exist covering main functionality
+
+### Testing Requirements
+- Unit tests for UUID v4 generation (crypto.randomUUID())
+- Unit tests for cookie validation (valid/invalid UUIDs)
+- Integration tests verifying cookie persists across page reloads
+- Integration tests verifying cookie flags (secure, sameSite, httpOnly)
+- Error handling tests for invalid UUID formats
+- Edge case: cookie already exists (should not regenerate)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR3: Unique Cookie Identifier</section>
+        <snippet>Users receive unique cookie identifier for future updates (FR3). Cookie-based user tracking (no accounts). One initial submission per IP address (anti-spam) with unlimited updates via cookie recognition (FR4).</snippet>
+      </doc>
+      <doc>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>NFR-S3: Cookie Security</section>
+        <snippet>Cookies set with httpOnly, secure, sameSite=Strict flags. Cookie-based sessions for secure, privacy-preserving user identification without requiring account creation.</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Cookie Management (ADR-010)</section>
+        <snippet>Frontend uses js-cookie library (3.0.5) for cookie operations. Secure flags: httpOnly: false (JavaScript needs access), secure: true (HTTPS only), sameSite: 'Strict' (CSRF protection). Generate unique cookie ID using crypto.randomUUID() and set user cookie with 365-day expiry (NOTE: Tech Spec specifies 2 years, use 2 years). Backend validates cookie ID must be valid UUID format.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>AC1: Secure Cookie ID Generation</section>
+        <snippet>Cookie ID generated using crypto.randomUUID() (UUID v4 format). Cookie stored with name "gta6_user_id", 2-year expiry. Security flags: secure: true, sameSite: 'Strict', httpOnly: false. Existing cookie not regenerated on subsequent visits. Cookie ID validated as valid UUID format on every request.</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>TypeScript Interfaces - CookieID Type</section>
+        <snippet>type CookieID = string; // UUID v4 format</snippet>
+      </doc>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-2.md</path>
+        <title>Epic 2 Technical Specification</title>
+        <section>Validation Schemas - UUIDSchema</section>
+        <snippet>UUID validation schema: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i). Format: 8-4-4-4-12 hex digits with '4' in version position and '[89ab]' in variant position. Example: "550e8400-e29b-41d4-a716-446655440000"</snippet>
+      </doc>
+      <doc>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Security Architecture</section>
+        <snippet>Cookie Security: Flags set with httpOnly (false for JS access), secure (HTTPS only), sameSite=strict. js-cookie library handles encoding/decoding safely. Supports FR3 (unique cookie identifier) and FR4 (unlimited updates).</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>src/types/index.ts</path>
+        <kind>TypeScript interfaces</kind>
+        <symbol>Env, ErrorResponse</symbol>
+        <lines>1-45</lines>
+        <reason>Existing TypeScript interfaces. ErrorResponse interface defines standardized error format. Env interface includes D1 database binding pattern. Cookie-related types should be added here following existing patterns.</reason>
+      </artifact>
+      <artifact>
+        <path>src/utils/api.ts</path>
+        <kind>API utility module</kind>
+        <symbol>callAPI&lt;T&gt;, submitPrediction, getStats</symbol>
+        <lines>1-72</lines>
+        <reason>Environment-aware API utility from Story 1.7. Uses generic TypeScript pattern callAPI&lt;T&gt; for type-safe API calls. Cookie utility should follow similar pattern with generic type parameters to avoid ESLint 'any' errors. Pattern: export async function foo&lt;T&gt;(...): Promise&lt;T&gt;</reason>
+      </artifact>
+      <artifact>
+        <path>src/index.ts</path>
+        <kind>Main Hono application</kind>
+        <symbol>app (Hono instance)</symbol>
+        <lines>1-44</lines>
+        <reason>Main application entry point using Hono framework. Shows Hono routing pattern and how to access c.env.DB for database operations. Cookie validation middleware could be added here using app.use().</reason>
+      </artifact>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>Frontend JavaScript</kind>
+        <symbol>N/A (placeholder)</symbol>
+        <lines>1-5</lines>
+        <reason>Frontend entry point currently minimal. Cookie management code (generateCookieID, setCookie, getCookie, validateCookieID) should be added here using js-cookie library. This is where crypto.randomUUID() will be called on page load.</reason>
+      </artifact>
+      <artifact>
+        <path>src/test-setup.ts</path>
+        <kind>Test configuration</kind>
+        <symbol>N/A</symbol>
+        <lines>N/A</lines>
+        <reason>Test setup for Vitest with Cloudflare Workers pool. Cookie utility tests should follow the same pattern established in src/index.test.ts and src/db/schema.test.ts (co-located with source).</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <npm>
+        <package name="js-cookie" version="^3.0.5">Cookie management library (frontend). Used for setting, getting, and managing cookies with secure flags. Already installed per package.json.</package>
+        <package name="dayjs" version="^1.11.19">Date manipulation library. Already installed. Not directly needed for cookie story but available for date utilities.</package>
+        <package name="hono" version="^4.10.0">Web framework for Cloudflare Workers. Backend cookie validation will use Hono context (c.req.header('Cookie')).</package>
+      </npm>
+      <runtime>
+        <dependency name="Web Crypto API">Built-in browser API for crypto.randomUUID(). No installation needed. Available in all modern browsers (Chrome 92+, Firefox 95+, Safari 15.4+).</dependency>
+        <dependency name="Cloudflare Workers Runtime">Provides c.env bindings for D1 database and environment variables. Cookie validation on backend uses c.req.header() to extract cookies.</dependency>
+      </runtime>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Use generic TypeScript patterns for type-safe cookie operations (follow callAPI&lt;T&gt; pattern from src/utils/api.ts to avoid ESLint 'any' errors)</constraint>
+    <constraint>Cookie utility module location: src/utils/cookie.ts (follows existing utils/ structure)</constraint>
+    <constraint>Unit tests co-located: src/utils/cookie.test.ts (per ADR-009 and existing test pattern)</constraint>
+    <constraint>Integration tests location: tests/cookie.test.ts or tests/integration/cookie.test.ts</constraint>
+    <constraint>TypeScript types added to src/types/index.ts (export type CookieID = string; // UUID v4 format)</constraint>
+    <constraint>Frontend cookie handling in public/app.js or public/js/cookie-manager.js (integrate with existing app.js)</constraint>
+    <constraint>Cookie name: "gta6_user_id" (per AC1 and tech spec)</constraint>
+    <constraint>Cookie expiry: 63072000 seconds (2 years, per FR65 and AC1)</constraint>
+    <constraint>Security flags: httpOnly: false, secure: true, sameSite: 'Strict' (per AC1)</constraint>
+    <constraint>UUID v4 validation regex: /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i (per tech spec)</constraint>
+    <constraint>Backend validation: All API endpoints must validate cookie_id format before database operations</constraint>
+    <constraint>Test coverage: 100% for cookie utility functions (generateCookieID, validateCookieID, setCookie, getCookie) per ADR-011</constraint>
+    <constraint>Testing framework: Vitest v3.2.4 (already configured, per ADR-009)</constraint>
+    <constraint>Error handling: Use ErrorResponse interface from src/types/index.ts for consistent API error responses</constraint>
+  </constraints>
+  <interfaces>
+    <interface>
+      <name>CookieID Type Alias</name>
+      <kind>TypeScript type</kind>
+      <signature>type CookieID = string; // UUID v4 format</signature>
+      <path>src/types/index.ts</path>
+      <usage>Used in backend API endpoints for cookie_id parameter validation. Frontend generates using crypto.randomUUID().</usage>
+    </interface>
+    <interface>
+      <name>Cookie Utility Functions</name>
+      <kind>Function signatures</kind>
+      <signature>
+        function generateCookieID(): string; // Returns UUID v4
+        function setCookie(name: string, value: string, options: CookieOptions): void;
+        function getCookie(name: string): string | undefined;
+        function validateCookieID(cookieId: string): boolean; // Regex validation
+      </signature>
+      <path>src/utils/cookie.ts (to be created)</path>
+      <usage>Frontend: Generate and manage cookies. Backend: Validate cookie format before database queries.</usage>
+    </interface>
+    <interface>
+      <name>Hono Context Cookie Access</name>
+      <kind>Framework API</kind>
+      <signature>c.req.header('Cookie'): string | undefined</signature>
+      <path>Hono framework (src/index.ts)</path>
+      <usage>Backend API endpoints extract cookie header, parse cookie_id, validate UUID format.</usage>
+    </interface>
+    <interface>
+      <name>js-cookie Library API</name>
+      <kind>External library</kind>
+      <signature>
+        Cookies.set(name: string, value: string, options?: CookieAttributes): string;
+        Cookies.get(name: string): string | undefined;
+      </signature>
+      <path>js-cookie package (frontend)</path>
+      <usage>Frontend cookie operations. Handles encoding, decoding, and secure flag setting automatically.</usage>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>
+**Mandatory Testing (ADR-011):**
+All stories MUST include automated tests covering main functionality. This is non-negotiable per Architecture ADR-011: Mandatory Automated Testing for All Stories.
+
+**Testing Framework:**
+- Vitest v3.2.4 (configured per ADR-009)
+- @cloudflare/vitest-pool-workers for Workers integration tests
+- Co-located unit tests (src/utils/cookie.test.ts)
+- Integration tests in tests/ directory
+
+**Coverage Requirements:**
+- Utility functions: 100% coverage (cookie generation, validation)
+- Critical paths: 100% (UUID generation, cookie validation regex)
+- Overall story: 100% (no exceptions for utility modules)
+
+**Testing Approach:**
+- Unit tests: Pure function testing (generateCookieID, validateCookieID)
+- Integration tests: Cookie persistence across simulated page reloads, cookie flags verification
+- Manual tests: Browser DevTools verification (Chrome, Firefox, Safari)
+
+**Test Execution:**
+- Tests run automatically in CI/CD pipeline (GitHub Actions)
+- Failed tests block deployment
+- Story cannot be marked "done" until all tests pass
+
+**Reference Implementation:**
+- Story 1.2: 30 tests (9 endpoint + 21 schema tests) as baseline
+- Test files: src/index.test.ts, src/db/schema.test.ts
+- Test setup: vitest.config.ts, src/test-setup.ts
+    </standards>
+    <locations>
+**Unit Test Locations:**
+- src/utils/cookie.test.ts (co-located with src/utils/cookie.ts per ADR-009)
+- Test UUID v4 generation: verify format matches regex
+- Test cookie validation: valid UUID passes, invalid UUIDs fail
+- Test edge cases: empty string, non-UUID, UUID v1/v3/v5 formats
+
+**Integration Test Locations:**
+- tests/integration/cookie.test.ts or tests/cookie.test.ts
+- Integration test: cookie persists across simulated page reloads
+- Integration test: cookie flags are correctly set (secure, sameSite, httpOnly)
+- Integration test: backend validates cookie format from request headers
+
+**Manual Test Locations:**
+- Browser DevTools (Application → Cookies tab)
+- Chrome: verify cookie in DevTools (Application → Cookies)
+- Firefox: verify cookie flags (Storage Inspector)
+- Safari: verify cookie flags (Storage tab)
+- Test cookie persistence: close browser, reopen, verify cookie exists
+- Test expiration: verify maxAge is 63072000 seconds (2 years)
+
+**Test Organization:**
+Tests are organized in two locations per vitest.config.unit.ts pattern:
+1. Unit tests: src/**/*.test.ts (co-located with source files)
+2. Integration tests: tests/**/*.test.ts (dedicated test directory)
+
+Both patterns are supported and tests in both locations are executed during npm run test.
+    </locations>
+    <ideas>
+**AC1: Unit tests for UUID v4 generation**
+- Test: generateCookieID() returns valid UUID v4 format
+- Test: UUID matches regex /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+- Test: Generated UUIDs are unique (generate 1000, verify no duplicates)
+- Test: UUID has '4' in version position (character 14)
+- Test: UUID has variant bits '[89ab]' in correct position (character 19)
+
+**AC1: Unit tests for cookie validation**
+- Test: validateCookieID() accepts valid UUID v4
+- Test: validateCookieID() rejects invalid formats (empty string, non-UUID, UUID v1/v3/v5)
+- Test: validateCookieID() rejects UUIDs with wrong version (not '4')
+- Test: validateCookieID() rejects UUIDs with wrong variant (not '[89ab]')
+- Test: validateCookieID() handles null/undefined gracefully
+
+**AC1: Integration tests for cookie persistence**
+- Test: Cookie set on first page load
+- Test: Cookie persists across simulated page reloads (use localStorage mock)
+- Test: Cookie not regenerated if already exists
+- Test: Same cookie ID retrieved on subsequent visits
+
+**AC1: Integration tests for cookie flags**
+- Test: Cookie has secure: true flag (HTTPS only)
+- Test: Cookie has sameSite: 'Strict' flag (CSRF protection)
+- Test: Cookie has httpOnly: false flag (JavaScript access needed)
+- Test: Cookie has maxAge: 63072000 (2 years)
+- Test: Cookie has path: '/' (site-wide access)
+
+**AC1: Backend validation tests**
+- Test: API endpoint validates cookie_id from request header
+- Test: Valid UUID v4 in cookie → request succeeds
+- Test: Invalid cookie format → 400 Bad Request
+- Test: Missing cookie → handled gracefully (generate new or reject)
+
+**AC1: Edge case tests**
+- Test: Cookie already exists (should not regenerate)
+- Test: Cookie expired (browser handles, test with mock)
+- Test: Cookie name collision (different cookie name)
+- Test: Unicode characters in cookie value (should fail validation)
+- Test: Very long string as cookie value (should fail UUID validation)
+
+**Coverage Target:**
+100% for all cookie utility functions (generateCookieID, validateCookieID, setCookie, getCookie) per ADR-011 mandatory testing requirements. No exceptions.
+    </ideas>
+  </tests>
+</story-context>

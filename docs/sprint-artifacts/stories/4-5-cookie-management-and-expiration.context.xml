@@ -1,0 +1,174 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>5</storyId>
+    <title>Cookie Management and Expiration</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-5-cookie-management-and-expiration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>cookies to expire after 2 years</iWant>
+    <soThat>user data isn't retained indefinitely</soThat>
+    <tasks>
+      - Task 1: Implement 2-year cookie expiration
+      - Task 2: Implement expired cookie detection
+      - Task 3: Prevent cookie refresh on every visit
+      - Task 4: Implement analytics data cleanup (FR90)
+      - Task 5: Handle orphaned predictions
+      - Task 6: Document cookie retention policy
+      - Task 7: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** cookies are set for user tracking (FR3, FR65)
+    **When** cookies are created or accessed
+    **Then** expiration is enforced correctly
+    **And** automated tests exist covering main functionality
+
+    ### Cookie Lifecycle
+    - Creation: Set maxAge 63072000 (2 years in seconds)
+    - Expiration: Cookie auto-deleted by browser after 2 years
+    - Post-Expiration: User treated as new visitor
+
+    ### Expiration Handling
+    - Cookie exists and valid: Use existing cookie_id
+    - Cookie expired: Generate new cookie_id (user can re-submit)
+    - Cookie deleted by user: Generate new cookie_id
+
+    ### Database Cleanup (FR90)
+    - Analytics data: Delete after 24 months
+    - Prediction data: Keep indefinitely (core value)
+    - Orphaned predictions: Keep (user may return)
+
+    ### Cookie Refresh
+    - On visit: Don't regenerate (no expiration extension)
+    - On submission/update: Don't regenerate
+    - Cookie expiration is absolute from first creation
+
+    ### Testing Requirements
+    - Unit tests for cookie expiration logic
+    - Test cookie maxAge setting (2 years)
+    - Test expired cookie handling
+    - Test cookie persistence
+    - Test database cleanup for analytics
+    - Test prediction data retention
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.5: Cookie Management and Expiration</section>
+        <snippet>2-year cookie expiration (maxAge: 63072000 seconds). Browser enforces expiration. No cookie refresh on visits (absolute expiration). Analytics data deleted after 24 months. Prediction data retained indefinitely.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR65: 2-Year Cookie Expiration</section>
+        <snippet>Cookies expire after 2 years maximum. Balance between utility (long enough) and privacy (short enough).</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR90: 24-Month Analytics Retention</section>
+        <snippet>Analytics data deleted after 24 months. Prediction data retained indefinitely (core product value).</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Cookie Management Pattern</section>
+        <snippet>Cookie expiration: 365 days (1 year) for gta6_user_id. Use js-cookie library with expires option. Set cookie with secure flags.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>public/app.js</path>
+        <kind>frontend module</kind>
+        <symbol>COOKIE_MAX_AGE_DAYS, COOKIE_OPTIONS, Cookies.set</symbol>
+        <lines>9-16, 60-107</lines>
+        <reason>Current cookie expiration: 730 days (2 years) already implemented. Verify expiration logic correct. Update if needed to match FR65 (63072000 seconds = 730 days).</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/utils/cookie.ts</path>
+        <kind>utility module</kind>
+        <symbol>COOKIE_MAX_AGE, setCookie, getDefaultCookieOptions</symbol>
+        <lines>186-209</lines>
+        <reason>Backend cookie utilities. COOKIE_MAX_AGE already set to 63072000 (2 years). Verify consistency with frontend implementation.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/db/schema.sql</path>
+        <kind>database schema</kind>
+        <symbol>predictions table</symbol>
+        <lines>N/A</lines>
+        <reason>Prediction data stored indefinitely. Analytics data cleanup needs separate implementation (not in current schema).</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="js-cookie" version="^3.0.5">Cookie library for expiration management.</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - FR65: 2-year cookie expiration (63072000 seconds = 730 days)
+    - FR90: 24-month analytics retention (predictions indefinite)
+    - No cookie refresh on visits (absolute expiration from creation)
+    - Browser enforces expiration (client-side, not server-side)
+    - Expired cookie triggers new cookie_id generation
+    - Database cleanup for analytics data only (not predictions)
+    - Orphaned predictions kept (user may return)
+    - Update Privacy Policy with retention periods
+    - Consistency between frontend (app.js) and backend (cookie.ts)
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Cookie Expiration API (js-cookie)</name>
+      <kind>JavaScript Library</kind>
+      <signature>Cookies.set(name, value, {expires: 730}) // 730 days = 2 years</signature>
+      <path>public/app.js (lines 60-107)</path>
+    </interface>
+
+    <interface>
+      <name>Database Cleanup Script (Future)</name>
+      <kind>Scheduled Task</kind>
+      <signature>Daily task to delete analytics data older than 24 months. Implemented via GitHub Actions or Cloudflare Cron Triggers.</signature>
+      <path>TBD (GitHub Actions workflow or Cloudflare Worker with cron trigger)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4. Test cookie expiration logic, maxAge settings, expired cookie handling, persistence. Coverage target: 90%+.
+    </standards>
+
+    <locations>
+      - tests/unit/cookie-expiration.test.ts
+      - vitest.config.unit.ts
+    </locations>
+
+    <ideas>
+      AC1 (Cookie Lifecycle): Test maxAge=63072000 set correctly, browser auto-deletes after 2 years (simulate)
+      AC2 (Expiration Handling): Test expired cookie detection, new cookie_id generation
+      AC3 (Cookie Refresh): Test no refresh on visit, absolute expiration maintained
+      AC4 (Database Cleanup): Test analytics data deletion after 24 months, predictions retained
+      AC5 (Orphaned Predictions): Test predictions kept even if no recent cookie access
+    </ideas>
+  </tests>
+</story-context>

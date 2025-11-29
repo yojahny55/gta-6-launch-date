@@ -9,12 +9,14 @@ pnpm-lock.yaml
 .env.local
 .env.*.local
 .dev.vars
+.env.development
 
 # Build output
 dist/
 .output/
 .vercel
 .netlify
+public/styles.built.css
 
 # Logs
 logs

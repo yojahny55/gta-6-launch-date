@@ -1,0 +1,688 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>5b</storyId>
+    <title>Cloudflare Turnstile Integration for Bot Protection</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-11-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-5b-cloudflare-turnstile-integration.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>system</asA>
+    <iWant>to verify users are human using Cloudflare Turnstile</iWant>
+    <soThat>bots cannot spam fake predictions</soThat>
+    <tasks>
+- [ ] Task 1: Register with Cloudflare Turnstile (AC: Prerequisites)
+  - [ ] Access Cloudflare dashboard (existing account)
+  - [ ] Create Turnstile site at https://dash.cloudflare.com/?to=/:account/turnstile
+  - [ ] Get Site Key (public)
+  - [ ] Get Secret Key (private, store in environment)
+  - [ ] Configure domains: localhost (dev), gta6-tracker.pages.dev (prod)
+  - **Note:** Setup guide to be created at `docs/TURNSTILE_SETUP.md` with step-by-step instructions
+
+- [ ] Task 2: Add Turnstile script to frontend (AC: 1)
+  - [ ] Add Turnstile script tag to `public/index.html` head
+  - [ ] Configure with Site Key
+  - [ ] Load script asynchronously (don't block page load)
+  - [ ] Add Turnstile badge to footer
+  - [ ] Test script loads correctly on page load
+
+- [ ] Task 3: Integrate Turnstile execution in form submission (AC: 1, 3)
+  - [ ] Modify `public/app.js` form submit handler
+  - [ ] Implement `turnstile.render()` with callback
+  - [ ] Include token in API request body
+  - [ ] Handle execution errors gracefully (degrades to empty token if Turnstile not loaded)
+
+- [ ] Task 4: Implement backend verification (AC: 2)
+  - [ ] Create `src/utils/turnstile.ts` verification module
+  - [ ] Implement `verifyTurnstileToken()` function
+  - [ ] POST to https://challenges.cloudflare.com/turnstile/v0/siteverify
+  - [ ] Parse response: success, challenge_ts, hostname, error-codes
+  - [ ] Return verification result (boolean success)
+
+- [ ] Task 5: Add challenge evaluation logic (AC: 3)
+  - [ ] Check success === true (boolean evaluation)
+  - [ ] Return 503 Service Unavailable if success === false
+  - [ ] Include retry suggestion in error message
+  - [ ] Log verification results for monitoring
+
+- [ ] Task 6: Implement graceful degradation (AC: 2)
+  - [ ] Detect network errors during verification
+  - [ ] Fail open: Allow submission if Cloudflare API unreachable (FR60)
+  - [ ] Log degradation events for monitoring
+  - [ ] Maintain same fail-open pattern as reCAPTCHA implementation
+
+- [ ] Task 7: Configure environment variables (AC: Prerequisites)
+  - [ ] Add TURNSTILE_SECRET_KEY to .dev.vars (local)
+  - [ ] Add TURNSTILE_SECRET_KEY to Cloudflare Workers secrets (production)
+  - [ ] Add TURNSTILE_SITE_KEY to frontend environment (build-time)
+  - [ ] Document secret rotation procedure in setup guide
+
+- [ ] Task 8: Write automated tests (ADR-011 Testing Requirements)
+  - [ ] Create `src/utils/turnstile.test.ts`
+  - [ ] Test token verification with mock Cloudflare API responses
+  - [ ] Test success/failure evaluation logic
+  - [ ] Test network failure handling (fail open)
+  - [ ] Test invalid token responses
+  - [ ] Integration tests for full workflow
+  - [ ] Verify test coverage: 90%+ for turnstile utilities - **Target: 25 tests**
+
+- [ ] Task 9: Add Turnstile monitoring (AC: Supporting)
+  - [ ] Log all Turnstile verification results
+  - [ ] Track verification success/failure rates
+  - [ ] Monitor API response times
+  - [ ] Alert on high failure rates (potential bot attack) - Implemented via structured logging
+
+- [ ] Task 10: Remove deprecated reCAPTCHA implementation
+  - [ ] Delete `src/utils/recaptcha.ts`
+  - [ ] Delete `src/utils/recaptcha.test.ts`
+  - [ ] Delete `docs/RECAPTCHA_SETUP.md`
+  - [ ] Verify no remaining reCAPTCHA references in codebase
+</tasks>
+  </story>
+
+  <acceptanceCriteria>
+**Given** Cloudflare Turnstile is configured
+**When** a user attempts to submit a prediction
+**Then** Turnstile workflow executes:
+
+1. **Frontend:** Execute Turnstile on form submit
+```javascript
+turnstile.render('#turnstile-container', {
+  sitekey: SITE_KEY,
+  callback: function(token) {
+    // Submit form with token
+  }
+})
+```
+
+2. **Backend:** Verify token with Cloudflare API
+```typescript
+const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    secret: SECRET_KEY,
+    response: token
+  })
+})
+```
+
+3. **Challenge Evaluation:** Accept successful verifications (FR76)
+- `success: false`: Reject as likely bot
+- `success: true`: Accept as likely human
+
+**And** Turnstile failures are handled gracefully:
+- Challenge failed: Return "Please try again" with retry option
+- Network error: Allow submission (fail open, don't block legitimate users)
+- Badge is visible but non-intrusive (bottom-right corner)
+
+**And** Turnstile is invisible (managed mode):
+- No user interaction required for most users (no checkbox)
+- Runs in background during form submit
+- Minimal UX friction (FR maintains 10-second submission goal)
+
+**And** automated tests exist covering main functionality
+
+**Prerequisites:** Story 2.3 (date picker), Story 2.4 (validation)
+</acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <!-- PRD - Functional Requirements -->
+      <doc path="docs/PRD.md" title="Product Requirements Document" section="Functional Requirements (FR1-FR58)">
+        FR76: Bot protection with retry mechanism (reCAPTCHA v3 integration)
+        FR60: Graceful degradation (fail-open pattern for network errors)
+        Zero-cost infrastructure requirement (Cloudflare Turnstile free on all plans)
+      </doc>
+
+      <!-- Architecture - Security Architecture -->
+      <doc path="docs/architecture.md" title="Architecture Document" section="Security Architecture - Bot Protection">
+        Cloudflare Turnstile provides challenge-based verification (pass/fail vs score-based)
+        Managed mode is invisible to most users (similar to reCAPTCHA v3)
+        Consider fallback if Cloudflare API is down (FR60 fail-open pattern)
+        Add Turnstile badge to footer per Cloudflare ToS
+        Free on all Cloudflare plans (maintains zero-cost architecture)
+        Native integration with existing Cloudflare stack (Workers + Pages + D1)
+      </doc>
+
+      <!-- Architecture - External Services -->
+      <doc path="docs/architecture.md" title="Architecture Document" section="External Services - Cloudflare Turnstile">
+        Site Key: Public (embedded in frontend)
+        Secret Key: Environment variable TURNSTILE_SECRET_KEY
+        API: https://challenges.cloudflare.com/turnstile/v0/siteverify
+        Free tier: Unlimited verifications on all Cloudflare plans
+        Documentation: https://developers.cloudflare.com/turnstile/
+      </doc>
+
+      <!-- Architecture - ADR-013 -->
+      <doc path="docs/architecture.md" title="Architecture Document" section="ADR-013: Cloudflare Turnstile over Google reCAPTCHA">
+        Decision: Replace Google reCAPTCHA with Cloudflare Turnstile
+        Rationale: Google Cloud cost requirement violates zero-cost architecture
+        Benefits: Stack consolidation, zero cost maintained, better integration
+        Trade-offs: Re-work effort (10-13 hours), different evaluation model (simpler boolean vs score-based)
+      </doc>
+
+      <!-- Tech Spec Epic 2 - AC5 -->
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC5: Turnstile Integration">
+        Cloudflare Turnstile integrated (invisible managed mode, no user interaction)
+        Frontend executes turnstile.render() on form submit
+        Backend verifies token with Cloudflare API
+        Challenge evaluation: success passes, failure rejects
+        Network errors fail open (allow submission, don't block users)
+        Turnstile badge visible in footer
+      </doc>
+
+      <!-- Tech Spec Epic 2 - Turnstile Service -->
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Services - Turnstile Service">
+        Bot detection and verification service
+        Input: User action, token from frontend
+        Output: Success (boolean)
+        Implements FR76 (Turnstile with retry mechanism)
+      </doc>
+
+      <!-- Epic 2 Story 2.5 (original reCAPTCHA) -->
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2: Core Prediction Engine" section="Story 2.5: reCAPTCHA Integration (DEPRECATED)">
+        Original reCAPTCHA implementation pattern to be replaced
+        Score-based evaluation (0.5 threshold) vs boolean challenge-based
+        Fail-open pattern preserved in Turnstile implementation
+        Frontend integration pattern: async execute on form submit
+        Backend verification pattern: POST to API, parse response
+      </doc>
+
+      <!-- Sprint Change Proposal -->
+      <doc path="docs/sprint-change-proposal-2025-11-21.md" title="Sprint Change Proposal" section="Complete Analysis">
+        Detailed analysis of Google Cloud Platform cost constraint
+        Comparison: reCAPTCHA vs Turnstile evaluation models
+        Implementation strategy and effort estimate
+        Risk assessment and mitigation plan
+      </doc>
+    </docs>
+
+    <code>
+      <!-- Existing reCAPTCHA Implementation (to be replaced) -->
+      <artifact path="src/utils/recaptcha.ts" kind="utility" symbol="verifyRecaptchaToken" lines="69-205" reason="Pattern for backend verification - replace with Turnstile equivalent. Fail-open pattern must be preserved.">
+        Implements backend token verification with Google reCAPTCHA API
+        Fail-open pattern for network errors (allow submission if API unreachable)
+        Structured logging for monitoring verification results
+        3-second timeout with graceful degradation
+        PATTERN TO PRESERVE: Fail-open on network errors, timeouts, API failures
+      </artifact>
+
+      <artifact path="src/utils/recaptcha.ts" kind="utility" symbol="isScoreAcceptable" lines="218-246" reason="Score evaluation logic - Turnstile uses simpler boolean success check instead">
+        Score-based evaluation (>= 0.5 passes, < 0.5 rejects)
+        Structured logging for threshold tuning
+        CHANGE FOR TURNSTILE: Replace with simple boolean success === true check
+      </artifact>
+
+      <artifact path="src/utils/recaptcha.ts" kind="utility" symbol="verifyAndEvaluateRecaptcha" lines="272-289" reason="Convenience wrapper pattern - create similar for Turnstile">
+        Combines verification + evaluation in single function
+        Returns passed boolean, score, and full result
+        PATTERN TO REPLICATE: Single-function API for convenience in endpoints
+      </artifact>
+
+      <!-- Type Definitions -->
+      <artifact path="src/types/index.ts" kind="interface" symbol="RecaptchaVerificationResult" lines="98-105" reason="Interface pattern for Turnstile - create TurnstileVerificationResult with similar structure">
+        success: boolean
+        score: number (not used in Turnstile - remove)
+        action?: string
+        challenge_ts?: string
+        hostname?: string
+        'error-codes'?: string[]
+        NEW FOR TURNSTILE: Simpler response with success, challenge_ts, hostname, error-codes only
+      </artifact>
+
+      <artifact path="src/types/index.ts" kind="interface" symbol="ErrorResponse" lines="46-59" reason="Standard error response format - BOT_DETECTED code already defined">
+        BOT_DETECTED error code exists for 503 Service Unavailable
+        Use same error response format for Turnstile failures
+      </artifact>
+
+      <artifact path="src/types/index.ts" kind="interface" symbol="Env" lines="108-114" reason="Environment bindings - add TURNSTILE_SECRET_KEY, remove/deprecate RECAPTCHA_SECRET_KEY">
+        Current: RECAPTCHA_SECRET_KEY: string
+        Add: TURNSTILE_SECRET_KEY: string
+        Add: TURNSTILE_SITE_KEY?: string (public, optional in backend)
+        Consider: Deprecate RECAPTCHA_SECRET_KEY after migration
+      </artifact>
+
+      <!-- Validation and Error Handling -->
+      <artifact path="src/utils/validation.ts" kind="utility" symbol="PredictionRequestSchema" lines="137-140" reason="Request validation schema - update to accept Turnstile token">
+        Current field: recaptcha_token: z.string().min(1)
+        NEW: Update to turnstile_token or keep generic token field name
+        Validation: Required, non-empty string
+      </artifact>
+
+      <artifact path="src/utils/error-handler.ts" kind="utility" symbol="formatErrorResponse" lines="126-160" reason="Standard error formatting - use for Turnstile BOT_DETECTED errors">
+        BOT_DETECTED error code already supported
+        Return 503 Service Unavailable with retry message
+        Example: "Please try again" with retry option
+      </artifact>
+
+      <artifact path="src/utils/error-handler.ts" kind="utility" symbol="logError" lines="233-244" reason="Structured logging pattern - use for Turnstile verification logging">
+        JSON format with timestamp, level, message, context
+        Follow same pattern for Turnstile monitoring logs
+      </artifact>
+
+      <!-- Frontend Integration -->
+      <artifact path="public/app.js" kind="frontend" symbol="Cookies" lines="59-106" reason="Cookie utilities for user identification - used in form submission">
+        Cookie management for gta6_user_id
+        Used to identify returning users
+        Include cookie_id in Turnstile-protected API requests
+      </artifact>
+
+      <artifact path="public/app.js" kind="frontend" symbol="initializeCookieID" lines="119-143" reason="Cookie initialization on page load - ensure called before Turnstile render">
+        Generates or retrieves UUID v4 cookie
+        Validates existing cookies
+        Must execute before form submission with Turnstile
+      </artifact>
+
+      <artifact path="public/index.html" kind="html" symbol="prediction-form" lines="18-48" reason="Form structure - add Turnstile container and update script tag">
+        Form submit handler will trigger Turnstile
+        Add Turnstile container div for render target
+        Update script tag from reCAPTCHA to Turnstile CDN
+      </artifact>
+
+      <artifact path="public/index.html" kind="html" symbol="recaptcha-script" lines="10-12" reason="Script tag to replace - switch from reCAPTCHA to Turnstile">
+        Current: https://www.google.com/recaptcha/api.js?render=SITE_KEY
+        NEW: https://challenges.cloudflare.com/turnstile/v0/api.js
+        Load asynchronously (async defer) to avoid blocking page load
+      </artifact>
+
+      <artifact path="public/index.html" kind="html" symbol="recaptcha-badge-footer" lines="57-61" reason="Footer badge - update text from reCAPTCHA to Turnstile">
+        Current: "This site is protected by reCAPTCHA..."
+        NEW: "This site is protected by Cloudflare Turnstile..."
+        Badge required by Cloudflare ToS
+      </artifact>
+    </code>
+
+    <dependencies>
+      <!-- Node.js Dependencies (package.json) -->
+      <node>
+        <package name="hono" version="^4.10.0" usage="Web framework for Cloudflare Workers - API routing and middleware" />
+        <package name="dayjs" version="^1.11.19" usage="Date manipulation (if needed for timestamp parsing)" />
+        <package name="zod" version="^3.25.76" usage="Request validation (Turnstile token validation)" />
+      </node>
+
+      <!-- Development Dependencies -->
+      <devDependencies>
+        <package name="vitest" version="^3.2.4" usage="Testing framework (ADR-009) - 25 tests required" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers testing environment" />
+        <package name="typescript" version="latest" usage="Type safety throughout" />
+        <package name="wrangler" version="^4.48.0" usage="Cloudflare CLI for deployment" />
+      </devDependencies>
+
+      <!-- External Services -->
+      <external>
+        <service name="Cloudflare Turnstile" endpoint="https://challenges.cloudflare.com/turnstile/v0/siteverify" usage="Backend token verification API" free-tier="Unlimited verifications on all Cloudflare plans" />
+        <service name="Cloudflare Turnstile CDN" endpoint="https://challenges.cloudflare.com/turnstile/v0/api.js" usage="Frontend widget script" />
+        <service name="Cloudflare Workers" usage="Runtime environment for backend (Epic 1 dependency)" />
+        <service name="Cloudflare D1" usage="Database binding for predictions storage" />
+      </external>
+
+      <!-- No new npm packages needed - Turnstile loaded via CDN -->
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <!-- Architecture Constraints -->
+    <constraint type="architecture" source="docs/architecture.md:89-93">
+      Must work on Cloudflare free tier (100K requests/day)
+      Zero-cost infrastructure requirement (Turnstile free on all plans)
+      All Cloudflare stack: Workers + Pages + D1 + Turnstile
+    </constraint>
+
+    <constraint type="security" source="docs/architecture.md:673-707">
+      Site Key: Public (embedded in frontend, not sensitive)
+      Secret Key: Environment variable TURNSTILE_SECRET_KEY (never in code)
+      Original IP never logged (only hashed values per NFR-S2)
+      Turnstile tokens never logged (sensitive, Cloudflare ToS)
+    </constraint>
+
+    <constraint type="naming" source="docs/architecture.md:567-586">
+      Functions: camelCase (verifyTurnstileToken, checkBotChallenge)
+      Files: camelCase (turnstile.ts)
+      Tests: {name}.test.ts co-located
+      Constants: SCREAMING_SNAKE_CASE (TURNSTILE_SECRET_KEY, TURNSTILE_API_URL)
+    </constraint>
+
+    <constraint type="error-handling" source="docs/architecture.md:588-615">
+      HTTP Status Codes:
+        503 Service Unavailable: Bot detected (challenge failed)
+        500 Internal Server Error: Verification failed (network/API error)
+      Error Response Format:
+        { success: false, error: { code: 'BOT_DETECTED', message: string, field?: string } }
+      Fail-open Pattern: Allow submission if Cloudflare API unreachable (FR60)
+      User-friendly messages: "Please try again" with retry option
+    </constraint>
+
+    <constraint type="logging" source="docs/architecture.md:1225-1268">
+      Structured JSON logging format
+      Log Levels:
+        INFO: Successful verifications
+        WARN: Challenge failures, retry attempts
+        ERROR: Network errors, API failures
+      What to Log:
+        - Verification results (success/failure)
+        - Challenge response times
+        - Error codes from Cloudflare API
+        - Fail-open events (API unreachable)
+      What NOT to Log:
+        - Turnstile tokens (sensitive)
+        - User IP addresses (use hashes only per NFR-S2)
+    </constraint>
+
+    <constraint type="testing" source="docs/architecture.md:ADR-011">
+      MANDATORY automated testing (ADR-011)
+      Minimum 90% coverage for turnstile utilities
+      Target: 25 tests (same as reCAPTCHA implementation)
+      Test types: Unit tests, integration tests, edge cases
+      Co-located test files: src/utils/turnstile.test.ts
+    </constraint>
+
+    <constraint type="performance" source="docs/sprint-artifacts/tech-spec-epic-2.md:449-470">
+      Prediction submission: < 500ms end-to-end (NFR-P4)
+      Turnstile verification: Part of submission flow, don't add excessive latency
+      Timeout: 3 seconds (same as reCAPTCHA pattern)
+      Fail-open on timeout: Don't block legitimate users
+    </constraint>
+
+    <constraint type="implementation" source="Story 2.5B Dev Notes">
+      Preserve fail-open pattern from reCAPTCHA implementation
+      Simpler evaluation logic: Boolean success === true (not score-based)
+      Same structured logging pattern for monitoring
+      Same timeout and error handling patterns
+      Co-located tests with implementation (turnstile.test.ts next to turnstile.ts)
+    </constraint>
+  </constraints>
+
+  <interfaces>
+    <!-- Turnstile API Interface -->
+    <interface name="Cloudflare Turnstile Verification API" kind="REST endpoint">
+      <signature>
+POST https://challenges.cloudflare.com/turnstile/v0/siteverify
+Headers:
+  Content-Type: application/json
+Body:
+  {
+    "secret": "SECRET_KEY",
+    "response": "token_from_frontend"
+  }
+Response:
+  {
+    "success": true/false,
+    "challenge_ts": "2025-11-21T14:30:00Z",
+    "hostname": "gta6-tracker.pages.dev",
+    "error-codes": []
+  }
+      </signature>
+      <path>External API (Cloudflare)</path>
+    </interface>
+
+    <!-- Frontend Turnstile Render Interface -->
+    <interface name="Turnstile Widget Render" kind="JavaScript API">
+      <signature>
+turnstile.render('#turnstile-container', {
+  sitekey: SITE_KEY,
+  callback: function(token) {
+    // Token generated, submit form with token
+  },
+  'error-callback': function() {
+    // Turnstile execution failed
+  }
+})
+      </signature>
+      <path>Frontend (public/app.js)</path>
+    </interface>
+
+    <!-- Backend Verification Function Interface -->
+    <interface name="verifyTurnstileToken" kind="TypeScript function">
+      <signature>
+async function verifyTurnstileToken(
+  token: string,
+  secretKey: string
+): Promise&lt;TurnstileVerificationResult&gt;
+
+interface TurnstileVerificationResult {
+  success: boolean;
+  challenge_ts?: string;
+  hostname?: string;
+  'error-codes'?: string[];
+}
+      </signature>
+      <path>src/utils/turnstile.ts (NEW FILE)</path>
+    </interface>
+
+    <!-- Convenience Wrapper Interface -->
+    <interface name="verifyAndEvaluateTurnstile" kind="TypeScript function">
+      <signature>
+async function verifyAndEvaluateTurnstile(
+  token: string,
+  secretKey: string
+): Promise&lt;{ passed: boolean; result: TurnstileVerificationResult }&gt;
+      </signature>
+      <path>src/utils/turnstile.ts (NEW FILE)</path>
+    </interface>
+
+    <!-- Type Definitions to Add -->
+    <interface name="TurnstileVerificationResult" kind="TypeScript interface">
+      <signature>
+export interface TurnstileVerificationResult {
+  success: boolean;
+  challenge_ts?: string; // ISO 8601 timestamp
+  hostname?: string; // Hostname where Turnstile was executed
+  'error-codes'?: string[]; // Cloudflare API error codes
+}
+      </signature>
+      <path>src/types/index.ts (UPDATE)</path>
+    </interface>
+
+    <!-- Environment Interface Update -->
+    <interface name="Env" kind="TypeScript interface">
+      <signature>
+export interface Env {
+  DB: D1Database;
+  SALT_V1: string;
+  RECAPTCHA_SECRET_KEY?: string; // DEPRECATED - keep for backward compatibility
+  TURNSTILE_SECRET_KEY: string; // NEW - Turnstile secret key
+  TURNSTILE_SITE_KEY?: string; // NEW - Optional in backend
+}
+      </signature>
+      <path>src/types/index.ts (UPDATE)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+Per ADR-011 (Mandatory Testing), all stories MUST include automated tests with 90%+ coverage for critical paths. Testing framework: Vitest (ADR-009) with @cloudflare/vitest-pool-workers for Workers environment.
+
+Test file location: src/utils/turnstile.test.ts (co-located with src/utils/turnstile.ts)
+
+Test coverage target: 90%+ for turnstile utilities
+Test count target: 25 tests (same as reCAPTCHA implementation for consistency)
+
+Test types required:
+1. Unit Tests - Individual function testing with mocked Cloudflare API
+2. Integration Tests - Full workflow from frontend token → backend verification
+3. Edge Cases - Network errors, timeouts, invalid tokens, malformed responses
+
+Mock Cloudflare Turnstile API in tests (don't call real API)
+Test both success and failure paths
+Test network error handling (timeout, API down)
+Test malformed responses and edge cases
+Verify fail-open behavior (API unreachable = allow submission)
+    </standards>
+
+    <locations>
+      <location>src/utils/turnstile.test.ts</location>
+      <location>src/utils/turnstile.ts</location>
+      <location>vitest.config.ts (Workers pool configuration)</location>
+    </locations>
+
+    <ideas>
+      <!-- Unit Tests -->
+      <test-idea ac-ref="AC2" category="unit" priority="high">
+Test verifyTurnstileToken() with successful response (success: true)
+Mock Cloudflare API response with success, challenge_ts, hostname
+Verify function returns correct TurnstileVerificationResult
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="unit" priority="high">
+Test verifyTurnstileToken() with failed challenge (success: false)
+Mock API response with success: false and error-codes
+Verify function returns failed verification result
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="unit" priority="high">
+Test verifyTurnstileToken() with network timeout (3 seconds)
+Simulate slow API response exceeding timeout
+Verify fail-open: returns success: true (don't block user)
+Verify timeout event logged for monitoring
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="unit" priority="high">
+Test verifyTurnstileToken() with network error (API unreachable)
+Simulate DNS failure, connection refused, etc.
+Verify fail-open: returns success: true
+Verify network error logged with fail_open: true context
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="unit" priority="medium">
+Test verifyTurnstileToken() with empty token
+Verify graceful handling (fail-open with warning log)
+Verify returns success: true with error-codes: ['missing-input-response']
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="unit" priority="medium">
+Test verifyTurnstileToken() with missing secret key
+Verify graceful handling (fail-open with error log)
+Verify returns success: true with error-codes: ['missing-input-secret']
+      </test-idea>
+
+      <test-idea ac-ref="AC3" category="unit" priority="high">
+Test isChallengeSuccessful() with success: true
+Verify returns true (challenge passed)
+Verify INFO level log entry
+      </test-idea>
+
+      <test-idea ac-ref="AC3" category="unit" priority="high">
+Test isChallengeSuccessful() with success: false
+Verify returns false (challenge failed)
+Verify WARN level log entry
+      </test-idea>
+
+      <test-idea ac-ref="AC2,AC3" category="unit" priority="high">
+Test verifyAndEvaluateTurnstile() convenience wrapper
+Verify combines verification + evaluation correctly
+Verify returns passed: boolean and result object
+      </test-idea>
+
+      <!-- Integration Tests -->
+      <test-idea ac-ref="AC1,AC2,AC3" category="integration" priority="high">
+Integration test: Frontend token → Backend verification → Success response
+Mock Turnstile render and token generation
+Call API endpoint with token
+Verify 201 Created response with prediction_id
+      </test-idea>
+
+      <test-idea ac-ref="AC1,AC2,AC3" category="integration" priority="high">
+Integration test: Frontend token → Backend verification → Failure response
+Mock Turnstile with failed challenge (success: false)
+Call API endpoint with token
+Verify 503 Service Unavailable with BOT_DETECTED error
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="integration" priority="high">
+Integration test: Network error → Fail-open behavior
+Mock Cloudflare API timeout
+Call API endpoint with token
+Verify submission ALLOWED (fail-open) with 201 Created
+Verify degradation event logged
+      </test-idea>
+
+      <!-- Edge Cases -->
+      <test-idea ac-ref="AC2" category="edge-case" priority="medium">
+Edge case: Invalid token format (malformed string)
+Verify API returns error-codes with invalid token
+Verify graceful handling (fail-open)
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="edge-case" priority="medium">
+Edge case: Expired token (challenge_ts too old)
+Verify Cloudflare API rejects expired token
+Verify error-codes includes 'timeout-or-duplicate'
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="edge-case" priority="medium">
+Edge case: Token already used (replay attack)
+Verify Cloudflare API rejects duplicate token
+Verify error-codes includes 'timeout-or-duplicate'
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="edge-case" priority="low">
+Edge case: API returns non-JSON response
+Simulate malformed API response (HTML error page)
+Verify fail-open with error handling
+Verify malformed response logged as ERROR
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="edge-case" priority="low">
+Edge case: API returns 500 Internal Server Error
+Simulate Cloudflare API server error
+Verify fail-open (don't block user for server issues)
+Verify HTTP error logged with status code
+      </test-idea>
+
+      <!-- Logging and Monitoring Tests -->
+      <test-idea ac-ref="AC2" category="monitoring" priority="medium">
+Verify structured logging format for successful verification
+Check JSON format with timestamp, level, message, context
+Verify context includes success, challenge_ts, hostname
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="monitoring" priority="medium">
+Verify structured logging format for failed verification
+Check WARN level log entry
+Verify context includes success: false, error-codes
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="monitoring" priority="medium">
+Verify structured logging format for network errors
+Check WARN level log entry
+Verify context includes fail_open: true, error message
+      </test-idea>
+
+      <!-- Comparison with reCAPTCHA (25 tests total) -->
+      <test-idea ac-ref="AC2" category="comparison" priority="low">
+Comparison test: Verify Turnstile simpler than reCAPTCHA (boolean vs score)
+Compare evaluation logic complexity
+Verify fewer lines of code for Turnstile evaluation
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="comparison" priority="low">
+Comparison test: Verify same fail-open pattern as reCAPTCHA
+Compare timeout handling between reCAPTCHA and Turnstile
+Verify both fail-open on network errors
+      </test-idea>
+
+      <test-idea ac-ref="AC2" category="comparison" priority="low">
+Comparison test: Verify same structured logging pattern
+Compare log format between reCAPTCHA and Turnstile
+Verify consistent JSON structure, levels, context
+      </test-idea>
+
+      <!-- Frontend Tests (if applicable) -->
+      <test-idea ac-ref="AC1" category="frontend" priority="medium">
+Frontend test: Verify Turnstile script loads asynchronously
+Check script tag has async defer attributes
+Verify page load not blocked by Turnstile script
+      </test-idea>
+
+      <test-idea ac-ref="AC1" category="frontend" priority="medium">
+Frontend test: Verify Turnstile container exists in DOM
+Check div#turnstile-container element exists
+Verify accessible after page load
+      </test-idea>
+    </ideas>
+  </tests>
+</story-context>

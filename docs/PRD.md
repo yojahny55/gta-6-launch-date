@@ -22,7 +22,7 @@
 
 While others build passive countdown timers, we give fans a voice. The weighted algorithm handles trolls democratically (extreme predictions count but have less influence). Simplicity IS the competitive advantage - one clean tool that does one thing perfectly beats complex forums through frictionlessness.
 
-**Viral mechanics by design:** Social comparison ("Am I the only one?"), embeddable widgets for streamers (250M+ content views), and SEO optimization create natural growth without paid acquisition.
+**Viral mechanics by design:** Bold, screenshot-worthy results (Spotify Wrapped-style), social comparison ("Am I the only one?"), embeddable widgets for streamers (250M+ content views), and SEO optimization create natural growth without paid acquisition.
 
 ---
 
@@ -91,16 +91,19 @@ While others build passive countdown timers, we give fans a voice. The weighted 
 11. Clean, fast-loading interface (< 2 second load)
 12. Social comparison messaging ("You're optimistic/pessimistic compared to community")
 13. Delta from median display ("[X days earlier/later] than community")
+14. Dashboard grid layout (Total Predictions, Community Median, Official Date, Optimism Score)
+15. Optimism Score calculation (% believing launch before official date)
+16. "My Prediction" display card for returning users
 
 **Monetization:**
-14. Google AdSense integration (small banner)
-15. User opt-out for ads (builds goodwill)
+17. Google AdSense integration (small banner)
+18. User opt-out for ads (builds goodwill)
 
 **Legal/Privacy:**
-16. Cookie consent banner
-17. Privacy Policy page
-18. Terms of Service page
-19. Hashed IP storage (GDPR compliant)
+19. Cookie consent banner
+20. Privacy Policy page
+21. Terms of Service page
+22. Hashed IP storage (GDPR compliant)
 
 ### Growth Features (Post-MVP, Month 2-6)
 
@@ -189,10 +192,11 @@ While others build passive countdown timers, we give fans a voice. The weighted 
 4. **Shareable by Default:** Every result wants to be shared
 
 **Visual Personality:**
-- **Clean & Modern:** Inspired by Stripe, Linear (not gaming-garish)
-- **Trustworthy:** Data-driven, not clickbait
-- **Playful:** Subtle humor about delays and hype
-- **Fast:** Minimal animations, instant feedback
+- **Bold & Energetic:** Gaming aesthetic with neon purple/pink gradients, GTA-themed visual identity
+- **Screenshot-Worthy:** Designed for social sharing (Spotify Wrapped-style results presentation)
+- **Trustworthy:** Data-driven with transparent methodology, real-time calculations (no placeholders)
+- **Playful:** Community-focused humor about delays and hype
+- **Fast:** Minimal animations, instant feedback, optimized for viral sharing
 
 **Key Interaction Patterns:**
 

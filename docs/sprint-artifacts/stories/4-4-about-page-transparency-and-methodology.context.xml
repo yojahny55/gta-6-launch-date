@@ -1,0 +1,166 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>4</epicId>
+    <storyId>4</storyId>
+    <title>About Page (Transparency & Methodology)</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/4-4-about-page-transparency-and-methodology.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user</asA>
+    <iWant>to understand what this site is, who runs it, and how it works</iWant>
+    <soThat>I can trust the data and feel comfortable participating</soThat>
+    <tasks>
+      - Task 1: Create about page HTML structure
+      - Task 2-8: Write 7 content sections (What/Why/How/Algorithm/Privacy/Who/Open Source)
+      - Task 9: Style page with conversational tone
+      - Task 10: Add navigation links
+      - Task 11: Write automated tests
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    **Given** users need transparency about the site (FR98)
+    **When** a user navigates to /about or clicks About link
+    **Then** an informative About page is displayed with all required content sections
+    **And** automated tests exist covering main functionality
+
+    ### 7 Content Sections
+    1. What Is This? Community-driven tracker, real community sentiment, anonymous participation
+    2. Why This Exists: Rockstar delay skepticism, no existing tools, gap in sentiment tracking
+    3. How It Works: Anonymous submission, weighted median, community consensus, sharing
+    4. The Algorithm (Transparency): Weighted median (1.0 / 0.3 / 0.1 weights), troll mitigation explained
+    5. Privacy & Data: IP hashing, cookie usage, no personal data, link to Privacy Policy
+    6. Who Made This: Creator info, fan-made emphasis, contact email
+    7. Open Source / Transparency: GitHub link, transparency commitment
+
+    ### Tone and Formatting
+    - Conversational, friendly, not corporate
+    - Honest about limitations
+    - Builds trust through transparency
+    - Mobile-responsive design
+    - Links from main navigation and footer
+
+    ### Testing Requirements
+    - Unit tests for page route and accessibility
+    - Test all 7 sections present
+    - Test Privacy Policy link works
+    - Test mobile responsiveness
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <artifact>
+        <path>docs/PRD.md</path>
+        <title>Product Requirements Document</title>
+        <section>FR98: About Page Transparency</section>
+        <snippet>About page explaining data usage, privacy, methodology. Transparency builds trust with gaming community.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/epics/epic-4-privacy-compliance-trust.md</path>
+        <title>Epic 4: Privacy, Compliance &amp; Trust</title>
+        <section>Story 4.4: About Page (Transparency & Methodology)</section>
+        <snippet>7 sections explaining purpose, methodology, algorithm transparency (weighted median: 1.0/0.3/0.1 weights). Conversational tone, honest about limitations, privacy commitment. Reddit mods more likely to approve if transparent.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>docs/architecture.md</path>
+        <title>Architecture Document</title>
+        <section>Weighted Median Algorithm Implementation</section>
+        <snippet>Algorithm calculates weighted median with weight rules: 0-5 years = 1.0, 5-50 years = 0.3, 50+ years = 0.1. Reduces troll influence while maintaining democratic sentiment.</snippet>
+      </artifact>
+
+      <artifact>
+        <path>src/utils/weighted-median.ts</path>
+        <title>Weighted Median Implementation</title>
+        <section>calculateWeight function</section>
+        <snippet>Implementation of weight calculation: yearsDiff <= 5 → 1.0, yearsDiff <= 50 → 0.3, else → 0.1. This code can be referenced for accuracy in About page algorithm explanation.</snippet>
+      </artifact>
+    </docs>
+
+    <code>
+      <artifact>
+        <path>src/utils/weighted-median.ts</path>
+        <kind>algorithm module</kind>
+        <symbol>calculateWeight, calculateWeightedMedian</symbol>
+        <lines>N/A</lines>
+        <reason>Reference for accurate algorithm description in "The Algorithm" section. Explain weight tiers (1.0, 0.3, 0.1) matching actual implementation.</reason>
+      </artifact>
+
+      <artifact>
+        <path>src/utils/ip-hash.ts</path>
+        <kind>utility module</kind>
+        <symbol>hashIpAddress</symbol>
+        <lines>N/A</lines>
+        <reason>Reference for Privacy & Data section. Explain IP hashing (SHA-256 with salt, no plaintext storage).</reason>
+      </artifact>
+
+      <artifact>
+        <path>public/privacy.html</path>
+        <kind>HTML template</kind>
+        <symbol>Static page pattern</symbol>
+        <lines>N/A</lines>
+        <reason>Link to Privacy Policy from "Privacy & Data" section. Consistent page structure and footer.</reason>
+      </artifact>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="tailwindcss" version="^4.0.0">Styling for about page. Conversational, friendly formatting.</package>
+        <package name="vitest" version="^3.2.4">Testing framework (ADR-011).</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Follow ADR-011: MANDATORY automated testing
+    - Conversational tone (friendly, not corporate)
+    - Algorithm transparency (prevent "rigged" accusations)
+    - Accurate algorithm description (match src/utils/weighted-median.ts)
+    - Link to Privacy Policy for detailed data info
+    - Mobile-responsive design
+    - Navigation and footer links to /about.html
+    - Honest about limitations (no guarantees about accuracy)
+    - Trust-building through transparency
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Static HTML Page</name>
+      <kind>Web Page</kind>
+      <signature>GET /about.html → HTML document with 7 sections, conversational tone, navigation links</signature>
+      <path>public/about.html</path>
+    </interface>
+
+    <interface>
+      <name>Privacy Policy Link</name>
+      <kind>Internal Link</kind>
+      <signature>Link from "Privacy & Data" section to /privacy.html</signature>
+      <path>public/about.html (link element)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Per ADR-011, automated tests required. Vitest v3.2.4. Test HTML structure, accessibility, content presence, links, mobile responsiveness. Coverage target: 90%+.
+    </standards>
+
+    <locations>
+      - tests/unit/about-page.test.ts
+      - vitest.config.unit.ts
+    </locations>
+
+    <ideas>
+      AC1 (7 Sections): Test all section headings present
+      AC2 (Algorithm Transparency): Test weight tiers mentioned (1.0, 0.3, 0.1)
+      AC3 (Privacy Link): Test link to /privacy.html works
+      AC4 (Tone): Test conversational language (not corporate jargon)
+      AC5 (Mobile): Test responsive breakpoints
+      AC6 (Navigation): Test about link in header/footer
+    </ideas>
+  </tests>
+</story-context>

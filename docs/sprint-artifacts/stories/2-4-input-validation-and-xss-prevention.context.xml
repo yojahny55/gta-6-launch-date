@@ -1,0 +1,118 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>2</epicId>
+    <storyId>4</storyId>
+    <title>Input Validation and XSS Prevention</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-20</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/2-4-input-validation-and-xss-prevention.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a system</asA>
+    <iWant>all user inputs validated and sanitized</iWant>
+    <soThat>the application is protected from injection attacks</soThat>
+    <tasks>
+      - Task 1: Install Zod validation library (v3.22.0)
+      - Task 2: Create validation schemas (DateSchema, UUIDSchema, UserAgentSchema, PredictionRequestSchema)
+      - Task 3: Implement sanitization functions (sanitizeUserAgent, detectSQLInjection, detectXSS)
+      - Task 4: Integrate validation into API endpoints (POST /api/predict, PUT /api/predict)
+      - Task 5: Create centralized error handling (ValidationError class, formatErrorResponse)
+      - Task 6: Write automated tests (100% coverage for validation utilities)
+      - Task 7: Update TypeScript types (ValidationResult interface)
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    AC1: Date input validation (ISO 8601, range 2025-2125, valid calendar date)
+    AC2: Cookie ID validation (UUID v4 format, max 36 chars)
+    AC3: User agent validation (max 256 chars, sanitized, HTML-encoded)
+    AC4: 400 Bad Request on invalid inputs with clear error messages
+    AC5: Centralized validation functions (shared module, reused across endpoints, TypeScript types enforce structure)
+    AC6: Automated tests covering main functionality (100% coverage for validation utilities)
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc path="docs/epics/epic-2-core-prediction-engine.md" title="Epic 2 Story Breakdown" section="Story 2.4 Definition" snippet="Validate all user inputs server-side (never trust client). Date format: ISO 8601. Cookie ID: UUID v4 format. User agent: Sanitized, max 256 chars." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="AC4: Input Validation and XSS Prevention" snippet="All inputs validated server-side. Zod schemas for type-safe validation. Regex for date format, UUID format. HTML encoding prevents XSS. Parameterized queries prevent SQL injection." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Validation Service" snippet="Centralized validation in src/utils/validation.ts. Zod library for TypeScript-first validation. Reused across all API endpoints." />
+      <doc path="docs/sprint-artifacts/tech-spec-epic-2.md" title="Epic 2 Technical Specification" section="Validation Schemas" snippet="DateSchema for ISO 8601 date validation. UUIDSchema for UUID v4 validation. PredictionRequestSchema for prediction submission." />
+      <doc path="docs/architecture.md" title="System Architecture" section="Input Validation (NFR-S4, NFR-S5)" snippet="Date format: ISO 8601 only. SQL injection: Parameterized queries only (D1 prepared statements). XSS: Sanitize all user inputs." />
+      <doc path="docs/architecture.md" title="System Architecture" section="Error Handling - Standard Error Response" snippet="Standardized error response format with success, error code, message, and optional details." />
+      <doc path="docs/architecture.md" title="System Architecture" section="ADR-011: Mandatory Automated Testing" snippet="MANDATORY automated tests for all stories. Minimum coverage: 100% for utility functions. Test location: Co-located with source." />
+      <doc path="docs/sprint-artifacts/stories/2-3-date-picker-with-validation.md" title="Story 2.3: Date Picker with Validation" section="Learnings from Previous Story" snippet="Comprehensive validation utility module with pure functions. Co-located test files achieving 100% coverage. Centralized validation constants." />
+    </docs>
+    <code>
+      <file path="src/utils/date-validation.ts" kind="utility" symbol="validateDate, isValidDateFormat, isLeapYear" lines="1-214" reason="Existing date validation logic to integrate/reference in centralized validation module" />
+      <file path="src/utils/date-validation.test.ts" kind="test" symbol="date validation test suite" lines="1-424" reason="Reference pattern for comprehensive testing (74 tests, 100% coverage)" />
+      <file path="src/utils/cookie.ts" kind="utility" symbol="generateCookieId, validateCookieId" lines="1-50" reason="Cookie ID generation/validation to integrate with UUID validation schema" />
+      <file path="src/types/index.ts" kind="types" symbol="TypeScript interfaces" lines="1-100" reason="Add ValidationResult interface and update prediction types" />
+      <file path="src/index.ts" kind="main" symbol="Hono app" lines="1-100" reason="Add validation middleware to API routes" />
+    </code>
+    <dependencies>
+      <node>
+        <package name="zod" version="^3.22.0" usage="TypeScript-first validation library for schemas (TO BE ADDED)" />
+        <package name="hono" version="^4.10.0" usage="Web framework for API routes and middleware integration" />
+        <package name="dayjs" version="^1.11.19" usage="Date manipulation for validation utilities" />
+        <package name="@cloudflare/workers-types" version="latest" usage="TypeScript types for Cloudflare Workers" />
+        <package name="vitest" version="^3.2.4" usage="Testing framework for unit tests (ADR-009)" />
+        <package name="@cloudflare/vitest-pool-workers" version="^0.10.7" usage="Workers integration tests" />
+        <package name="typescript" version="latest" usage="TypeScript strict mode enforcement" />
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    - Server-side validation MANDATORY: Never trust client input
+    - Validation must be centralized in src/utils/validation.ts for reusability
+    - Use Zod schemas for TypeScript-first validation (not manual regex everywhere)
+    - Date validation: ISO 8601 format only (YYYY-MM-DD), range 2025-2125
+    - Cookie ID validation: UUID v4 format, strict regex matching
+    - User agent: Max 256 chars, HTML-encoded, no SQL injection patterns
+    - SQL injection prevention: Parameterized queries only (D1 prepared statements)
+    - XSS prevention: HTML encoding for all user inputs
+    - Error responses: 400 Bad Request with standardized JSON format (success: false, error.code, error.message, error.field)
+    - Testing: 100% coverage mandatory for validation utilities (ADR-011)
+    - Test location: Co-located with source (src/utils/validation.test.ts)
+    - TypeScript strict mode: All validation functions must have proper types
+    - Naming conventions: camelCase functions, SCREAMING_SNAKE_CASE constants
+  </constraints>
+
+  <interfaces>
+    <interface name="DateSchema" kind="Zod schema" signature="z.string().regex(/ISO8601/).refine(date => date >= '2025-01-01').refine(date => date <= '2125-12-31')" path="src/utils/validation.ts" />
+    <interface name="UUIDSchema" kind="Zod schema" signature="z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i)" path="src/utils/validation.ts" />
+    <interface name="UserAgentSchema" kind="Zod schema" signature="z.string().max(256)" path="src/utils/validation.ts" />
+    <interface name="PredictionRequestSchema" kind="Zod schema" signature="z.object({ predicted_date: DateSchema, recaptcha_token: z.string().min(1) })" path="src/utils/validation.ts" />
+    <interface name="ValidationResult" kind="TypeScript interface" signature="{ success: boolean; data?: T; error?: { code: string; message: string; field?: string } }" path="src/types/index.ts" />
+    <interface name="ValidationError" kind="Class" signature="class ValidationError extends Error { constructor(message: string, field?: string) }" path="src/utils/error-handler.ts" />
+    <interface name="formatErrorResponse" kind="Function" signature="(error: ValidationError) => { success: false; error: { code: string; message: string; field?: string } }" path="src/utils/error-handler.ts" />
+  </interfaces>
+
+  <tests>
+    <standards>
+      Testing framework: Vitest v3.2.4 (per ADR-009). Test location: Co-located with source (src/utils/validation.test.ts). Coverage target: 100% for validation utilities (ADR-011 mandatory requirement). Test patterns: Comprehensive edge case coverage, boundary condition testing, attack payload testing (XSS, SQL injection). Integration tests: API endpoint validation responses (400 Bad Request cases). Reference pattern: Story 2.3 achieved 74 tests with 100% coverage for date validation.
+    </standards>
+    <locations>
+      src/utils/validation.test.ts (unit tests for Zod schemas, sanitization functions)
+      src/routes/predict.test.ts (integration tests for API endpoint validation)
+    </locations>
+    <ideas>
+      <test ac="AC1" idea="Test DateSchema with valid ISO 8601 dates (2025-06-15, 2026-11-19, 2125-12-31)" />
+      <test ac="AC1" idea="Test DateSchema with invalid dates (2024-12-31 too early, 2126-01-01 too late, invalid format '11/19/2026')" />
+      <test ac="AC1" idea="Test DateSchema with edge cases (leap years Feb 29, invalid calendar dates Feb 30, month 13)" />
+      <test ac="AC2" idea="Test UUIDSchema with valid UUID v4 (crypto.randomUUID() format)" />
+      <test ac="AC2" idea="Test UUIDSchema with invalid UUIDs (v1/v3/v5 format, malformed strings, empty strings)" />
+      <test ac="AC3" idea="Test UserAgentSchema with valid user agents (< 256 chars)" />
+      <test ac="AC3" idea="Test UserAgentSchema with invalid user agents (> 256 chars, SQL injection patterns, XSS payloads)" />
+      <test ac="AC3" idea="Test sanitizeUserAgent() with XSS payloads (<script>, <img onerror>, event handlers)" />
+      <test ac="AC3" idea="Test detectSQLInjection() with common patterns (UNION SELECT, DROP TABLE, -- comments, OR 1=1)" />
+      <test ac="AC4" idea="Integration test: POST /api/predict with invalid date returns 400 with field 'predicted_date'" />
+      <test ac="AC4" idea="Integration test: POST /api/predict with invalid UUID returns 400 with field 'cookie_id'" />
+      <test ac="AC5" idea="Test PredictionRequestSchema reusability across POST and PUT endpoints" />
+      <test ac="AC5" idea="Test validation middleware integration in Hono app" />
+      <test ac="AC6" idea="Achieve 100% coverage for all validation utility functions (DateSchema, UUIDSchema, sanitization)" />
+    </ideas>
+  </tests>
+</story-context>

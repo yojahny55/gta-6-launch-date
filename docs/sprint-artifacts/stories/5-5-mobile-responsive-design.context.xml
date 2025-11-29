@@ -1,0 +1,105 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>5</epicId>
+    <storyId>5.5</storyId>
+    <title>Mobile-Responsive Design</title>
+    <status>drafted</status>
+    <generatedAt>2025-11-26</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>docs/sprint-artifacts/stories/5-5-mobile-responsive-design.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>a user on mobile</asA>
+    <iWant>the site to work perfectly on my phone</iWant>
+    <soThat>I can participate regardless of device</soThat>
+    <tasks>Implement responsive layouts for mobile (&lt;768px single-column), tablet (768-1024px two-column), desktop (&gt;1024px three-column). Ensure 44x44px touch targets (FR87), native mobile date picker, lazy load images, critical CSS inline, &lt;3s load on 3G (FR40). Test on iOS Safari, Android Chrome, pass Google Mobile-Friendly Test (FR93).</tasks>
+  </story>
+
+  <acceptanceCriteria>
+    Responsive layouts: Mobile single-column with stacked elements, tablet two-column, desktop three-column. Touch optimization: 44x44px minimum tap targets (FR87), no hover-dependent interactions, 16px minimum font. Responsive images with SVG icons. Mobile performance: lazy loading, minimal JS, critical CSS inline, &lt;3s on 3G (FR40). Testing: iOS Safari, Android Chrome, 320px-1920px, pass Google Mobile-Friendly Test (FR93).
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>docs/sprint-artifacts/tech-spec-epic-5.md</path>
+        <title>ResponsiveLayoutModule</title>
+        <section>Services and Modules</section>
+        <snippet>Mobile-first responsive design using Tailwind CSS breakpoints (sm:640px, md:768px, lg:1024px). Located in public/styles.css. Inputs: Viewport width. Outputs: Responsive layout classes.</snippet>
+      </doc>
+      <doc>
+        <path>docs/epics/epic-5-social-sharing-virality.md</path>
+        <title>Story 5.5: Mobile Responsive</title>
+        <section>Mobile layout requirements</section>
+        <snippet>FR39 (mobile-responsive), FR40 (&lt;3s mobile load), FR87 (44x44px touch targets), FR93 (mobile testing requirement). Mobile-first approach with Tailwind breakpoints.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <artifact>
+        <path>public/styles.css</path>
+        <kind>stylesheet</kind>
+        <symbol>Tailwind CSS responsive utilities</symbol>
+        <lines>all</lines>
+        <reason>Main stylesheet - Tailwind responsive classes (sm:, md:, lg:) used throughout for mobile-first design</reason>
+      </artifact>
+      <artifact>
+        <path>public/index.html</path>
+        <kind>file</kind>
+        <symbol>HTML structure with responsive classes</symbol>
+        <lines>all</lines>
+        <reason>Base HTML with Tailwind responsive classes - already mobile-first but may need refinement for Story 5.5 requirements</reason>
+      </artifact>
+    </code>
+    <dependencies>
+      <node>
+        <dependency>
+          <name>tailwindcss</name>
+          <version>^4.0.0</version>
+          <purpose>CSS framework with mobile-first responsive utilities</purpose>
+        </dependency>
+        <dependency>
+          <name>daisyui</name>
+          <version>^5.5.5</version>
+          <purpose>UI components with responsive design patterns</purpose>
+        </dependency>
+      </node>
+      <external>
+        <api>
+          <name>Google Mobile-Friendly Test</name>
+          <endpoint>https://search.google.com/test/mobile-friendly</endpoint>
+          <purpose>Validate mobile responsiveness (FR93)</purpose>
+        </api>
+      </external>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Mobile-first approach (design for mobile, enhance for desktop)</constraint>
+    <constraint>Touch targets minimum 44x44px (FR87 - WCAG 2.1 Level AAA)</constraint>
+    <constraint>No hover-dependent interactions on mobile (use :focus for accessibility)</constraint>
+    <constraint>Native mobile date picker (input type="date" - no custom JS picker)</constraint>
+    <constraint>Minimum 16px base font size (prevents mobile zoom on input focus)</constraint>
+    <constraint>Comfortable spacing between tappable elements (min 8px gap)</constraint>
+    <constraint>Test on real iOS Safari and Android Chrome devices (FR93)</constraint>
+    <constraint>Pass Google Mobile-Friendly Test (FR93)</constraint>
+    <constraint>Responsive images with srcset or CSS scaling</constraint>
+    <constraint>Load time &lt;3s on 3G (FR40)</constraint>
+    <constraint>Use Tailwind breakpoints: sm (640px), md (768px), lg (1024px)</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>Tailwind Responsive Classes</name>
+      <kind>CSS utility classes</kind>
+      <signature>sm:*, md:*, lg:* prefix classes for responsive design</signature>
+      <path>public/styles.css (Tailwind framework)</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>Visual regression tests with screenshot comparison at key breakpoints. Manual testing on real iOS and Android devices. Google Mobile-Friendly Test validation. Automated tests for touch target sizes using DOM queries.</standards>
+    <locations>tests/visual/responsive.test.ts (NEW), manual testing on real devices, Google Mobile-Friendly Test</locations>
+    <ideas>Test layout at 320px, 375px, 640px, 768px, 1024px, 1920px. Test touch targets are &gt;=44x44px. Test native mobile date picker activated. Test no horizontal scroll on mobile. Test stacked vs side-by-side layouts at breakpoints. Test lazy loading images. Test &lt;3s load on throttled 3G.</ideas>
+  </tests>
+</story-context>
