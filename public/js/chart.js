@@ -599,7 +599,7 @@ async function initChart() {
 
     const result = await response.json();
     const stats = result.data || result;
-    const totalPredictions = stats.total || 0;
+    const totalPredictions = stats.count || stats.total || 0;
 
     console.log(`Chart init: ${totalPredictions} predictions (threshold: 50)`);
 
