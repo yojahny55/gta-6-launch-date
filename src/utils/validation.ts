@@ -18,15 +18,16 @@ import { z } from 'zod';
 export const MIN_DATE = '2026-11-19';
 
 /**
- * Maximum allowed date for predictions (December 31, 2125)
+ * Maximum allowed date for predictions (December 31, 2100)
+ * Maximum year 2100 for democratic predictions - all voices heard
  */
-export const MAX_DATE = '2125-12-31';
+export const MAX_DATE = '2100-12-31';
 
 /**
  * ISO 8601 date format regex (YYYY-MM-DD)
- * Validates year range 2025-2125, months 01-12, days 01-31
+ * Validates year range 2025-2100, months 01-12, days 01-31
  */
-export const DATE_REGEX = /^(202[5-9]|20[3-9]\d|21[0-2]\d)-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+export const DATE_REGEX = /^(202[5-9]|20[3-9]\d|2100)-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
 
 /**
  * UUID v4 format regex
@@ -54,7 +55,7 @@ export const MAX_USER_AGENT_LENGTH = 256;
  */
 export const DateSchema = z
   .string()
-  .regex(DATE_REGEX, 'Invalid date format. Expected YYYY-MM-DD between 2026-11-19 and 2125-12-31')
+  .regex(DATE_REGEX, 'Invalid date format. Expected YYYY-MM-DD between 2026-11-19 and 2100-12-31')
   .refine(
     (date) => {
       const parsed = new Date(date);

@@ -24,10 +24,10 @@ dayjs.extend(utc);
 export const MIN_DATE = '2026-11-19';
 
 /**
- * Maximum allowed date for predictions (December 31, 2125)
- * 100-year range per FR2 requirement
+ * Maximum allowed date for predictions (December 31, 2100)
+ * Maximum year 2100 for democratic predictions - all voices heard
  */
-export const MAX_DATE = '2125-12-31';
+export const MAX_DATE = '2100-12-31';
 
 /**
  * ISO 8601 date format regex (YYYY-MM-DD)

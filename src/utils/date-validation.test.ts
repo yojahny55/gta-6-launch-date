@@ -26,8 +26,8 @@ describe('Date Validation Constants', () => {
     expect(MIN_DATE).toBe('2026-11-19');
   });
 
-  it('should have correct MAX_DATE (2125-12-31)', () => {
-    expect(MAX_DATE).toBe('2125-12-31');
+  it('should have correct MAX_DATE (2100-12-31)', () => {
+    expect(MAX_DATE).toBe('2100-12-31');
   });
 
   it('should have valid DATE_REGEX pattern', () => {
@@ -242,8 +242,8 @@ describe('validateDateRange', () => {
       expect(validateDateRange('2026-11-19')).toBe(true);
     });
 
-    it('should accept maximum boundary (2125-12-31)', () => {
-      expect(validateDateRange('2125-12-31')).toBe(true);
+    it('should accept maximum boundary (2100-12-31)', () => {
+      expect(validateDateRange('2100-12-31')).toBe(true);
     });
 
     it('should accept mid-range dates', () => {
@@ -321,7 +321,7 @@ describe('validateDate (comprehensive)', () => {
     });
 
     it('should validate maximum boundary date', () => {
-      const result = validateDate('2125-12-31');
+      const result = validateDate('2100-12-31');
       expect(result.valid).toBe(true);
       expect(result.error).toBeUndefined();
     });
@@ -407,8 +407,8 @@ describe('validateDate (comprehensive)', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('should handle day before maximum boundary (2125-12-30)', () => {
-      const result = validateDate('2125-12-30');
+    it('should handle day before maximum boundary (2100-12-30)', () => {
+      const result = validateDate('2100-12-30');
       expect(result.valid).toBe(true);
     });
 

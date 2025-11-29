@@ -15,45 +15,47 @@ function initMyPredictionElements() {
     card: document.getElementById('my-prediction-card'),
     date: document.getElementById('my-prediction-date'),
     delta: document.getElementById('my-prediction-delta'),
+    progressBar: document.getElementById('prediction-position-bar'),
+    percentile: document.getElementById('prediction-percentile'),
   };
 }
 
 /**
- * Get user's prediction from localStorage
- * AC: Data Source - Read from cookie (primary), fallback to localStorage
+ * Get user's prediction from API (Cloudflare KV)
+ * AC: Data Source - Fetch from /api/predict (Cloudflare KV source of truth)
  *
- * @returns {object|null} Prediction data or null if not found
+ * Sprint Change 2025-11-28: Changed from localStorage to API fetch for always-fresh data
+ *
+ * @returns {Promise<object|null>} Prediction data or null if not found
  */
-function getUserPrediction() {
-  // Check for cookie ID first (primary data source)
-  const cookieId = typeof getCookieID === 'function' ? getCookieID() : null;
-
-  if (!cookieId) {
-    console.log('My Prediction: No cookie ID found');
-    return null;
-  }
-
-  // Try to get prediction from localStorage
+async function getUserPrediction() {
   try {
-    const storageKey = `gta6_prediction_${cookieId}`;
-    const stored = localStorage.getItem(storageKey);
+    const API_URL = window.API_URL || '';
+    const response = await fetch(`${API_URL}/api/predict`, {
+      method: 'GET',
+      credentials: 'same-origin',
+    });
 
-    if (!stored) {
-      console.log('My Prediction: No cached prediction found');
+    if (response.ok) {
+      const result = await response.json();
+
+      if (result.success && result.data && result.data.predicted_date) {
+        console.log('My Prediction: Prediction fetched from API');
+        return result.data;
+      } else {
+        console.log('My Prediction: No prediction found in API response');
+        return null;
+      }
+    } else if (response.status === 404) {
+      // User hasn't submitted yet - this is normal
+      console.log('My Prediction: No prediction found (404)');
+      return null;
+    } else {
+      console.warn('My Prediction: API error:', response.status);
       return null;
     }
-
-    const prediction = JSON.parse(stored);
-
-    // Validate prediction structure
-    if (!prediction || !prediction.predicted_date) {
-      console.warn('My Prediction: Invalid prediction structure');
-      return null;
-    }
-
-    return prediction;
   } catch (error) {
-    console.error('My Prediction: Error reading localStorage:', error);
+    console.error('My Prediction: Error fetching prediction from API:', error);
     return null;
   }
 }
@@ -115,13 +117,130 @@ function formatMyPredictionDate(dateString) {
 }
 
 /**
+ * Calculate user's percentile position in prediction distribution
+ * AC: Percentile represents how pessimistic user is vs community
+ *
+ * Sprint Change Proposal: 2025-11-28 VS Community Percentile
+ * Formula: (predictions_before_user / total_predictions) × 100
+ *
+ * @param {string} userDate - User's predicted date (ISO 8601)
+ * @param {Array} allPredictions - Array of {predicted_date, count} from /api/predictions
+ * @returns {number} Percentile (0-100), rounded to nearest integer
+ */
+function calculatePercentile(userDate, allPredictions) {
+  if (!allPredictions || allPredictions.length === 0) {
+    console.log('My Prediction: No predictions data for percentile calculation');
+    return 50; // Default to middle if no data
+  }
+
+  // Count predictions earlier than user's date
+  let earlierCount = 0;
+  let totalCount = 0;
+
+  allPredictions.forEach(pred => {
+    const count = pred.count || 1;
+    totalCount += count;
+
+    if (pred.predicted_date < userDate) {
+      earlierCount += count;
+    }
+  });
+
+  if (totalCount === 0) {
+    console.log('My Prediction: Total count is 0, defaulting to 50th percentile');
+    return 50;
+  }
+
+  // Percentile = (predictions before user / total) × 100
+  // Example: 6500 predictions before user out of 10000 total = 65th percentile
+  // Interpretation: User is more pessimistic than 65% of community
+  const percentile = (earlierCount / totalCount) * 100;
+  const rounded = Math.round(percentile);
+
+  console.log(`My Prediction: Percentile calculated - ${rounded}% (${earlierCount}/${totalCount} predictions earlier)`);
+  return rounded;
+}
+
+/**
+ * Fetch predictions data and calculate user's percentile
+ * AC: Uses /api/predictions endpoint (Story 3.4b)
+ *
+ * Sprint Change Proposal: 2025-11-28 VS Community Percentile
+ *
+ * @param {string} userDate - User's predicted date
+ * @returns {Promise<number>} Percentile value (0-100)
+ */
+async function fetchAndCalculatePercentile(userDate) {
+  try {
+    const API_URL = window.API_URL || '';
+    const response = await fetch(`${API_URL}/api/predictions`);
+
+    if (!response.ok) {
+      console.error('My Prediction: Failed to fetch predictions for percentile (HTTP', response.status, ')');
+      return 50; // Default to middle on error
+    }
+
+    const result = await response.json();
+    const predictions = result.data || [];
+
+    if (predictions.length === 0) {
+      console.log('My Prediction: No predictions data returned from API');
+      return 50;
+    }
+
+    return calculatePercentile(userDate, predictions);
+  } catch (error) {
+    console.error('My Prediction: Error fetching predictions for percentile:', error);
+    return 50; // Default to middle on error
+  }
+}
+
+/**
+ * Update progress bar and percentile display
+ * AC: Progress bar width = percentile value (0% = earliest, 100% = latest)
+ *
+ * Sprint Change Proposal: 2025-11-28 VS Community Percentile
+ *
+ * @param {number} percentile - Calculated percentile (0-100)
+ */
+function updateProgressBar(percentile) {
+  // Support testing with global.myPredictionElements
+  const elements = myPredictionElements || (typeof global !== 'undefined' && global.myPredictionElements);
+
+  if (!elements) {
+    console.error('My Prediction: DOM elements not initialized');
+    return;
+  }
+
+  const { progressBar, percentile: percentileDisplay } = elements;
+
+  // Update progress bar width
+  if (progressBar) {
+    progressBar.style.width = `${percentile}%`;
+    console.log(`My Prediction: Progress bar updated to ${percentile}%`);
+  } else {
+    console.warn('My Prediction: Progress bar element not found');
+  }
+
+  // Update percentile display text
+  if (percentileDisplay) {
+    percentileDisplay.textContent = `${percentile}%`;
+    console.log(`My Prediction: Percentile display updated to ${percentile}%`);
+  } else {
+    console.warn('My Prediction: Percentile display element not found');
+  }
+}
+
+/**
  * Show My Prediction card with user's prediction and delta
  * AC: Show card only if prediction exists
+ *
+ * Sprint Change Proposal: 2025-11-28 - Enhanced with percentile calculation
  *
  * @param {object} prediction - User's prediction data
  * @param {string} medianDate - Community median date
  */
-function showMyPredictionCard(prediction, medianDate) {
+async function showMyPredictionCard(prediction, medianDate) {
   if (!myPredictionElements || !myPredictionElements.card) {
     console.error('My Prediction: DOM elements not initialized');
     return;
@@ -139,10 +258,15 @@ function showMyPredictionCard(prediction, medianDate) {
     myPredictionElements.delta.textContent = 'Loading community median...';
   }
 
+  // Fetch predictions data and calculate percentile
+  // Sprint Change Proposal: 2025-11-28 VS Community Percentile
+  const percentile = await fetchAndCalculatePercentile(prediction.predicted_date);
+  updateProgressBar(percentile);
+
   // Show the card (remove 'hidden' class)
   myPredictionElements.card.classList.remove('hidden');
 
-  console.log('My Prediction: Card shown with date:', formattedDate);
+  console.log('My Prediction: Card shown with date:', formattedDate, 'percentile:', percentile);
 }
 
 /**
@@ -165,14 +289,16 @@ function hideMyPredictionCard() {
  * Initialize My Prediction card
  * Main entry point for the module
  *
+ * Sprint Change Proposal: 2025-11-28 - Made async to await API fetch and percentile calculation
+ *
  * @param {object} stats - Current stats (includes median)
  */
-function initMyPrediction(stats) {
+async function initMyPrediction(stats) {
   // Initialize DOM elements
   initMyPredictionElements();
 
-  // Check for user's prediction
-  const prediction = getUserPrediction();
+  // Check for user's prediction (async API fetch)
+  const prediction = await getUserPrediction();
 
   // AC: Hide card if no prediction exists
   if (!prediction) {
@@ -181,23 +307,26 @@ function initMyPrediction(stats) {
   }
 
   // AC: Show card with prediction and delta
+  // Sprint Change Proposal: 2025-11-28 - Await async showMyPredictionCard (percentile fetch)
   const medianDate = stats?.median || null;
-  showMyPredictionCard(prediction, medianDate);
+  await showMyPredictionCard(prediction, medianDate);
 }
 
 /**
  * Update My Prediction card with new stats (e.g., after stats refresh)
  * Recalculates delta with updated median
  *
+ * Sprint Change 2025-11-28: Made async to await API fetch
+ *
  * @param {object} stats - Updated stats data
  */
-function updateMyPredictionDelta(stats) {
+async function updateMyPredictionDelta(stats) {
   if (!myPredictionElements || myPredictionElements.card.classList.contains('hidden')) {
     // Card not visible, no need to update
     return;
   }
 
-  const prediction = getUserPrediction();
+  const prediction = await getUserPrediction();
   if (!prediction || !stats || !stats.median) {
     return;
   }
@@ -220,5 +349,9 @@ if (typeof module !== 'undefined' && module.exports) {
     formatMyPredictionDate,
     showMyPredictionCard,
     hideMyPredictionCard,
+    // Sprint Change Proposal: 2025-11-28 VS Community Percentile
+    calculatePercentile,
+    fetchAndCalculatePercentile,
+    updateProgressBar,
   };
 }

@@ -229,12 +229,15 @@ So that I can trust the data and feel comfortable participating.
    - See community consensus + how you compare
    - Share results to start conversations
 
-4. **The Algorithm (Transparency)**
+4. **The Algorithm (How We Handle Trolls)** ✅ ENHANCED
    - "We use a weighted median algorithm"
    - Reasonable predictions (within 5 years): Full weight (1.0)
    - Far predictions (5-50 years): Reduced weight (0.3)
    - Extreme predictions (50+ years): Minimal weight (0.1)
+   - Visual weight cards showing 1.0x/0.3x/0.1x multipliers
+   - Practical example: "10 troll votes = 1 genuine vote"
    - "This means trolls submitting '2099' have less influence than reasonable predictions"
+   - **Enhancement (2025-11-28):** Added visual cards and concrete troll-to-genuine ratio example
 
 5. **Privacy & Data**
    - "We take privacy seriously"
