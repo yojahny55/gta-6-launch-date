@@ -195,15 +195,6 @@ export async function queueSubmission(
       return keyTimestamp <= timestamp;
     }).length;
 
-    console.log(
-      JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: 'INFO',
-        message: 'Submission queued',
-        context: { queueKey, position, cookie_id: submission.cookie_id },
-      })
-    );
-
     return { position };
   } catch (error) {
     console.error('[Capacity] Error queuing submission:', error);
@@ -268,29 +259,11 @@ export async function processQueue(
         // Delete from queue after successful processing
         await kv.delete(key.name);
         processed++;
-
-        console.log(
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            message: 'Queued submission processed',
-            context: { queueKey: key.name, cookie_id: submission.cookie_id },
-          })
-        );
       } catch (error) {
         console.error(`[Capacity] Error processing queue item ${key.name}:`, error);
         // Continue processing other items
       }
     }
-
-    console.log(
-      JSON.stringify({
-        timestamp: new Date().toISOString(),
-        level: 'INFO',
-        message: 'Queue processing completed',
-        context: { processed, remaining: queueList.keys.length - processed },
-      })
-    );
 
     return { processed };
   } catch (error) {

@@ -121,12 +121,10 @@ function prepareHistogramData(stats, predictions = []) {
  */
 async function loadChartLibrary() {
   if (chartLibraryLoaded) {
-    console.log('Chart.js already loaded');
     return true;
   }
 
   try {
-    console.log('Loading Chart.js and annotation plugin from CDN...');
 
     // Load Chart.js from CDN
     await new Promise((resolve, reject) => {
@@ -143,8 +141,6 @@ async function loadChartLibrary() {
       throw new Error('Chart.js failed to initialize');
     }
 
-    console.log('Chart.js loaded, now loading annotation plugin...');
-
     // Load annotation plugin from CDN
     await new Promise((resolve, reject) => {
       const script = document.createElement('script');
@@ -155,42 +151,26 @@ async function loadChartLibrary() {
       document.head.appendChild(script);
     });
 
-    // Debug: Check what globals are available
-    console.log('Checking for annotation plugin...', {
-      hasChartAnnotation: typeof window.ChartAnnotation !== 'undefined',
-      hasAnnotationPlugin: typeof window.annotationPlugin !== 'undefined',
-      chartRegistry: !!Chart.registry,
-      registryPlugins: Chart.registry ? Chart.registry.plugins : null
-    });
-
     // Annotation plugin auto-registers in browser environment with UMD build
     // Verify plugin is available in Chart.registry.plugins
     const annotationRegistered = Chart.registry?.plugins?.get('annotation');
 
     if (!annotationRegistered) {
-      console.log('Attempting manual registration...');
       // Fallback: Try manual registration if available as global
       // Try all possible global variable names
       if (typeof window.ChartAnnotation !== 'undefined') {
         Chart.register(window.ChartAnnotation);
-        console.log('✓ Registered via window.ChartAnnotation');
       } else if (window.chartjs?.AnnotationPlugin) {
         Chart.register(window.chartjs.AnnotationPlugin);
-        console.log('✓ Registered via window.chartjs.AnnotationPlugin');
       } else if (typeof window['chartjs-plugin-annotation'] !== 'undefined') {
         Chart.register(window['chartjs-plugin-annotation']);
-        console.log('✓ Registered via window["chartjs-plugin-annotation"]');
       } else {
         // List all Chart-related globals for debugging
         const chartGlobals = Object.keys(window).filter(k => k.toLowerCase().includes('chart') || k.toLowerCase().includes('annotation'));
         console.warn('⚠️ Annotation plugin not found. Available Chart-related globals:', chartGlobals);
         console.warn('The median line may not appear. Plugin should still work if it auto-registered.');
       }
-    } else {
-      console.log('✓ Annotation plugin already registered:', annotationRegistered);
     }
-
-    console.log('Chart.js and annotation plugin loaded successfully');
 
     chartLibraryLoaded = true;
     return true;
@@ -364,8 +344,6 @@ function renderChart(config) {
       }
     }
   });
-
-  console.log('Chart rendered successfully');
 }
 
 /**
@@ -431,8 +409,6 @@ function createDataTable(buckets) {
 
   table.appendChild(tbody);
   chartElements.dataTable.appendChild(table);
-
-  console.log('Data table created for accessibility');
 }
 
 /**
@@ -449,7 +425,6 @@ async function toggleChart() {
 
   if (!isChartExpanded) {
     // Expanding: Show loading, load Chart.js, render chart
-    console.log('Expanding chart...');
 
     // Update button text and ARIA (if toggle button exists - old UI)
     if (chartElements.toggleText && chartElements.toggleBtn) {
@@ -506,10 +481,6 @@ async function toggleChart() {
       if (predictionsResponse.ok) {
         const predictionsResult = await predictionsResponse.json();
         predictionData = predictionsResult.data || [];
-        console.log('Predictions data loaded', {
-          total: predictionsResult.total_predictions,
-          unique_dates: predictionData.length
-        });
       } else {
         console.warn('Predictions endpoint failed, showing empty chart');
       }
@@ -544,8 +515,6 @@ async function toggleChart() {
       }
 
       isChartExpanded = true;
-
-      console.log('Chart expanded successfully');
     } catch (error) {
       console.error('Failed to render chart:', error);
 
@@ -562,7 +531,6 @@ async function toggleChart() {
     }
   } else {
     // Collapsing: Hide chart
-    console.log('Collapsing chart...');
 
     // Update button text and ARIA (if toggle button exists - old UI)
     if (chartElements.toggleText && chartElements.toggleBtn) {
@@ -577,8 +545,6 @@ async function toggleChart() {
     }
 
     isChartExpanded = false;
-
-    console.log('Chart collapsed successfully');
   }
 }
 
@@ -601,11 +567,8 @@ async function initChart() {
     const stats = result.data || result;
     const totalPredictions = stats.count || stats.total || 0;
 
-    console.log(`Chart init: ${totalPredictions} predictions (threshold: 50)`);
-
     // Only show chart if we have 50+ predictions
     if (totalPredictions < 50) {
-      console.log('Not enough predictions to show chart (need 50)');
       if (chartElements && chartElements.container) {
         chartElements.container.classList.add('hidden');
       }
@@ -621,7 +584,6 @@ async function initChart() {
     } else if (chartElements && chartElements.toggleBtn) {
       // Fallback for old UI with toggle button
       chartElements.toggleBtn.addEventListener('click', toggleChart);
-      console.log('Chart toggle initialized');
     }
   } catch (error) {
     console.error('Error checking prediction count for chart:', error);

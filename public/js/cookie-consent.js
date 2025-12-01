@@ -55,7 +55,6 @@ const CookieConsent = {
     }
 
     document.cookie = cookieString;
-    console.log('Cookie consent set:', level);
   },
 
   /**
@@ -103,7 +102,6 @@ function showConsentBanner() {
     banner.classList.remove('hidden');
     // Announce to screen readers
     banner.setAttribute('aria-live', 'polite');
-    console.log('Cookie consent banner displayed');
   }
 }
 
@@ -115,7 +113,6 @@ function hideConsentBanner() {
   const banner = document.getElementById('cookie-consent-banner');
   if (banner) {
     banner.classList.add('hidden');
-    console.log('Cookie consent banner hidden');
   }
 }
 
@@ -130,10 +127,8 @@ function setAnalyticsEnabled(enabled) {
   if (enabled) {
     // Enable Cloudflare Analytics
     enableCloudflareAnalytics();
-    console.log('Analytics enabled (user consented to "all")');
   } else {
     // Disable analytics (functional cookies still work)
-    console.log('Analytics disabled (user chose "functional only")');
     // Note: Functional cookies (gta6_user_id) always work regardless
   }
 }
@@ -145,7 +140,6 @@ function setAnalyticsEnabled(enabled) {
 function enableCloudflareAnalytics() {
   // Check if analytics script already loaded
   if (document.querySelector('script[data-cf-beacon]')) {
-    console.log('Cloudflare Analytics already loaded');
     return;
   }
 
@@ -155,7 +149,6 @@ function enableCloudflareAnalytics() {
   script.src = 'https://static.cloudflareinsights.com/beacon.min.js';
   script.setAttribute('data-cf-beacon', '{"token": "placeholder-replace-with-actual-token"}');
   document.body.appendChild(script);
-  console.log('Cloudflare Analytics script loaded');
 }
 
 /**
@@ -171,8 +164,6 @@ function handleAcceptAll() {
 
   // Hide banner
   hideConsentBanner();
-
-  console.log('User accepted all cookies');
 }
 
 /**
@@ -188,8 +179,6 @@ function handleFunctionalOnly() {
 
   // Hide banner
   hideConsentBanner();
-
-  console.log('User accepted functional cookies only');
 }
 
 /**
@@ -204,11 +193,9 @@ function initializeCookieConsent() {
   if (!consentStatus) {
     // No consent given yet - show banner
     showConsentBanner();
-    console.log('No consent cookie found. Showing banner.');
   } else {
     // Consent already given - hide banner
     hideConsentBanner();
-    console.log('Consent already given:', consentStatus);
 
     // Enable analytics if user previously consented to "all"
     if (consentStatus === ConsentLevel.ALL) {
@@ -227,8 +214,6 @@ function initializeCookieConsent() {
   if (functionalOnlyBtn) {
     functionalOnlyBtn.addEventListener('click', handleFunctionalOnly);
   }
-
-  console.log('Cookie consent initialized');
 }
 
 // Initialize on DOM ready

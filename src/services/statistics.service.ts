@@ -118,11 +118,6 @@ export async function calculateStatistics(db: D1Database): Promise<StatsResponse
       duration_ms: calculationTime,
       prediction_count: aggregationResult.total_count,
     });
-  } else {
-    console.log('Stats calculated', {
-      duration_ms: calculationTime,
-      prediction_count: aggregationResult.total_count,
-    });
   }
 
   return {
@@ -166,10 +161,8 @@ export async function getStatisticsWithCache(
       const cached = await kv.get(cacheKey);
       if (cached) {
         const stats = JSON.parse(cached) as StatsResponse;
-        console.log('Stats cache HIT', { cacheKey });
         return { stats, cacheHit: true };
       }
-      console.log('Stats cache MISS', { cacheKey });
     } catch (error) {
       // Cache read failed - continue with database query
       console.warn('KV cache read failed, falling back to database:', error);
@@ -217,7 +210,6 @@ export async function invalidateStatsCache(
 
   try {
     await kv.delete(cacheKey);
-    console.log('Stats cache invalidated', { cacheKey });
   } catch (error) {
     // Cache invalidation failed - log but don't fail
     console.warn('Stats cache invalidation failed:', error);

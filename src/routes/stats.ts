@@ -47,8 +47,6 @@ export function createStatsRoutes() {
    * Rate Limit: 60/min per IP (handled by middleware)
    */
   app.get('/api/stats', async (c) => {
-    const startTime = Date.now();
-
     try {
       // Get current capacity level to determine cache TTL (Story 3.7 - AC2)
       const { level } = await getCapacityLevel(c.env.gta6_capacity);
@@ -66,13 +64,6 @@ export function createStatsRoutes() {
       c.header('Cache-Control', `public, max-age=${cacheTTL}`);
       c.header('X-Cache', cacheHit ? 'HIT' : 'MISS');
       c.header('X-Capacity-Level', level); // Debugging header
-
-      // Log request
-      console.log('Stats request processed', {
-        cacheHit,
-        count: stats.count,
-        duration_ms: Date.now() - startTime,
-      });
 
       // Return statistics
       return c.json(stats, 200);

@@ -162,18 +162,11 @@ describe('Cookie Expiration and Management - Story 4.5', () => {
       const validCookieId = 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
       document.cookie = `gta6_user_id=${validCookieId}; path=/`;
 
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-
       const cookieId = (window as any).initializeCookieID();
 
       // Should return existing cookie, not generate new one
       expect(cookieId).toBe(validCookieId);
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Cookie already exists (valid)'),
-        validCookieId
-      );
-
-      consoleSpy.mockRestore();
+      // Note: Console logging removed in production for performance
     });
   });
 
@@ -186,7 +179,7 @@ describe('Cookie Expiration and Management - Story 4.5', () => {
       );
 
       // Check that initializeCookieID returns existing valid cookie without re-setting
-      expect(appJs).toContain('Cookie already exists (valid)');
+      // Note: Console logging removed in production for performance
       expect(appJs).toContain('return cookieId');
     });
 
@@ -218,7 +211,7 @@ describe('Cookie Expiration and Management - Story 4.5', () => {
       // Check logic: only set when cookie missing or invalid
       expect(appJs).toContain('if (cookieId)');
       expect(appJs).toContain('if (validateCookieID(cookieId))');
-      expect(appJs).toContain('Cookie already exists (valid)');
+      // Note: Console logging removed in production for performance
       expect(appJs).toContain('return cookieId');
     });
   });

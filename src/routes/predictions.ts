@@ -72,8 +72,6 @@ export function createPredictionsRoutes() {
    * Rate Limit: 60/min per IP (handled by middleware)
    */
   app.get('/api/predictions', async (c) => {
-    const startTime = Date.now();
-
     try {
       // Get aggregated predictions with caching
       const { predictions, cacheHit } = await getAggregatedPredictionsWithCache(
@@ -86,14 +84,6 @@ export function createPredictionsRoutes() {
       // Set cache headers
       c.header('Cache-Control', `public, max-age=${PREDICTIONS_CACHE_TTL}`);
       c.header('X-Cache', cacheHit ? 'HIT' : 'MISS');
-
-      // Log request
-      console.log('Predictions request processed', {
-        cacheHit,
-        total_predictions: predictions.total_predictions,
-        unique_dates: predictions.data.length,
-        duration_ms: Date.now() - startTime,
-      });
 
       // Return predictions
       return c.json(predictions, 200);

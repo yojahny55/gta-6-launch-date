@@ -430,18 +430,14 @@ describe('My Prediction Card - Story 10.3', () => {
     });
 
     it('should not throw error or show message to user on any failure', async () => {
-      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
-
       // Sprint Change 2025-11-28: Mock network error
       global.fetch.mockRejectedValue(new Error('Network error'));
 
       const prediction = await getUserPrediction();
 
       expect(prediction).toBeNull();
-      expect(consoleError).toHaveBeenCalled(); // Error logged to console
+      // Note: Console logging removed in production for performance
       // No user-facing error message (graceful degradation)
-
-      consoleError.mockRestore();
     });
   });
 

@@ -124,21 +124,19 @@ function initializeCookieID() {
   if (cookieId) {
     // Validate existing cookie format
     if (validateCookieID(cookieId)) {
-      console.log('Cookie already exists (valid):', cookieId);
+      
       return cookieId;
     } else {
       // Invalid cookie: regenerate
       console.warn('Invalid cookie format detected. Regenerating...', cookieId);
       cookieId = generateCookieID();
       Cookies.set(COOKIE_NAME, cookieId, COOKIE_OPTIONS);
-      console.log('Cookie regenerated:', cookieId);
       return cookieId;
     }
   } else {
     // No cookie: generate new UUID
     cookieId = generateCookieID();
     Cookies.set(COOKIE_NAME, cookieId, COOKIE_OPTIONS);
-    console.log('Cookie generated (first visit):', cookieId);
     return cookieId;
   }
 }
@@ -465,12 +463,6 @@ async function handleFormSubmit(event) {
             'info'
           );
 
-          // Log for monitoring but don't show error UI
-          console.log('User already has prediction - switched to update mode', {
-            dateValue,
-            errorCode: result.error?.code
-          });
-
           return;
         } else if (result.error?.code === 'IP_ALREADY_USED') {
           // Scenario 2: IP conflict with different cookie → Show error
@@ -526,7 +518,6 @@ async function handleFormSubmit(event) {
     // It will fetch from /api/predict (Cloudflare KV) after stats refresh for always-fresh data
 
     // Success! Update confirmation with actual data (Story 3.3, AC: Update with actual ranking)
-    console.log('Prediction submitted/updated successfully:', result);
 
     // Extract data from response (handle both POST and PUT response formats)
     const userDate = result.data?.predicted_date || result.predicted_date;
@@ -591,11 +582,6 @@ async function handleFormSubmit(event) {
           'You already have a prediction! To change it, update the date above and click "Update Prediction".',
           'info'
         );
-
-        console.log('User already has prediction - switched to update mode', {
-          dateValue,
-          errorCode: errorData.error?.code
-        });
       } else if (errorData?.error?.code === 'IP_ALREADY_USED') {
         showValidationMessage(
           errorData.error.message || 'This IP address has already submitted a prediction.',
@@ -790,7 +776,7 @@ function renderStats(stats) {
     if (statsElements.count) {
       statsElements.count.textContent = formatted.rawCount.toString();
     }
-    console.log(`Below threshold: ${formatted.rawCount} of 50 predictions`);
+
     return;
   }
 
@@ -809,8 +795,6 @@ function renderStats(stats) {
   if (typeof updateMyPredictionDelta === 'function') {
     updateMyPredictionDelta(stats);
   }
-
-  console.log('Stats rendered:', formatted);
 }
 
 // showStatsError() function removed - new dashboard doesn't have error state divs
@@ -850,10 +834,6 @@ async function fetchStats(retryCount = 0, bypassCache = false) {
     }
 
     const data = await response.json();
-
-    // Log cache status for debugging
-    const cacheStatus = response.headers.get('X-Cache');
-    console.log('Stats fetched:', { cacheStatus, count: data.count });
 
     // AC10: Save to localStorage as fallback cache
     try {
@@ -925,7 +905,6 @@ async function loadStats(bypassCache = false) {
  * AC: FR59 - Retry mechanism for error recovery
  */
 function handleStatsRetry() {
-  console.log('Retrying stats load...');
   loadStats();
 }
 
@@ -1006,7 +985,7 @@ function renderOptimismScore(data) {
     if (optimismScoreElements.subtext) {
       optimismScoreElements.subtext.textContent = 'Need at least 50 predictions';
     }
-    console.log('Optimism score below threshold');
+ 
     return;
   }
 
@@ -1034,12 +1013,6 @@ function renderOptimismScore(data) {
       optimismScoreElements.icon.classList.add('text-red-500'); // Skeptical
     }
   }
-
-  console.log('Optimism score rendered:', `${data.optimism_score}%`, {
-    optimistic: data.optimistic_count,
-    pessimistic: data.pessimistic_count,
-    total: data.total_count,
-  });
 }
 
 /**
@@ -1052,7 +1025,6 @@ async function loadOptimismScore() {
     renderOptimismScore(data);
   } else {
     // Keep showing "--" placeholder on error
-    console.log('Optimism score unavailable');
   }
 }
 
@@ -1151,8 +1123,6 @@ function displayComparison(userDate, medianDate) {
       comparisonElements.container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 100);
   }
-
-  console.log('Comparison displayed:', comparison);
 }
 
 /**
@@ -1214,8 +1184,6 @@ function displayShareButtons(userDate, medianDate) {
 
   // Note: Share buttons now show/hide automatically with #confirmation-display card
   // No need to toggle visibility separately
-
-  console.log('Share buttons ready for prediction:', { userDate, medianDate });
 }
 
 /**
@@ -1318,12 +1286,9 @@ async function checkExistingPredictionFlag() {
         // User has an existing prediction - set flag for button text
         hasExistingPrediction = true;
         updateSubmitButtonText();
-
-        console.log('Existing prediction detected - button set to update mode');
       }
     } else if (response.status === 404) {
       // User hasn't submitted yet - this is normal
-      console.log('No existing prediction found - user is new');
     } else {
       // Other errors - log but don't disrupt UX
       console.warn('Error checking existing prediction:', response.status);
@@ -1357,16 +1322,9 @@ async function checkExistingPrediction() {
 
         // Display current prediction in UI
         displayCurrentPrediction(result.data);
-
-        console.log('Existing prediction loaded:', {
-          predicted_date: result.data.predicted_date,
-          submitted_at: result.data.submitted_at,
-          updated_at: result.data.updated_at,
-        });
       }
     } else if (response.status === 404) {
       // User hasn't submitted yet - this is normal
-      console.log('No existing prediction found - user is new');
     } else {
       // Other errors - log but don't disrupt UX
       console.warn('Error checking existing prediction:', response.status);
@@ -1400,8 +1358,6 @@ function displayCurrentPrediction(data) {
 
   // Show the card
   card.classList.remove('hidden');
-
-  console.log('My Prediction card displayed:', formattedDate);
 }
 
 /**
@@ -1437,14 +1393,8 @@ async function updatePredictionDelta(predictedDate) {
  * Runs on page load to set up cookie tracking, form handling, and stats display
  */
 document.addEventListener('DOMContentLoaded', function() {
-  console.log('GTA 6 Tracker initialized');
-
   // Initialize cookie ID (AC1: generate on first visit, persist across sessions)
   const userId = initializeCookieID();
-
-  // Log cookie generation event for debugging (as per AC1)
-  console.log('User ID:', userId);
-  console.log('Cookie flags:', COOKIE_OPTIONS);
 
   // Store in global scope for later use by form submission logic
   window.userCookieID = userId;
@@ -1489,11 +1439,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Note: "Update Prediction" button handler is now in my-prediction.js (Story 10.3)
   // No duplicate handler needed here
-
-  console.log('Date picker initialized with validation');
-  console.log('Stats display initialized');
-  console.log('Share buttons initialized (Twitter + Reddit)');
-  console.log('My Prediction card initialized');
 });
 
 // Export functions for testing and future use

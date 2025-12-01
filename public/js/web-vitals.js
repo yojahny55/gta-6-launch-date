@@ -38,12 +38,6 @@
         const lastEntry = entries[entries.length - 1];
         vitalsData.lcp = Math.round(lastEntry.renderTime || lastEntry.loadTime);
 
-        // Log LCP
-        console.log(`[Web Vitals] LCP: ${vitalsData.lcp}ms`, {
-          status: vitalsData.lcp < 2500 ? 'GOOD' : vitalsData.lcp < 4000 ? 'NEEDS_IMPROVEMENT' : 'POOR',
-          element: lastEntry.element,
-        });
-
         // Send to analytics (Cloudflare Web Analytics automatically tracks LCP)
         sendToAnalytics('lcp', vitalsData.lcp);
       });
@@ -63,12 +57,6 @@
       const observer = new PerformanceObserver((list) => {
         const firstInput = list.getEntries()[0];
         vitalsData.fid = Math.round(firstInput.processingStart - firstInput.startTime);
-
-        // Log FID
-        console.log(`[Web Vitals] FID: ${vitalsData.fid}ms`, {
-          status: vitalsData.fid < 100 ? 'GOOD' : vitalsData.fid < 300 ? 'NEEDS_IMPROVEMENT' : 'POOR',
-          eventType: firstInput.name,
-        });
 
         // Send to analytics
         sendToAnalytics('fid', vitalsData.fid);
@@ -116,11 +104,6 @@
             if (sessionValue > clsValue) {
               clsValue = sessionValue;
               vitalsData.cls = Math.round(clsValue * 1000) / 1000; // Round to 3 decimals
-
-              // Log CLS
-              console.log(`[Web Vitals] CLS: ${vitalsData.cls}`, {
-                status: vitalsData.cls < 0.1 ? 'GOOD' : vitalsData.cls < 0.25 ? 'NEEDS_IMPROVEMENT' : 'POOR',
-              });
             }
           }
         }
@@ -150,9 +133,6 @@
         const fcpEntry = entries.find((entry) => entry.name === 'first-contentful-paint');
         if (fcpEntry) {
           vitalsData.fcp = Math.round(fcpEntry.startTime);
-          console.log(`[Web Vitals] FCP: ${vitalsData.fcp}ms`, {
-            status: vitalsData.fcp < 1800 ? 'GOOD' : vitalsData.fcp < 3000 ? 'NEEDS_IMPROVEMENT' : 'POOR',
-          });
           sendToAnalytics('fcp', vitalsData.fcp);
         }
       });
@@ -172,9 +152,6 @@
       const navigationEntry = performance.getEntriesByType('navigation')[0];
       if (navigationEntry) {
         vitalsData.ttfb = Math.round(navigationEntry.responseStart - navigationEntry.requestStart);
-        console.log(`[Web Vitals] TTFB: ${vitalsData.ttfb}ms`, {
-          status: vitalsData.ttfb < 800 ? 'GOOD' : vitalsData.ttfb < 1800 ? 'NEEDS_IMPROVEMENT' : 'POOR',
-        });
         sendToAnalytics('ttfb', vitalsData.ttfb);
       }
     } catch (error) {
@@ -190,9 +167,6 @@
   function sendToAnalytics(metric, value) {
     // Cloudflare Web Analytics automatically tracks Core Web Vitals
     // This function is for custom event tracking or debugging
-
-    // Log to console for debugging (removed in production via Vite minification)
-    console.log(`[Web Vitals] Sending ${metric.toUpperCase()} to analytics:`, value);
 
     // Optional: Send to custom analytics endpoint
     // fetch('/api/analytics/web-vitals', {
@@ -231,8 +205,6 @@
     // Track bonus metrics
     trackFCP();
     trackTTFB();
-
-    console.log('[Web Vitals] Monitoring initialized');
   }
 
   // Initialize on DOMContentLoaded

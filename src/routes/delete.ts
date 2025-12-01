@@ -91,7 +91,7 @@ export function createDeleteRoutes() {
         );
       }
 
-      const { cookie_id, reason } = parseResult.data;
+      const { cookie_id } = parseResult.data;
 
       // Check if cookie_id exists in database
       const prediction = await c.env.DB.prepare(
@@ -126,18 +126,6 @@ export function createDeleteRoutes() {
             },
           },
           500
-        );
-      }
-
-      // Log deletion reason (if provided) for analytics
-      if (reason) {
-        console.log(
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            message: 'Deletion reason logged',
-            context: { reason },
-          })
         );
       }
 

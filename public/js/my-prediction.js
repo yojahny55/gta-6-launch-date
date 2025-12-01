@@ -40,22 +40,17 @@ async function getUserPrediction() {
       const result = await response.json();
 
       if (result.success && result.data && result.data.predicted_date) {
-        console.log('My Prediction: Prediction fetched from API');
         return result.data;
       } else {
-        console.log('My Prediction: No prediction found in API response');
         return null;
       }
     } else if (response.status === 404) {
       // User hasn't submitted yet - this is normal
-      console.log('My Prediction: No prediction found (404)');
       return null;
     } else {
-      console.warn('My Prediction: API error:', response.status);
       return null;
     }
   } catch (error) {
-    console.error('My Prediction: Error fetching prediction from API:', error);
     return null;
   }
 }
@@ -129,7 +124,6 @@ function formatMyPredictionDate(dateString) {
  */
 function calculatePercentile(userDate, allPredictions) {
   if (!allPredictions || allPredictions.length === 0) {
-    console.log('My Prediction: No predictions data for percentile calculation');
     return 50; // Default to middle if no data
   }
 
@@ -147,7 +141,6 @@ function calculatePercentile(userDate, allPredictions) {
   });
 
   if (totalCount === 0) {
-    console.log('My Prediction: Total count is 0, defaulting to 50th percentile');
     return 50;
   }
 
@@ -157,7 +150,6 @@ function calculatePercentile(userDate, allPredictions) {
   const percentile = (earlierCount / totalCount) * 100;
   const rounded = Math.round(percentile);
 
-  console.log(`My Prediction: Percentile calculated - ${rounded}% (${earlierCount}/${totalCount} predictions earlier)`);
   return rounded;
 }
 
@@ -184,7 +176,6 @@ async function fetchAndCalculatePercentile(userDate) {
     const predictions = result.data || [];
 
     if (predictions.length === 0) {
-      console.log('My Prediction: No predictions data returned from API');
       return 50;
     }
 
@@ -217,7 +208,6 @@ function updateProgressBar(percentile) {
   // Update progress bar width
   if (progressBar) {
     progressBar.style.width = `${percentile}%`;
-    console.log(`My Prediction: Progress bar updated to ${percentile}%`);
   } else {
     console.warn('My Prediction: Progress bar element not found');
   }
@@ -225,7 +215,6 @@ function updateProgressBar(percentile) {
   // Update percentile display text
   if (percentileDisplay) {
     percentileDisplay.textContent = `${percentile}%`;
-    console.log(`My Prediction: Percentile display updated to ${percentile}%`);
   } else {
     console.warn('My Prediction: Percentile display element not found');
   }
@@ -242,7 +231,6 @@ function updateProgressBar(percentile) {
  */
 async function showMyPredictionCard(prediction, medianDate) {
   if (!myPredictionElements || !myPredictionElements.card) {
-    console.error('My Prediction: DOM elements not initialized');
     return;
   }
 
@@ -265,8 +253,6 @@ async function showMyPredictionCard(prediction, medianDate) {
 
   // Show the card (remove 'hidden' class)
   myPredictionElements.card.classList.remove('hidden');
-
-  console.log('My Prediction: Card shown with date:', formattedDate, 'percentile:', percentile);
 }
 
 /**
@@ -280,8 +266,6 @@ function hideMyPredictionCard() {
 
   // Hide the card (add 'hidden' class)
   myPredictionElements.card.classList.add('hidden');
-
-  console.log('My Prediction: Card hidden (no prediction)');
 }
 
 

@@ -73,8 +73,6 @@ interface SentimentAggregation {
  * // }
  */
 export async function calculateSentiment(db: D1Database): Promise<SentimentResponse> {
-  const startTime = Date.now();
-
   // Query: Count optimistic vs pessimistic predictions using CASE
   const result = await db
     .prepare(
@@ -102,14 +100,6 @@ export async function calculateSentiment(db: D1Database): Promise<SentimentRespo
   // Calculate optimism score: (optimistic / total) * 100
   // Round to 1 decimal place
   const optimismScore = Math.round((result.optimistic_count / result.total_count) * 1000) / 10;
-
-  console.log('Sentiment calculated', {
-    optimism_score: optimismScore,
-    optimistic_count: result.optimistic_count,
-    pessimistic_count: result.pessimistic_count,
-    total_count: result.total_count,
-    duration_ms: Date.now() - startTime,
-  });
 
   return {
     optimism_score: optimismScore,
@@ -154,11 +144,8 @@ export async function getSentimentWithCache(
   const cached = kv ? await kv.get<SentimentResponse>(cacheKey, 'json') : null;
 
   if (cached) {
-    console.log('Sentiment cache HIT');
     return { sentiment: cached, cacheHit: true };
   }
-
-  console.log('Sentiment cache MISS - calculating fresh sentiment');
 
   // Cache miss - calculate fresh sentiment
   const sentiment = await calculateSentiment(db);
@@ -192,6 +179,5 @@ export async function invalidateSentimentCache(
 ): Promise<void> {
   if (kv) {
     await kv.delete(cacheKey);
-    console.log('Sentiment cache invalidated');
   }
 }
