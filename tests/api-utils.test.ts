@@ -153,7 +153,7 @@ describe('API Utility Module', () => {
       );
     });
 
-    it('should log API calls for debugging', async () => {
+    it('should not log API calls in production', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({}),
@@ -161,12 +161,8 @@ describe('API Utility Module', () => {
 
       await callAPI('/api/test');
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('API call:'),
-      );
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('http://localhost:8787/api/test'),
-      );
+      // Console logging has been removed to reduce noise in production
+      expect(consoleSpy).not.toHaveBeenCalled();
     });
 
     it('should handle network errors', async () => {
