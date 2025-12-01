@@ -67,13 +67,6 @@ export function createStatsRoutes() {
       c.header('X-Cache', cacheHit ? 'HIT' : 'MISS');
       c.header('X-Capacity-Level', level); // Debugging header
 
-      // Log request
-      console.log('Stats request processed', {
-        cacheHit,
-        count: stats.count,
-        duration_ms: Date.now() - startTime,
-      });
-
       // Return statistics
       return c.json(stats, 200);
     } catch (error) {

@@ -95,12 +95,6 @@ export function createSentimentRoutes() {
 
       // Check FR99 threshold (< 50 predictions)
       if (sentiment.total_count < STATS_THRESHOLD) {
-        console.log('Sentiment request - below threshold', {
-          total_count: sentiment.total_count,
-          threshold: STATS_THRESHOLD,
-          duration_ms: Date.now() - startTime,
-        });
-
         // Return response with null optimism_score
         return c.json(
           {
@@ -118,14 +112,6 @@ export function createSentimentRoutes() {
           200
         );
       }
-
-      // Log request
-      console.log('Sentiment request processed', {
-        cacheHit,
-        optimism_score: sentiment.optimism_score,
-        total_count: sentiment.total_count,
-        duration_ms: Date.now() - startTime,
-      });
 
       // Return sentiment data
       return c.json(

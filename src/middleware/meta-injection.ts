@@ -385,27 +385,6 @@ export async function metaInjectionMiddleware(
       if (c.env.gta6_stats_cache) {
         await c.env.gta6_stats_cache.put(cacheKey, metaTags, { expirationTtl: META_CACHE_TTL });
       }
-
-      console.log(
-        JSON.stringify({
-          timestamp: new Date().toISOString(),
-          level: 'INFO',
-          event: 'meta_injection',
-          cache_hit: false,
-          personalized: !!personalized,
-          duration_ms: Date.now() - startTime,
-        })
-      );
-    } else {
-      console.log(
-        JSON.stringify({
-          timestamp: new Date().toISOString(),
-          level: 'INFO',
-          event: 'meta_injection',
-          cache_hit: true,
-          duration_ms: Date.now() - startTime,
-        })
-      );
     }
 
     // Get HTML body

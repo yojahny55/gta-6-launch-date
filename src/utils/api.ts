@@ -21,9 +21,6 @@ export async function callAPI<T = unknown>(
 ): Promise<T> {
   const url = `${API_URL}${endpoint}`;
 
-  // Log API call for debugging (helpful in development)
-  console.log(`[${ENVIRONMENT}] API call: ${url}`);
-
   const response = await fetch(url, {
     ...options,
     headers: {

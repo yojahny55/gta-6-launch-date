@@ -92,15 +92,7 @@ async function retryWithBackoff<T>(
     }
   }
 
-  // Log deadlock rate for monitoring (Story 3.6 - AC: Alert if rate > 1%)
-  if (deadlockCount > 0) {
-    console.log('Deadlock retry completed', {
-      totalAttempts: maxAttempts,
-      deadlockCount,
-      success: false,
-      timestamp: new Date().toISOString(),
-    });
-  }
+  // Deadlock retry completed - logging removed
 
   // All retries failed
   throw lastError || new Error('Retry failed - unknown error');
@@ -290,25 +282,11 @@ export function createPredictRoutes() {
       const cookieHeader = c.req.header('Cookie') || '';
       cookieId = getCookie(cookieHeader, COOKIE_NAME) || null;
 
-      // DEBUG: Log cookie detection
-      console.log('POST /api/predict - Cookie detection', {
-        hasCookieHeader: !!cookieHeader,
-        cookieHeaderLength: cookieHeader?.length || 0,
-        extractedCookieId: cookieId ? cookieId.substring(0, 8) + '...' : null,
-        cookieName: COOKIE_NAME,
-      });
-
       // Generate new cookie if not present or invalid
       let isNewCookie = false;
       if (!cookieId || !validateCookieID(cookieId)) {
-        const oldCookie = cookieId;
         cookieId = generateCookieID();
         isNewCookie = true;
-        console.log('POST /api/predict - Generated new cookie', {
-          reason: !oldCookie ? 'no_cookie' : 'invalid_cookie',
-          oldCookiePrefix: oldCookie ? oldCookie.substring(0, 8) : null,
-          newCookiePrefix: cookieId.substring(0, 8),
-        });
       }
 
       // Step 3: Extract and hash IP address
@@ -355,39 +333,17 @@ export function createPredictRoutes() {
 
       // Step 7: Check if cookie_id already exists (Story 3.6 - Cookie-first logic)
       // If exists, route to UPDATE instead of INSERT (handles double-click scenario)
-      console.log('POST /api/predict - Checking for existing prediction by cookie', {
-        cookieIdPrefix: cookieId.substring(0, 8),
-        isNewCookie,
-      });
-
       const existingByCookie = await c.env.DB.prepare(
         'SELECT id, predicted_date FROM predictions WHERE cookie_id = ?'
       )
         .bind(cookieId)
         .first();
 
-      console.log('POST /api/predict - Database lookup result', {
-        cookieIdPrefix: cookieId.substring(0, 8),
-        foundExisting: !!existingByCookie,
-        existingId: existingByCookie?.id,
-        existingDate: existingByCookie?.predicted_date,
-      });
-
       if (existingByCookie) {
         // Cookie exists - check if this is an idempotent resubmission (AC: Scenario 2 - Double-click)
-        console.log('POST /api/predict - Found existing prediction by cookie', {
-          cookieIdPrefix: cookieId.substring(0, 8),
-          existingDate: existingByCookie.predicted_date,
-          newDate: predicted_date,
-          dateChanged: existingByCookie.predicted_date !== predicted_date,
-        });
-
         // If date is the SAME, return success immediately (idempotent - handles double-click)
         // This prevents duplicate submissions when user rapidly clicks submit button
         if (existingByCookie.predicted_date === predicted_date) {
-          console.log(
-            'POST /api/predict - Idempotent resubmission (same date) - returning success'
-          );
           const stats = await calculateStatistics(c.env.DB);
           const userDate = new Date(predicted_date);
           const medianDate = new Date(stats.median);
@@ -423,9 +379,6 @@ export function createPredictRoutes() {
 
         // Different date - this is an intentional update attempt
         // Return 409 to let frontend handle update flow (maintains existing UI behavior)
-        console.log(
-          'POST /api/predict - Different date detected - returning 409 for frontend to handle'
-        );
         const errorResponse: ErrorResponse = {
           success: false,
           error: {
@@ -449,15 +402,6 @@ export function createPredictRoutes() {
 
         const { position } = await queueSubmission(kv, queuedSubmission);
 
-        console.log(
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            message: 'Submission queued - critical capacity',
-            context: { capacityLevel, position, cookieIdPrefix: cookieId.substring(0, 8) },
-          })
-        );
-
         // Return success with queue position (AC7)
         return c.json(
           {
@@ -475,13 +419,6 @@ export function createPredictRoutes() {
       }
 
       // Step 8b: Database transaction - INSERT prediction with retry (Story 3.6 - AC: Scenario 3)
-      console.log('POST /api/predict - Proceeding to INSERT', {
-        cookieIdPrefix: cookieId.substring(0, 8),
-        ipHashPrefix: ipHash.substring(0, 8),
-        isNewCookie,
-        predicted_date,
-      });
-
       const now = new Date().toISOString();
 
       try {
@@ -528,17 +465,6 @@ export function createPredictRoutes() {
           const cookieOptions = getDefaultCookieOptions();
           c.header('Set-Cookie', setCookie(COOKIE_NAME, cookieId, cookieOptions));
         }
-
-        // Log successful submission
-        console.log('Prediction submitted', {
-          prediction_id: predictionId,
-          predicted_date,
-          weight,
-          delta_days,
-          comparison,
-          ipHashPrefix: ipHash.substring(0, 8),
-          duration_ms: Date.now() - startTime,
-        });
 
         // Return 201 Created response with stats for comparison (Story 3.2)
         return c.json(
@@ -647,14 +573,6 @@ export function createPredictRoutes() {
               // Set new cookie in response
               const cookieOptions = getDefaultCookieOptions();
               c.header('Set-Cookie', setCookie(COOKIE_NAME, cookieId, cookieOptions));
-
-              console.log('Prediction submitted (cookie regenerated)', {
-                prediction_id: predictionId,
-                predicted_date,
-                weight,
-                delta_days,
-                comparison,
-              });
 
               return c.json(
                 {
@@ -875,10 +793,6 @@ export function createPredictRoutes() {
 
       // Step 7: Check if date is the same (idempotent - skip update)
       if (previousDate === predicted_date) {
-        console.log('Idempotent update - date unchanged', {
-          cookieIdPrefix: cookieId.substring(0, 8),
-          predicted_date,
-        });
         return c.json(
           {
             success: true,
@@ -896,17 +810,6 @@ export function createPredictRoutes() {
       // Step 9: Detect IP change for IP conflict resolution (FR67, Story 4.7 - AC: Scenario 1)
       // Cookie_id takes precedence - update ip_hash to new IP
       const ipChanged = storedIpHash !== ipHash;
-      if (ipChanged) {
-        console.log('IP change detected - cookie allows update from any IP', {
-          cookieIdPrefix: cookieId.substring(0, 8),
-          oldIpHashPrefix: storedIpHash.substring(0, 8),
-          newIpHashPrefix: ipHash.substring(0, 8),
-          timestamp: new Date().toISOString(),
-          scenario: 'User changed networks (WiFi/mobile/VPN)',
-          conflictType: 'ip_change_allowed',
-          resolution: 'Update ip_hash to new IP, keep cookie_id (FR67)',
-        });
-      }
 
       // Step 10: Perform UPDATE with prepared statement
       const now = new Date().toISOString();
@@ -958,19 +861,7 @@ export function createPredictRoutes() {
         else if (delta_days > 0) comparison = 'pessimistic';
         else comparison = 'optimistic';
 
-        // Step 11: Log successful update
-        console.log('Prediction updated', {
-          cookie_id_prefix: cookieId.substring(0, 8),
-          predicted_date,
-          previous_date: previousDate,
-          weight,
-          delta_days,
-          comparison,
-          ip_changed: ipChanged,
-          duration_ms: Date.now() - startTime,
-        });
-
-        // Step 12: Return 200 OK with stats for comparison (Story 3.2)
+        // Step 11: Return 200 OK with stats for comparison (Story 3.2)
         return c.json(
           {
             success: true,
@@ -1034,14 +925,6 @@ export function createPredictRoutes() {
             if (delta_days === 0) comparison = 'aligned';
             else if (delta_days > 0) comparison = 'pessimistic';
             else comparison = 'optimistic';
-
-            console.log('Prediction updated (IP conflict resolved - kept original IP)', {
-              cookie_id_prefix: cookieId.substring(0, 8),
-              predicted_date,
-              previous_date: previousDate,
-              delta_days,
-              comparison,
-            });
 
             return c.json(
               {

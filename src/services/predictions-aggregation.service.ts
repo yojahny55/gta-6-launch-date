@@ -90,11 +90,6 @@ export async function getAggregatedPredictions(db: D1Database): Promise<Predicti
 
   // Check 50-prediction minimum threshold (FR99)
   if (totalCount < MINIMUM_PREDICTION_THRESHOLD) {
-    console.log('Prediction threshold not met', {
-      current: totalCount,
-      required: MINIMUM_PREDICTION_THRESHOLD,
-    });
-
     return {
       data: [], // Empty array when threshold not met
       total_predictions: totalCount,
@@ -120,12 +115,6 @@ export async function getAggregatedPredictions(db: D1Database): Promise<Predicti
   // Performance monitoring: Log slow aggregations (>100ms)
   if (calculationTime > 100) {
     console.warn('Predictions aggregation slow', {
-      duration_ms: calculationTime,
-      total_predictions: totalCount,
-      unique_dates: aggregationResult.results?.length || 0,
-    });
-  } else {
-    console.log('Predictions aggregated', {
       duration_ms: calculationTime,
       total_predictions: totalCount,
       unique_dates: aggregationResult.results?.length || 0,
@@ -174,10 +163,8 @@ export async function getAggregatedPredictionsWithCache(
       const cached = await kv.get(cacheKey);
       if (cached) {
         const predictions = JSON.parse(cached) as PredictionsResponse;
-        console.log('Predictions cache HIT', { cacheKey });
         return { predictions, cacheHit: true };
       }
-      console.log('Predictions cache MISS', { cacheKey });
     } catch (error) {
       // Cache read failed - continue with database query
       console.warn('KV cache read failed, falling back to database:', error);
@@ -192,11 +179,6 @@ export async function getAggregatedPredictionsWithCache(
     try {
       await kv.put(cacheKey, JSON.stringify(predictions), {
         expirationTtl: ttlSeconds,
-      });
-      console.log('Predictions cached', {
-        cacheKey,
-        ttl: ttlSeconds,
-        data_size: predictions.data.length,
       });
     } catch (error) {
       // Cache write failed - log but don't fail the request
@@ -232,7 +214,6 @@ export async function invalidatePredictionsCache(
 
   try {
     await kv.delete(cacheKey);
-    console.log('Predictions cache invalidated', { cacheKey });
   } catch (error) {
     // Cache invalidation failed - log but don't fail
     console.warn('Predictions cache invalidation failed:', error);
@@ -263,9 +244,6 @@ export async function invalidateAllCaches(kv: KVNamespace | undefined): Promise<
       kv.delete('predictions:aggregated'),
       kv.delete('sentiment:score'), // Story 10.1
     ]);
-    console.log('All caches invalidated', {
-      keys: ['stats:latest', 'predictions:aggregated', 'sentiment:score'],
-    });
   } catch (error) {
     // Cache invalidation failed - log but don't fail
     console.warn('Cache invalidation failed:', error);

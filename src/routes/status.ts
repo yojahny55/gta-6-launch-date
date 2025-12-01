@@ -102,12 +102,6 @@ export function createStatusRoutes() {
 
       // Check FR99 threshold (< 50 predictions)
       if (status.total_count !== undefined && status.total_count < STATS_THRESHOLD) {
-        console.log('Status request - below threshold', {
-          total_count: status.total_count,
-          threshold: STATS_THRESHOLD,
-          duration_ms: Date.now() - startTime,
-        });
-
         // Return response with "Gathering Data" status
         return c.json(
           {
@@ -125,15 +119,6 @@ export function createStatusRoutes() {
           200
         );
       }
-
-      // Log request
-      console.log('Status request processed', {
-        cacheHit,
-        status: status.status,
-        color: status.status_color,
-        days_difference: status.days_difference,
-        duration_ms: Date.now() - startTime,
-      });
 
       // Return status data
       return c.json(

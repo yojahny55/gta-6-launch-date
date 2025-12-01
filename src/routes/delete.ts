@@ -129,18 +129,6 @@ export function createDeleteRoutes() {
         );
       }
 
-      // Log deletion reason (if provided) for analytics
-      if (reason) {
-        console.log(
-          JSON.stringify({
-            timestamp: new Date().toISOString(),
-            level: 'INFO',
-            message: 'Deletion reason logged',
-            context: { reason },
-          })
-        );
-      }
-
       return c.json({
         success: true,
         message: 'Your data has been deleted successfully.',

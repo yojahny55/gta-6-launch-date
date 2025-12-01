@@ -87,14 +87,6 @@ export function createPredictionsRoutes() {
       c.header('Cache-Control', `public, max-age=${PREDICTIONS_CACHE_TTL}`);
       c.header('X-Cache', cacheHit ? 'HIT' : 'MISS');
 
-      // Log request
-      console.log('Predictions request processed', {
-        cacheHit,
-        total_predictions: predictions.total_predictions,
-        unique_dates: predictions.data.length,
-        duration_ms: Date.now() - startTime,
-      });
-
       // Return predictions
       return c.json(predictions, 200);
     } catch (error) {

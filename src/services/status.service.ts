@@ -118,15 +118,6 @@ export async function calculateStatusFromDB(db: D1Database): Promise<StatusRespo
   // Calculate status using status-calculator utility
   const statusResult = calculateStatus(medianDate, OFFICIAL_RELEASE_DATE);
 
-  console.log('Status calculated', {
-    status: statusResult.status,
-    color: statusResult.color,
-    median_date: medianDate,
-    days_difference: statusResult.daysDifference,
-    total_count: totalCount,
-    duration_ms: Date.now() - startTime,
-  });
-
   return {
     status: statusResult.status,
     status_color: statusResult.color,
@@ -171,11 +162,8 @@ export async function getStatusWithCache(
   const cached = kv ? await kv.get<StatusResponse>(cacheKey, 'json') : null;
 
   if (cached) {
-    console.log('Status cache HIT');
     return { status: cached, cacheHit: true };
   }
-
-  console.log('Status cache MISS - calculating fresh status');
 
   // Cache miss - calculate fresh status
   const status = await calculateStatusFromDB(db);
@@ -209,6 +197,5 @@ export async function invalidateStatusCache(
 ): Promise<void> {
   if (kv) {
     await kv.delete(cacheKey);
-    console.log('Status cache invalidated');
   }
 }
