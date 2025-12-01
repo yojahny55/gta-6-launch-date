@@ -47,8 +47,6 @@ export function createStatsRoutes() {
    * Rate Limit: 60/min per IP (handled by middleware)
    */
   app.get('/api/stats', async (c) => {
-   
-
     try {
       // Get current capacity level to determine cache TTL (Story 3.7 - AC2)
       const { level } = await getCapacityLevel(c.env.gta6_capacity);

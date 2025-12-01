@@ -72,8 +72,6 @@ export function createPredictionsRoutes() {
    * Rate Limit: 60/min per IP (handled by middleware)
    */
   app.get('/api/predictions', async (c) => {
-  
-
     try {
       // Get aggregated predictions with caching
       const { predictions, cacheHit } = await getAggregatedPredictionsWithCache(

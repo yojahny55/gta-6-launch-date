@@ -72,8 +72,6 @@ export interface StatusResponse {
  * // }
  */
 export async function calculateStatusFromDB(db: D1Database): Promise<StatusResponse> {
- 
-
   // Get total prediction count
   const countResult = await db
     .prepare('SELECT COUNT(*) as total_count FROM predictions')

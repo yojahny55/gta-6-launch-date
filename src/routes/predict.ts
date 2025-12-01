@@ -57,7 +57,6 @@ async function retryWithBackoff<T>(
 ): Promise<T> {
   let lastError: Error | null = null;
 
-
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       return await fn();
@@ -77,7 +76,7 @@ async function retryWithBackoff<T>(
       }
 
       // Log deadlock detection (Story 3.6 - AC: Transaction logging)
-     
+
       const delay = delays[attempt] || delays[delays.length - 1];
       console.warn('Database deadlock/BUSY detected - retrying', {
         attempt: attempt + 1,
@@ -218,7 +217,6 @@ export function createPredictRoutes() {
    * - 500: Server/database error
    */
   app.post('/api/predict', async (c) => {
-   
     let cookieId: string | null = null;
     let ipHash: string | null = null;
 
@@ -690,7 +688,6 @@ export function createPredictRoutes() {
    * - 500: Server/database error
    */
   app.put('/api/predict', async (c) => {
-  
     let cookieId: string | null = null;
     let ipHash: string | null = null;
 
@@ -789,7 +786,6 @@ export function createPredictRoutes() {
       }
 
       const previousDate = existingPrediction.predicted_date as string;
-     
 
       // Step 7: Check if date is the same (idempotent - skip update)
       if (previousDate === predicted_date) {
@@ -809,7 +805,6 @@ export function createPredictRoutes() {
 
       // Step 9: Detect IP change for IP conflict resolution (FR67, Story 4.7 - AC: Scenario 1)
       // Cookie_id takes precedence - update ip_hash to new IP
-    
 
       // Step 10: Perform UPDATE with prepared statement
       const now = new Date().toISOString();

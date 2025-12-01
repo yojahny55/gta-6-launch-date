@@ -80,8 +80,6 @@ export function createStatusRoutes() {
    * Rate Limit: 60/min per IP (handled by middleware)
    */
   app.get('/api/status', async (c) => {
-  
-
     try {
       // Get current capacity level to determine cache TTL (same as stats endpoint)
       const { level } = await getCapacityLevel(c.env.gta6_capacity);
