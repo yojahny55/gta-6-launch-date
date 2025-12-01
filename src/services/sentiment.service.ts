@@ -73,7 +73,7 @@ interface SentimentAggregation {
  * // }
  */
 export async function calculateSentiment(db: D1Database): Promise<SentimentResponse> {
-  const startTime = Date.now();
+  
 
   // Query: Count optimistic vs pessimistic predictions using CASE
   const result = await db

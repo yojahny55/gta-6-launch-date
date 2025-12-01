@@ -91,7 +91,7 @@ export function createDeleteRoutes() {
         );
       }
 
-      const { cookie_id, reason } = parseResult.data;
+      const { cookie_id } = parseResult.data;
 
       // Check if cookie_id exists in database
       const prediction = await c.env.DB.prepare(

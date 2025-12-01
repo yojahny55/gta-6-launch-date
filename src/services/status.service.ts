@@ -72,7 +72,7 @@ export interface StatusResponse {
  * // }
  */
 export async function calculateStatusFromDB(db: D1Database): Promise<StatusResponse> {
-  const startTime = Date.now();
+ 
 
   // Get total prediction count
   const countResult = await db
