@@ -106,13 +106,6 @@ function updateStatusBadge(badge, statusData) {
 
   // Update data attribute for debugging
   badge.dataset.statusColor = status_color;
-
-  console.log('Status badge updated', {
-    status,
-    color: status_color,
-    median_date: statusData.median_date,
-    days_difference: statusData.days_difference,
-  });
 }
 
 /**

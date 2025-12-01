@@ -257,12 +257,13 @@ describe('Story 5.6: Performance Optimization', () => {
       expect(html).toContain('<html');
     });
 
-    it('should log metrics to console for debugging', () => {
+    it('should keep console.warn and console.error for debugging', () => {
       const webVitalsPath = join(process.cwd(), 'public/js/web-vitals.js');
       const webVitalsScript = readFileSync(webVitalsPath, 'utf-8');
 
-      // Check console.log for debugging
-      expect(webVitalsScript).toContain('console.log');
+      // Check console.warn and console.error remain for debugging critical issues
+      expect(webVitalsScript).toContain('console.warn');
+      expect(webVitalsScript).toContain('console.error');
       expect(webVitalsScript).toContain('[Web Vitals]');
     });
   });

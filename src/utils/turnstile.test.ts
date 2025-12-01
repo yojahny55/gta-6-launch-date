@@ -22,18 +22,19 @@ import type { TurnstileVerificationResult } from '../types';
 // Mock fetch globally
 global.fetch = vi.fn();
 
+// Mock console methods to avoid noise in test output
+const consoleLogSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
 describe('Turnstile Verification Module', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.restoreAllMocks();
-    // Reset console spy
-    vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'error').mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
+    // Clear console spy calls
+    consoleLogSpy.mockClear();
+    consoleWarnSpy.mockClear();
+    consoleErrorSpy.mockClear();
+    // Clear fetch mock
+    (global.fetch as ReturnType<typeof vi.fn>).mockClear();
   });
 
   describe('verifyTurnstileToken() - Successful Verification', () => {
@@ -489,7 +490,7 @@ describe('Turnstile Verification Module', () => {
 
       await verifyTurnstileToken('token', 'secret');
 
-      expect(console.error).toHaveBeenCalledWith(
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
         expect.stringContaining('network error'),
         expect.objectContaining({
           fail_open: true,

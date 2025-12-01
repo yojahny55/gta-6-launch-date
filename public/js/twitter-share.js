@@ -200,17 +200,6 @@ export function trackShareClick(platform, eventData = {}) {
       deltaDays = calculateDaysDifference(eventData.user_prediction, eventData.median_prediction);
     }
 
-    // Log analytics event (Cloudflare Analytics auto-tracks page events)
-    console.log(JSON.stringify({
-      timestamp: new Date().toISOString(),
-      level: 'INFO',
-      event: 'share_click',
-      platform: platform,
-      user_prediction: eventData.user_prediction || null,
-      median_prediction: eventData.median_prediction,
-      delta_days: deltaDays
-    }));
-
     return true;
   } catch (error) {
     // Analytics tracking is non-blocking - log error but don't fail
