@@ -1,4 +1,5 @@
 import { defineConfig, loadEnv } from 'vite';
+import terser from '@rollup/plugin-terser';
 
 export default defineConfig(({ mode }) => {
   // Load environment variables from .env files
@@ -19,9 +20,10 @@ export default defineConfig(({ mode }) => {
       minify: 'terser', // Use terser for better minification than esbuild
       terserOptions: {
         compress: {
-          drop_console: mode === 'production', // Remove console.log in production
+          drop_console: true, // Always remove console.log in builds
           drop_debugger: true,
-          pure_funcs: mode === 'production' ? ['console.log', 'console.info'] : [],
+          pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+          passes: 2, // Multiple passes for better optimization
         },
         mangle: {
           safari10: true, // Safari 10 compatibility
@@ -41,6 +43,19 @@ export default defineConfig(({ mode }) => {
           chunkFileNames: '[name].[hash].js',
           assetFileNames: '[name].[hash][extname]',
         },
+        plugins: [
+          terser({
+            compress: {
+              drop_console: true,
+              drop_debugger: true,
+              pure_funcs: ['console.log', 'console.info', 'console.debug', 'console.warn'],
+              passes: 2,
+            },
+            format: {
+              comments: false,
+            },
+          }),
+        ],
       },
       // Target modern browsers for smaller bundles
       target: 'es2020',
